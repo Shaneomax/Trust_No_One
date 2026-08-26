@@ -42,10 +42,14 @@ namespace V0.Interaction
 
             if (Physics.Raycast(ray, out RaycastHit hit, _interactDistance, _interactableLayer, QueryTriggerInteraction.Ignore))
             {
-                IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
                 if (interactable == null)
                 {
-                    interactable = hit.collider.GetComponent<IInteractable>();
+                    interactable = hit.collider.GetComponentInParent<IInteractable>();
+                }
+                if (interactable == null && hit.collider.transform.parent != null)
+                {
+                    interactable = hit.collider.transform.parent.GetComponentInChildren<IInteractable>();
                 }
                 _currentInteractable = interactable;
             }
