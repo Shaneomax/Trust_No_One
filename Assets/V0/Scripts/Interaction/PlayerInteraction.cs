@@ -10,34 +10,21 @@ namespace V0.Interaction
     /// <summary>
     /// Player interaction component. Raycasts forward from player camera
     /// and invokes IInteractable.Interact() when the interact input is triggered.
-    /// Dynamically highlights interactable objects using URP Rendering Layer Masks with Free Outline.
+    /// Shows Free Outline ONLY when the player is in interaction range AND looking directly at the object.
     /// </summary>
     [RequireComponent(typeof(StarterAssetsInputs))]
     public class PlayerInteraction : MonoBehaviour
     {
-        public enum HighlightTrigger
-        {
-            CrosshairHover,
-            ProximityRadius,
-            Both
-        }
-
         [Header("Interaction Settings")]
-        [Tooltip("Max reach distance for interaction")]
+        [Tooltip("Max reach distance for interaction and outline visibility")]
         [SerializeField] private float _interactDistance = 3.0f;
 
         [Tooltip("Layer mask for interactable objects")]
         [SerializeField] private LayerMask _interactableLayer;
 
         [Header("Outline / Highlight Settings (Free Outline)")]
-        [Tooltip("Enable dynamic outline highlighting on interactable objects")]
+        [Tooltip("Enable outline highlight when looking at an interactable in range")]
         [SerializeField] private bool _enableOutline = true;
-
-        [Tooltip("When to show outline: CrosshairHover (aiming at it), ProximityRadius (near it), or Both")]
-        [SerializeField] private HighlightTrigger _highlightMode = HighlightTrigger.Both;
-
-        [Tooltip("Distance around player to highlight interactables when using ProximityRadius or Both")]
-        [SerializeField] private float _proximityRadius = 4.0f;
 
         [Tooltip("The URP Rendering Layer bit for Free Outline. Default is 2 (Light Layer 1 / Layer 2).")]
         [SerializeField] private uint _outlineRenderingLayer = 2;
@@ -70,8 +57,7 @@ namespace V0.Interaction
                 _interactableLayer = LayerMask.GetMask("Interactable");
                 if (_interactableLayer.value == 0)
                 {
-                    // Fallback to Layer 6
-                    _interactableLayer = 1 << 6;
+                    _interactableLayer = 1 << 6; // Layer 6: Interactable
                 }
             }
         }
@@ -93,10 +79,15 @@ namespace V0.Interaction
 
             Ray ray = new Ray(_playerCamera.transform.position, _playerCamera.transform.forward);
 
+            // 1. Direct raycast
             if (Physics.Raycast(ray, out RaycastHit hit, _interactDistance, _interactableLayer, QueryTriggerInteraction.Ignore))
             {
-                IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
-                _currentInteractable = interactable;
+                _currentInteractable = hit.collider.GetComponentInParent<IInteractable>();
+            }
+            // 2. Slight sphere cast (radius 0.15m) so small pickups like flashlights/keys are easy to target
+            else if (Physics.SphereCast(ray, 0.15f, out RaycastHit sphereHit, _interactDistance, _interactableLayer, QueryTriggerInteraction.Ignore))
+            {
+                _currentInteractable = sphereHit.collider.GetComponentInParent<IInteractable>();
             }
             else
             {
@@ -114,40 +105,17 @@ namespace V0.Interaction
 
             _currentlyActiveRenderers.Clear();
 
-            // 1. Crosshair Hover target (aiming directly at an interactable)
-            if (_highlightMode == HighlightTrigger.CrosshairHover || _highlightMode == HighlightTrigger.Both)
+            // ONLY highlight when player is in interaction range AND looking directly at the object!
+            if (_currentInteractable != null)
             {
-                if (_currentInteractable != null)
+                MonoBehaviour mb = _currentInteractable as MonoBehaviour;
+                if (mb != null)
                 {
-                    MonoBehaviour mb = _currentInteractable as MonoBehaviour;
-                    if (mb != null)
-                    {
-                        AddRenderersToActive(mb.gameObject);
-                    }
+                    AddRenderersToActive(mb.gameObject);
                 }
             }
 
-            // 2. Proximity check (walking close to any interactable in the scene)
-            if (_highlightMode == HighlightTrigger.ProximityRadius || _highlightMode == HighlightTrigger.Both)
-            {
-                Vector3 origin = _playerCamera != null ? _playerCamera.transform.position : transform.position;
-                Collider[] hits = Physics.OverlapSphere(origin, _proximityRadius, _interactableLayer);
-
-                foreach (Collider col in hits)
-                {
-                    IInteractable interactable = col.GetComponentInParent<IInteractable>();
-                    if (interactable != null)
-                    {
-                        MonoBehaviour mb = interactable as MonoBehaviour;
-                        if (mb != null)
-                        {
-                            AddRenderersToActive(mb.gameObject);
-                        }
-                    }
-                }
-            }
-
-            // Apply outline layer to all active renderers
+            // Apply outline layer to the active target
             foreach (Renderer r in _currentlyActiveRenderers)
             {
                 if (r == null) continue;
@@ -158,12 +126,12 @@ namespace V0.Interaction
 
                     if (_debugLogs)
                     {
-                        Debug.Log($"<color=cyan>[PlayerInteraction]</color> Highlighted: <b>{r.gameObject.name}</b> (New mask: {r.renderingLayerMask})");
+                        Debug.Log($"<color=cyan>[PlayerInteraction]</color> Highlighted: <b>{r.gameObject.name}</b>");
                     }
                 }
             }
 
-            // Remove outline from renderers no longer targeted / in range
+            // Remove outline when looking away or stepping out of range
             List<Renderer> toRemove = null;
             foreach (var kvp in _highlightedRenderers)
             {
@@ -250,13 +218,6 @@ namespace V0.Interaction
             {
                 Gizmos.color = _currentInteractable != null ? Color.green : Color.red;
                 Gizmos.DrawRay(cam.transform.position, cam.transform.forward * _interactDistance);
-            }
-
-            if (_enableOutline && (_highlightMode == HighlightTrigger.ProximityRadius || _highlightMode == HighlightTrigger.Both))
-            {
-                Gizmos.color = Color.cyan;
-                Vector3 origin = cam != null ? cam.transform.position : transform.position;
-                Gizmos.DrawWireSphere(origin, _proximityRadius);
             }
         }
     }

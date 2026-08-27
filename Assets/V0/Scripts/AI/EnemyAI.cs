@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using DG.Tweening;
+using StarterAssets;
 using V0.Interaction;
 
 namespace TrustNoOne.AI
@@ -22,7 +23,7 @@ namespace TrustNoOne.AI
         [SerializeField] private State _currentState = State.Patrol;
 
         [Header("Vision & Line of Sight")]
-        [Tooltip("Maximum distance enemy can spot the player")]
+        [Tooltip("Maximum distance enemy can spot the player visually")]
         [SerializeField] private float _detectionRadius = 14f;
 
         [Tooltip("Vision cone angle (degrees) in front of the enemy")]
@@ -38,8 +39,15 @@ namespace TrustNoOne.AI
         [Tooltip("Layers that block line of sight (walls, furniture, closed doors, tables)")]
         [SerializeField] private LayerMask _obstructionLayers = ~0;
 
+        [Header("Hearing & Sprint Sound Detection")]
+        [Tooltip("Maximum distance the ghost can hear the player sprinting")]
+        [SerializeField] private float _hearingRadius = 16f;
+
+        [Tooltip("Can the ghost hear sprint footsteps through walls? (true = 360 sound sphere, false = muffled by walls)")]
+        [SerializeField] private bool _hearThroughWalls = true;
+
         [Header("Search / Lost Sight Settings")]
-        [Tooltip("Time enemy spends searching at player's last known position before resuming patrol")]
+        [Tooltip("Time enemy spends searching at player's last known or heard position before resuming patrol")]
         [SerializeField] private float _searchDuration = 5f;
 
         [Tooltip("Movement speed when walking to investigate last known spot")]
@@ -54,6 +62,13 @@ namespace TrustNoOne.AI
 
         [Tooltip("Damage dealt per attack")]
         [SerializeField] private float _attackDamage = 25f;
+
+        [Header("Player Collision & Push Prevention")]
+        [Tooltip("Prevent the player from walking into or shoving the ghost")]
+        [SerializeField] private bool _preventPlayerPush = true;
+
+        [Tooltip("Minimum distance kept between player and ghost (player is blocked if closer)")]
+        [SerializeField] private float _minPlayerDistance = 0.85f;
 
         [Header("Movement Speeds")]
         [Tooltip("Speed when patrolling (plays Walk animation)")]
@@ -101,6 +116,10 @@ namespace TrustNoOne.AI
         private float _patrolWaitTimer;
         private bool _isWaitingAtPoint;
 
+        // Player input & movement cache for hearing and push prevention
+        private StarterAssetsInputs _playerInputs;
+        private CharacterController _playerCharController;
+
         // Line of Sight & Search State
         private bool _canSeePlayer;
         private Vector3 _lastKnownPlayerPosition;
@@ -140,6 +159,14 @@ namespace TrustNoOne.AI
             _ownCollider = GetComponent<Collider>();
             _spawnPosition = transform.position;
 
+            // Lock Rigidbody so physics collisions/shoves cannot move the ghost
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+                rb.constraints = RigidbodyConstraints.FreezeAll;
+            }
+
             if (_animator == null)
             {
                 _animator = GetComponentInChildren<Animator>();
@@ -154,6 +181,11 @@ namespace TrustNoOne.AI
             CheckAnimatorParameters();
             InitializeDoors();
 
+            CachePlayerReferences();
+        }
+
+        private void CachePlayerReferences()
+        {
             if (_player == null)
             {
                 GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -161,6 +193,12 @@ namespace TrustNoOne.AI
                 {
                     _player = playerObj.transform;
                 }
+            }
+
+            if (_player != null)
+            {
+                _playerInputs = _player.GetComponent<StarterAssetsInputs>();
+                _playerCharController = _player.GetComponent<CharacterController>();
             }
         }
 
@@ -258,8 +296,7 @@ namespace TrustNoOne.AI
         {
             if (_player == null)
             {
-                GameObject p = GameObject.FindGameObjectWithTag("Player");
-                if (p != null) _player = p.transform;
+                CachePlayerReferences();
                 return;
             }
 
@@ -271,11 +308,16 @@ namespace TrustNoOne.AI
                 _lastKnownPlayerPosition = _player.position;
                 _lostSightGraceTimer = 0f;
             }
+            else
+            {
+                // 2. If enemy CANNOT see the player, check if it HEARS the player sprinting!
+                EvaluateHearing(distanceToPlayer);
+            }
 
-            // 2. Check door proximity for phasing
+            // 3. Check door proximity for phasing
             UpdateDoorPhasing();
 
-            // 3. State Machine
+            // 4. State Machine
             switch (_currentState)
             {
                 case State.Patrol:
@@ -301,7 +343,126 @@ namespace TrustNoOne.AI
         private void LateUpdate()
         {
             SnapModelToGround();
+            PreventPlayerPushing();
         }
+
+        #region Player Collision & Push Prevention
+
+        /// <summary>
+        /// Prevents the player from pushing, walking through, or displacing the ghost.
+        /// If the player tries to run into the ghost, the player is firmly blocked and pushed back.
+        /// </summary>
+        private void PreventPlayerPushing()
+        {
+            if (!_preventPlayerPush || _player == null) return;
+
+            Vector3 ghostPos = transform.position;
+            Vector3 playerPos = _player.position;
+
+            // Only push if on roughly the same vertical level
+            if (Mathf.Abs(playerPos.y - ghostPos.y) > 2.0f) return;
+
+            Vector3 toPlayer = playerPos - ghostPos;
+            toPlayer.y = 0f;
+            float horizontalDist = toPlayer.magnitude;
+
+            if (horizontalDist < _minPlayerDistance)
+            {
+                Vector3 pushDir = toPlayer.normalized;
+                if (pushDir == Vector3.zero)
+                {
+                    pushDir = -transform.forward;
+                }
+
+                float pushDistance = _minPlayerDistance - horizontalDist;
+
+                if (_playerCharController != null && _playerCharController.enabled)
+                {
+                    _playerCharController.Move(pushDir * pushDistance);
+                }
+                else
+                {
+                    _player.position += pushDir * pushDistance;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Hearing & Sprint Sound Detection
+
+        /// <summary>
+        /// Checks if player is sprinting nearby. If heard, ghost moves to investigate the sound location!
+        /// </summary>
+        private void EvaluateHearing(float distanceToPlayer)
+        {
+            // If already chasing or attacking, no need to listen for footsteps
+            if (_currentState == State.Chase || _currentState == State.Attack) return;
+
+            // Outside hearing range
+            if (distanceToPlayer > _hearingRadius) return;
+
+            // Is the player actually sprinting?
+            if (!IsPlayerSprinting()) return;
+
+            // If wall occlusion is enabled, check if sound is blocked by solid walls
+            if (!_hearThroughWalls)
+            {
+                Vector3 eyePos = transform.position + Vector3.up * _eyeHeight;
+                Vector3 dirToPlayer = _player.position - eyePos;
+                if (Physics.Raycast(eyePos, dirToPlayer.normalized, distanceToPlayer, _obstructionLayers, QueryTriggerInteraction.Ignore))
+                {
+                    return; // Wall muffles the sound
+                }
+            }
+
+            // Ghost hears the sprint sound!
+            // Head directly to investigate where the player made the noise
+            _lastKnownPlayerPosition = _player.position;
+            _currentState = State.Search;
+            _searchTimer = _searchDuration;
+            _hasReachedLastKnownPos = false;
+            _agent.isStopped = false;
+            if (!_isPhasing) _agent.speed = _searchSpeed;
+            _agent.SetDestination(_lastKnownPlayerPosition);
+
+            Debug.Log($"<color=orange>[EnemyAI]</color> Ghost heard sprinting footsteps {distanceToPlayer:F1}m away! Investigating sound location.");
+        }
+
+        private bool IsPlayerSprinting()
+        {
+            if (_player == null) return false;
+
+            if (_playerInputs == null)
+            {
+                _playerInputs = _player.GetComponent<StarterAssetsInputs>();
+            }
+
+            if (_playerCharController == null)
+            {
+                _playerCharController = _player.GetComponent<CharacterController>();
+            }
+
+            // Check input system (holding sprint + moving)
+            if (_playerInputs != null && _playerInputs.sprint && _playerInputs.move != Vector2.zero)
+            {
+                return true;
+            }
+
+            // Check CharacterController physical movement speed (sprint is ~6m/s, walk is ~4m/s)
+            if (_playerCharController != null)
+            {
+                Vector3 horizontalVel = new Vector3(_playerCharController.velocity.x, 0, _playerCharController.velocity.z);
+                if (horizontalVel.magnitude > 4.5f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
 
         #region Line of Sight & Vision Cone
 
@@ -434,7 +595,7 @@ namespace TrustNoOne.AI
                 // Player broke line of sight (ran behind wall, under table, etc.)
                 _lostSightGraceTimer += Time.deltaTime;
 
-                // After brief 0.3s confirmation, switch to searching last known spot
+                // After brief 0.35s confirmation, switch to searching last known spot
                 if (_lostSightGraceTimer >= 0.35f)
                 {
                     Debug.Log("<color=yellow>[EnemyAI]</color> Lost sight of player! Heading to last known position.");
@@ -450,10 +611,10 @@ namespace TrustNoOne.AI
 
         private void HandleSearch()
         {
-            // If player exposes themselves or tries to hide directly in front -> resume Chase/Attack!
+            // If player is spotted (or found while searching) -> immediately Chase or Attack!
             if (_canSeePlayer)
             {
-                Debug.Log("<color=red>[EnemyAI]</color> Spotted player while searching!");
+                Debug.Log("<color=red>[EnemyAI]</color> Found player! Attacking!");
                 float dist = Vector3.Distance(transform.position, _player.position);
                 if (dist <= _attackRadius)
                 {
@@ -468,7 +629,7 @@ namespace TrustNoOne.AI
                 return;
             }
 
-            // Move to where the player was last seen
+            // Move to where the player was last seen or heard
             if (!_hasReachedLastKnownPos)
             {
                 if (!_isPhasing) _agent.speed = _searchSpeed;
@@ -482,7 +643,7 @@ namespace TrustNoOne.AI
             }
             else
             {
-                // Reached last known position: look around cautiously
+                // Reached position: look around cautiously
                 _agent.isStopped = true;
                 _searchTimer -= Time.deltaTime;
 
@@ -500,7 +661,7 @@ namespace TrustNoOne.AI
                 // If search time expires without seeing player -> resume patrol
                 if (_searchTimer <= 0f)
                 {
-                    Debug.Log("<color=green>[EnemyAI]</color> Player successfully hid. Resuming patrol.");
+                    Debug.Log("<color=green>[EnemyAI]</color> Player not found. Resuming patrol.");
                     _currentState = State.Patrol;
                     _agent.isStopped = false;
                     if (!_isPhasing) _agent.speed = _patrolSpeed;
@@ -750,15 +911,19 @@ namespace TrustNoOne.AI
 
         private void OnDrawGizmosSelected()
         {
-            // Yellow = Detection range
+            // Yellow = Vision range
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+
+            // Blue = Hearing range (sprinting footsteps)
+            Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.6f);
+            Gizmos.DrawWireSphere(transform.position, _hearingRadius);
 
             // Red = Attack range
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, _attackRadius);
 
-            // Green = Last known player position (during search)
+            // Green = Last known/heard player position (during search)
             if (_currentState == State.Search)
             {
                 Gizmos.color = Color.green;
