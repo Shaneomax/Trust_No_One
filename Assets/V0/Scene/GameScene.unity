@@ -30780,6 +30780,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9e8109ada6106e242a119a746f51af4b, type: 3}
   m_PrefabInstance: {fileID: 1036821089}
   m_PrefabAsset: {fileID: 0}
+--- !u!95 &428100276 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 9e8109ada6106e242a119a746f51af4b, type: 3}
+  m_PrefabInstance: {fileID: 1036821089}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &437171042
 GameObject:
   m_ObjectHideFlags: 0
@@ -93936,7 +93941,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1030974413, guid: abc00000000004441456172276527205, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2096203017}
   m_SourcePrefab: {fileID: 100100000, guid: abc00000000004441456172276527205, type: 3}
 --- !u!4 &1031804032 stripped
 Transform:
@@ -192322,6 +192330,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DOE Ghost
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 9e8109ada6106e242a119a746f51af4b, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 94089c4904a97d2438648a3e8eb68140, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -193059,7 +193071,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1213372966}
-  - component: {fileID: 1213372967}
   m_Layer: 7
   m_Name: GroundFloor
   m_TagString: Untagged
@@ -193147,38 +193158,6 @@ Transform:
   - {fileID: 15956310}
   m_Father: {fileID: 1913588914}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1213372967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1213372965}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
-  m_SerializedVersion: 0
-  m_AgentTypeID: 0
-  m_CollectObjects: 0
-  m_Size: {x: 10, y: 10, z: 10}
-  m_Center: {x: 0, y: 2, z: 0}
-  m_LayerMask:
-    serializedVersion: 2
-    m_Bits: 128
-  m_UseGeometry: 0
-  m_DefaultArea: 0
-  m_GenerateLinks: 0
-  m_IgnoreNavMeshAgent: 1
-  m_IgnoreNavMeshObstacle: 1
-  m_OverrideTileSize: 0
-  m_TileSize: 256
-  m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.16666667
-  m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 53c75687bbbdb0049bdcf4a3f8e65439, type: 2}
-  m_BuildHeightMesh: 0
 --- !u!1 &1213814776
 GameObject:
   m_ObjectHideFlags: 0
@@ -194860,6 +194839,7 @@ GameObject:
   - component: {fileID: 1500852714}
   - component: {fileID: 1500852713}
   - component: {fileID: 1500852712}
+  - component: {fileID: 1500852715}
   m_Layer: 0
   m_Name: Ghost
   m_TagString: Untagged
@@ -194955,6 +194935,39 @@ CapsuleCollider:
   m_Height: 1.2945907
   m_Direction: 1
   m_Center: {x: -0.0016412735, y: 0.65, z: -0.015301228}
+--- !u!114 &1500852715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500852710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75631baf30aa3e542b5d05b4955db030, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrustNoOne.AI.EnemyAI
+  _currentState: 0
+  _detectionRadius: 12
+  _attackRadius: 2
+  _attackCooldown: 2
+  _attackDamage: 25
+  _patrolSpeed: 1.8
+  _chaseSpeed: 2.5
+  _doorGameObjects: []
+  _doorPhaseDistance: 0.8
+  _doorPhasingSpeed: 0.45
+  _enableGroundSnapping: 1
+  _feetOffset: 0.09
+  _groundLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  _patrolWaypoints: []
+  _patrolWanderRadius: 15
+  _patrolWaitDuration: 2.5
+  _player: {fileID: 1132628782}
+  _animator: {fileID: 428100276}
+  _modelTransform: {fileID: 428100275}
 --- !u!1 &1508295520
 GameObject:
   m_ObjectHideFlags: 0
@@ -199756,6 +199769,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2068229373}
   - component: {fileID: 2068229374}
+  - component: {fileID: 2068229375}
   m_Layer: 0
   m_Name: ModularHouse
   m_TagString: Untagged
@@ -199804,6 +199818,38 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!114 &2068229375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2068229372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 2
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 129
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 352da35a8cc97f04ba442f24e5112b68, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1001 &2077500829
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -200087,6 +200133,36 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -6492427120234770954, guid: bb28c2048a9c22e44b5c89eb7195b008, type: 3}
+--- !u!1 &2096203013 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1030974413, guid: abc00000000004441456172276527205, type: 3}
+  m_PrefabInstance: {fileID: 1031804031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2096203017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2096203013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eeb5dc026fdf4b488bc7ae0138ab719, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshLink
+  m_SerializedVersion: 1
+  m_AgentTypeID: 0
+  m_StartPoint: {x: 0, y: 0, z: -2.5}
+  m_EndPoint: {x: 0, y: 0, z: 2.5}
+  m_StartTransform: {fileID: 0}
+  m_EndTransform: {fileID: 0}
+  m_Activated: 1
+  m_Width: 0
+  m_CostModifier: 1
+  m_IsOverridingCost: 0
+  m_Bidirectional: 1
+  m_AutoUpdatePosition: 0
+  m_Area: 1
 --- !u!1 &2119866356
 GameObject:
   m_ObjectHideFlags: 0
