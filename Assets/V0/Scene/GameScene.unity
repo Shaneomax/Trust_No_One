@@ -1484,7 +1484,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -2179,7 +2179,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -3547,7 +3547,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -4917,7 +4917,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -5796,7 +5796,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -6615,7 +6615,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -7645,7 +7645,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -171495,7 +171495,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -171516,7 +171516,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -171827,7 +171827,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -175252,7 +175252,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -175273,7 +175273,7 @@ MonoBehaviour:
   _isOpen: 0
   _doorTransform: {fileID: 0}
   _closedRotation: {x: 0, y: 0, z: 0}
-  _openRotation: {x: 0, y: -90, z: 0}
+  _openRotation: {x: 0, y: 90, z: 0}
   _animationDuration: 0.8
   _openEase: 6
   _closeEase: 5
@@ -176762,7 +176762,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4390112639311778727}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
