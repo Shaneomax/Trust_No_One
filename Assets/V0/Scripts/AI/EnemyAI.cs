@@ -14,15 +14,36 @@ namespace TrustNoOne.AI
         {
             Patrol,
             Chase,
+            Search,
             Attack
         }
 
         [Header("Current State")]
         [SerializeField] private State _currentState = State.Patrol;
 
-        [Header("Detection")]
-        [Tooltip("Distance at which the enemy notices the player")]
-        [SerializeField] private float _detectionRadius = 12f;
+        [Header("Vision & Line of Sight")]
+        [Tooltip("Maximum distance enemy can spot the player")]
+        [SerializeField] private float _detectionRadius = 14f;
+
+        [Tooltip("Vision cone angle (degrees) in front of the enemy")]
+        [Range(30f, 360f)]
+        [SerializeField] private float _fieldOfView = 120f;
+
+        [Tooltip("Height of enemy's eyes from feet for raycasting")]
+        [SerializeField] private float _eyeHeight = 1.4f;
+
+        [Tooltip("Close proximity awareness: within this distance, enemy senses player 360 degrees")]
+        [SerializeField] private float _closeProximityRadius = 2.2f;
+
+        [Tooltip("Layers that block line of sight (walls, furniture, closed doors, tables)")]
+        [SerializeField] private LayerMask _obstructionLayers = ~0;
+
+        [Header("Search / Lost Sight Settings")]
+        [Tooltip("Time enemy spends searching at player's last known position before resuming patrol")]
+        [SerializeField] private float _searchDuration = 5f;
+
+        [Tooltip("Movement speed when walking to investigate last known spot")]
+        [SerializeField] private float _searchSpeed = 1.6f;
 
         [Header("Combat & Attack Logic")]
         [Tooltip("Distance at which the enemy stops and attacks the player")]
@@ -79,6 +100,15 @@ namespace TrustNoOne.AI
         private float _lastAttackTime = -999f;
         private float _patrolWaitTimer;
         private bool _isWaitingAtPoint;
+
+        // Line of Sight & Search State
+        private bool _canSeePlayer;
+        private Vector3 _lastKnownPlayerPosition;
+        private float _searchTimer;
+        private float _lostSightGraceTimer;
+        private bool _hasReachedLastKnownPos;
+        private float _searchLookTimer;
+        private float _searchLookAngle;
 
         // Door tracking with child collider search
         private class TrackedDoor
@@ -138,7 +168,6 @@ namespace TrustNoOne.AI
         {
             _trackedDoors.Clear();
 
-            // 1. If user assigned specific door gameobjects in inspector
             if (_doorGameObjects != null && _doorGameObjects.Count > 0)
             {
                 foreach (GameObject go in _doorGameObjects)
@@ -149,20 +178,16 @@ namespace TrustNoOne.AI
             }
             else
             {
-                // 2. Auto-find all DoorInteractable in the entire scene
                 DoorInteractable[] foundDoors = Object.FindObjectsByType<DoorInteractable>(FindObjectsSortMode.None);
                 foreach (DoorInteractable door in foundDoors)
                 {
                     RegisterDoorObject(door.gameObject);
                 }
             }
-
-            Debug.Log($"<color=cyan>[EnemyAI]</color> Initialized {_trackedDoors.Count} doors with all child colliders.");
         }
 
         private void RegisterDoorObject(GameObject go)
         {
-            // Search on self, children, or parent for DoorInteractable
             DoorInteractable doorInteractable = go.GetComponentInChildren<DoorInteractable>(true)
                                             ?? go.GetComponentInParent<DoorInteractable>();
 
@@ -175,7 +200,6 @@ namespace TrustNoOne.AI
                 CenterTransform = doorInteractable.transform
             };
 
-            // Search self and ALL children recursively for colliders
             Collider[] colliders = go.GetComponentsInChildren<Collider>(true);
             foreach (Collider c in colliders)
             {
@@ -185,7 +209,6 @@ namespace TrustNoOne.AI
                 }
             }
 
-            // Also check doorInteractable GameObject children
             Collider[] doorCols = doorInteractable.GetComponentsInChildren<Collider>(true);
             foreach (Collider c in doorCols)
             {
@@ -240,11 +263,19 @@ namespace TrustNoOne.AI
                 return;
             }
 
-            float distanceToPlayer = Vector3.Distance(transform.position, _player.position);
+            // 1. Evaluate Line of Sight to the player
+            _canSeePlayer = EvaluateLineOfSight(out float distanceToPlayer);
 
-            // Check distance to all tracked doors
+            if (_canSeePlayer)
+            {
+                _lastKnownPlayerPosition = _player.position;
+                _lostSightGraceTimer = 0f;
+            }
+
+            // 2. Check door proximity for phasing
             UpdateDoorPhasing();
 
+            // 3. State Machine
             switch (_currentState)
             {
                 case State.Patrol:
@@ -253,6 +284,10 @@ namespace TrustNoOne.AI
 
                 case State.Chase:
                     HandleChase(distanceToPlayer);
+                    break;
+
+                case State.Search:
+                    HandleSearch();
                     break;
 
                 case State.Attack:
@@ -268,167 +303,67 @@ namespace TrustNoOne.AI
             SnapModelToGround();
         }
 
-        #region Door Phasing (Go Through Closed Doors)
+        #region Line of Sight & Vision Cone
 
         /// <summary>
-        /// Continuously checks distance to all known doors.
-        /// When near a closed door, slows down and triggers DOTween ghost phasing.
+        /// Checks if player is within distance, inside field of view,
+        /// and not blocked by walls, furniture, tables, or closed doors.
         /// </summary>
-        private void UpdateDoorPhasing()
+        private bool EvaluateLineOfSight(out float distanceToPlayer)
         {
-            TrackedDoor nearestDoor = null;
-            float minDistance = float.MaxValue;
+            distanceToPlayer = Vector3.Distance(transform.position, _player.position);
 
-            Vector2 ghost2D = new Vector2(transform.position.x, transform.position.z);
-
-            // Find the closest door to the ghost
-            foreach (TrackedDoor door in _trackedDoors)
+            if (distanceToPlayer > _detectionRadius)
             {
-                if (door == null || door.Interactable == null || door.CenterTransform == null) continue;
+                return false;
+            }
 
-                Vector2 door2D = new Vector2(door.CenterTransform.position.x, door.CenterTransform.position.z);
-                float dist = Vector2.Distance(ghost2D, door2D);
+            Vector3 eyePos = transform.position + Vector3.up * _eyeHeight;
+            Vector3 playerTarget = _player.position + Vector3.up * 0.9f; // Player chest height
+            Vector3 dirToPlayer = playerTarget - eyePos;
 
-                if (dist < minDistance)
+            // Check field of view angle (unless player is in close proximity)
+            if (distanceToPlayer > _closeProximityRadius)
+            {
+                float angle = Vector3.Angle(transform.forward, dirToPlayer);
+                if (angle > _fieldOfView * 0.5f)
                 {
-                    minDistance = dist;
-                    nearestDoor = door;
+                    return false; // Player is outside peripheral vision cone
                 }
             }
 
-            // Check if the ghost is within door range
-            if (nearestDoor != null && minDistance <= _doorPhaseDistance)
-            {
-                // If the door is OPEN -> DO NOT PHASE. Walk through normally at full speed!
-                if (nearestDoor.Interactable.IsOpen)
-                {
-                    if (_isPhasing)
-                    {
-                        EndDoorPhasing();
-                    }
-                }
-                else
-                {
-                    // Door is CLOSED -> Phase through with slow speed and DOTween animation
-                    if (!_isPhasing || _currentPhasingDoor != nearestDoor)
-                    {
-                        StartDoorPhasing(nearestDoor);
-                    }
-                    _agent.speed = _doorPhasingSpeed;
-                }
-            }
-            else if (_isPhasing && minDistance > _doorPhaseDistance + 0.3f)
-            {
-                // Moved safely past the door -> End phasing
-                EndDoorPhasing();
-            }
-        }
+            // Raycast check for walls, tables, and closed doors
+            Ray ray = new Ray(eyePos, dirToPlayer.normalized);
+            RaycastHit[] hits = Physics.RaycastAll(ray, distanceToPlayer, _obstructionLayers, QueryTriggerInteraction.Ignore);
 
-        private void StartDoorPhasing(TrackedDoor door)
-        {
-            _isPhasing = true;
-            _currentPhasingDoor = door;
-            _agent.speed = _doorPhasingSpeed;
-
-            // Ignore collision with ALL child colliders of this door/wall
-            if (_ownCollider != null)
-            {
-                foreach (Collider col in door.ChildColliders)
-                {
-                    if (col != null)
-                    {
-                        Physics.IgnoreCollision(_ownCollider, col, true);
-                    }
-                }
-            }
-
-            // DOTween Phasing Animation
-            if (_modelTransform != null)
-            {
-                _phaseSequence?.Kill();
-                _phaseSequence = DOTween.Sequence();
-
-                // 1. Slim down into an ethereal mist
-                _phaseSequence.Append(_modelTransform.DOScale(new Vector3(0.25f, 1.12f, 0.25f), 0.35f).SetEase(Ease.InOutSine));
-
-                // 2. Ghostly vibration while passing through
-                _phaseSequence.Join(_modelTransform.DOShakePosition(2f, new Vector3(0.06f, 0.02f, 0.06f), 10, 90, false, false));
-
-                // 3. Spectral blue/shadow color tint on materials
-                foreach (var kvp in _originalColors)
-                {
-                    Material mat = kvp.Key;
-                    Color orig = kvp.Value;
-                    Color spectralColor = new Color(orig.r * 0.4f, orig.g * 0.7f, orig.b * 1.3f, orig.a);
-                    _phaseSequence.Join(mat.DOColor(spectralColor, "_BaseColor", 0.35f));
-                }
-            }
-        }
-
-        private void EndDoorPhasing()
-        {
-            _isPhasing = false;
-
-            // Re-enable collisions
-            if (_ownCollider != null && _currentPhasingDoor != null)
-            {
-                foreach (Collider col in _currentPhasingDoor.ChildColliders)
-                {
-                    if (col != null)
-                    {
-                        Physics.IgnoreCollision(_ownCollider, col, false);
-                    }
-                }
-            }
-            _currentPhasingDoor = null;
-
-            // Restore scale and original colors with DOTween
-            if (_modelTransform != null)
-            {
-                _phaseSequence?.Kill();
-                _phaseSequence = DOTween.Sequence();
-
-                // Restore full scale with slight bounce
-                _phaseSequence.Append(_modelTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
-
-                // Restore material colors
-                foreach (var kvp in _originalColors)
-                {
-                    Material mat = kvp.Key;
-                    _phaseSequence.Join(mat.DOColor(kvp.Value, "_BaseColor", 0.35f));
-                }
-            }
-
-            // Restore normal speed
-            _agent.speed = (_currentState == State.Chase) ? _chaseSpeed : _patrolSpeed;
-        }
-
-        #endregion
-
-        #region Ground Snapping (Stairs & Slope Alignment)
-
-        private void SnapModelToGround()
-        {
-            if (!_enableGroundSnapping || _modelTransform == null) return;
-
-            Ray ray = new Ray(transform.position + Vector3.up * 1f, Vector3.down);
-            RaycastHit[] hits = Physics.RaycastAll(ray, 3f, _groundLayers, QueryTriggerInteraction.Ignore);
-
-            if (hits.Length == 0) return;
+            if (hits.Length == 0) return true;
 
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
             foreach (RaycastHit hit in hits)
             {
+                // Ignore self and child colliders
                 if (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform))
                     continue;
 
-                float targetLocalY = (hit.point.y - transform.position.y) + _feetOffset;
-                Vector3 localPos = _modelTransform.localPosition;
-                localPos.y = Mathf.Lerp(localPos.y, targetLocalY, Time.deltaTime * 20f);
-                _modelTransform.localPosition = localPos;
-                break;
+                // Reached player without obstacle
+                if (hit.transform == _player || hit.transform.IsChildOf(_player))
+                {
+                    return true;
+                }
+
+                // If hit an open door, line of sight passes through
+                DoorInteractable door = hit.collider.GetComponentInParent<DoorInteractable>();
+                if (door != null && door.IsOpen)
+                {
+                    continue;
+                }
+
+                // Blocked by a solid wall, table, or closed door!
+                return false;
             }
+
+            return true;
         }
 
         #endregion
@@ -437,15 +372,25 @@ namespace TrustNoOne.AI
 
         private void HandlePatrol(float distanceToPlayer)
         {
-            if (distanceToPlayer <= _detectionRadius)
+            // If enemy sees player -> immediately Chase or Attack
+            if (_canSeePlayer)
             {
                 _isWaitingAtPoint = false;
-                _currentState = State.Chase;
-                _agent.isStopped = false;
-                if (!_isPhasing) _agent.speed = _chaseSpeed;
+
+                if (distanceToPlayer <= _attackRadius)
+                {
+                    _currentState = State.Attack;
+                }
+                else
+                {
+                    _currentState = State.Chase;
+                    _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _chaseSpeed;
+                }
                 return;
             }
 
+            // Normal Patrol movement
             if (!_isPhasing) _agent.speed = _patrolSpeed;
 
             if (!_agent.pathPending && _agent.remainingDistance <= _agent.stoppingDistance + 0.2f)
@@ -469,30 +414,106 @@ namespace TrustNoOne.AI
 
         private void HandleChase(float distanceToPlayer)
         {
-            if (distanceToPlayer <= _attackRadius)
+            // Close enough to attack and still has line of sight -> Attack
+            if (distanceToPlayer <= _attackRadius && _canSeePlayer)
             {
                 _currentState = State.Attack;
                 _agent.isStopped = true;
                 return;
             }
 
-            if (distanceToPlayer > _detectionRadius * 1.4f)
+            // Player is visible -> Run straight towards player
+            if (_canSeePlayer)
             {
-                _currentState = State.Patrol;
-                if (!_isPhasing) _agent.speed = _patrolSpeed;
-                SetNextPatrolDestination();
+                _agent.isStopped = false;
+                if (!_isPhasing) _agent.speed = _chaseSpeed;
+                _agent.SetDestination(_player.position);
+            }
+            else
+            {
+                // Player broke line of sight (ran behind wall, under table, etc.)
+                _lostSightGraceTimer += Time.deltaTime;
+
+                // After brief 0.3s confirmation, switch to searching last known spot
+                if (_lostSightGraceTimer >= 0.35f)
+                {
+                    Debug.Log("<color=yellow>[EnemyAI]</color> Lost sight of player! Heading to last known position.");
+                    _currentState = State.Search;
+                    _searchTimer = _searchDuration;
+                    _hasReachedLastKnownPos = false;
+                    _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _searchSpeed;
+                    _agent.SetDestination(_lastKnownPlayerPosition);
+                }
+            }
+        }
+
+        private void HandleSearch()
+        {
+            // If player exposes themselves or tries to hide directly in front -> resume Chase/Attack!
+            if (_canSeePlayer)
+            {
+                Debug.Log("<color=red>[EnemyAI]</color> Spotted player while searching!");
+                float dist = Vector3.Distance(transform.position, _player.position);
+                if (dist <= _attackRadius)
+                {
+                    _currentState = State.Attack;
+                }
+                else
+                {
+                    _currentState = State.Chase;
+                    _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _chaseSpeed;
+                }
                 return;
             }
 
-            _agent.isStopped = false;
-            if (!_isPhasing) _agent.speed = _chaseSpeed;
-            _agent.SetDestination(_player.position);
+            // Move to where the player was last seen
+            if (!_hasReachedLastKnownPos)
+            {
+                if (!_isPhasing) _agent.speed = _searchSpeed;
+                _agent.SetDestination(_lastKnownPlayerPosition);
+
+                if (!_agent.pathPending && _agent.remainingDistance <= _agent.stoppingDistance + 0.3f)
+                {
+                    _hasReachedLastKnownPos = true;
+                    _agent.isStopped = true;
+                }
+            }
+            else
+            {
+                // Reached last known position: look around cautiously
+                _agent.isStopped = true;
+                _searchTimer -= Time.deltaTime;
+
+                // Turn head/body left and right periodically
+                _searchLookTimer -= Time.deltaTime;
+                if (_searchLookTimer <= 0f)
+                {
+                    _searchLookTimer = Random.Range(1.2f, 2.2f);
+                    _searchLookAngle = Random.Range(-65f, 65f);
+                }
+
+                Quaternion targetRot = Quaternion.Euler(0f, transform.eulerAngles.y + _searchLookAngle, 0f);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 3f);
+
+                // If search time expires without seeing player -> resume patrol
+                if (_searchTimer <= 0f)
+                {
+                    Debug.Log("<color=green>[EnemyAI]</color> Player successfully hid. Resuming patrol.");
+                    _currentState = State.Patrol;
+                    _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _patrolSpeed;
+                    SetNextPatrolDestination();
+                }
+            }
         }
 
         private void HandleAttack(float distanceToPlayer)
         {
             _agent.isStopped = true;
 
+            // Look directly at player
             Vector3 lookDirection = (_player.position - transform.position);
             lookDirection.y = 0f;
             if (lookDirection != Vector3.zero)
@@ -501,14 +522,28 @@ namespace TrustNoOne.AI
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * 8f);
             }
 
-            if (distanceToPlayer > _attackRadius * 1.2f)
+            // If player moves away or breaks line of sight -> Chase or Search
+            if (distanceToPlayer > _attackRadius * 1.2f || !_canSeePlayer)
             {
-                _currentState = State.Chase;
-                _agent.isStopped = false;
-                if (!_isPhasing) _agent.speed = _chaseSpeed;
+                if (_canSeePlayer)
+                {
+                    _currentState = State.Chase;
+                    _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _chaseSpeed;
+                }
+                else
+                {
+                    _currentState = State.Search;
+                    _searchTimer = _searchDuration;
+                    _hasReachedLastKnownPos = false;
+                    _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _searchSpeed;
+                    _agent.SetDestination(_lastKnownPlayerPosition);
+                }
                 return;
             }
 
+            // Attack cooldown logic
             if (Time.time >= _lastAttackTime + _attackCooldown)
             {
                 PerformAttack();
@@ -558,6 +593,156 @@ namespace TrustNoOne.AI
 
         #endregion
 
+        #region Door Phasing (Go Through Closed Doors)
+
+        private void UpdateDoorPhasing()
+        {
+            TrackedDoor nearestDoor = null;
+            float minDistance = float.MaxValue;
+
+            Vector2 ghost2D = new Vector2(transform.position.x, transform.position.z);
+
+            foreach (TrackedDoor door in _trackedDoors)
+            {
+                if (door == null || door.Interactable == null || door.CenterTransform == null) continue;
+
+                Vector2 door2D = new Vector2(door.CenterTransform.position.x, door.CenterTransform.position.z);
+                float dist = Vector2.Distance(ghost2D, door2D);
+
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    nearestDoor = door;
+                }
+            }
+
+            if (nearestDoor != null && minDistance <= _doorPhaseDistance)
+            {
+                // Door is OPEN -> do not phase! Move normally through doorway
+                if (nearestDoor.Interactable.IsOpen)
+                {
+                    if (_isPhasing)
+                    {
+                        EndDoorPhasing();
+                    }
+                }
+                else
+                {
+                    // Door is CLOSED -> Phase through with slow speed and DOTween animation
+                    if (!_isPhasing || _currentPhasingDoor != nearestDoor)
+                    {
+                        StartDoorPhasing(nearestDoor);
+                    }
+                    _agent.speed = _doorPhasingSpeed;
+                }
+            }
+            else if (_isPhasing && minDistance > _doorPhaseDistance + 0.3f)
+            {
+                EndDoorPhasing();
+            }
+        }
+
+        private void StartDoorPhasing(TrackedDoor door)
+        {
+            _isPhasing = true;
+            _currentPhasingDoor = door;
+            _agent.speed = _doorPhasingSpeed;
+
+            if (_ownCollider != null)
+            {
+                foreach (Collider col in door.ChildColliders)
+                {
+                    if (col != null)
+                    {
+                        Physics.IgnoreCollision(_ownCollider, col, true);
+                    }
+                }
+            }
+
+            if (_modelTransform != null)
+            {
+                _phaseSequence?.Kill();
+                _phaseSequence = DOTween.Sequence();
+
+                _phaseSequence.Append(_modelTransform.DOScale(new Vector3(0.25f, 1.12f, 0.25f), 0.35f).SetEase(Ease.InOutSine));
+                _phaseSequence.Join(_modelTransform.DOShakePosition(2f, new Vector3(0.06f, 0.02f, 0.06f), 10, 90, false, false));
+
+                foreach (var kvp in _originalColors)
+                {
+                    Material mat = kvp.Key;
+                    Color orig = kvp.Value;
+                    Color spectralColor = new Color(orig.r * 0.4f, orig.g * 0.7f, orig.b * 1.3f, orig.a);
+                    _phaseSequence.Join(mat.DOColor(spectralColor, "_BaseColor", 0.35f));
+                }
+            }
+        }
+
+        private void EndDoorPhasing()
+        {
+            _isPhasing = false;
+
+            if (_ownCollider != null && _currentPhasingDoor != null)
+            {
+                foreach (Collider col in _currentPhasingDoor.ChildColliders)
+                {
+                    if (col != null)
+                    {
+                        Physics.IgnoreCollision(_ownCollider, col, false);
+                    }
+                }
+            }
+            _currentPhasingDoor = null;
+
+            if (_modelTransform != null)
+            {
+                _phaseSequence?.Kill();
+                _phaseSequence = DOTween.Sequence();
+
+                _phaseSequence.Append(_modelTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
+
+                foreach (var kvp in _originalColors)
+                {
+                    Material mat = kvp.Key;
+                    _phaseSequence.Join(mat.DOColor(kvp.Value, "_BaseColor", 0.35f));
+                }
+            }
+
+            // Restore appropriate speed
+            if (_currentState == State.Chase) _agent.speed = _chaseSpeed;
+            else if (_currentState == State.Search) _agent.speed = _searchSpeed;
+            else _agent.speed = _patrolSpeed;
+        }
+
+        #endregion
+
+        #region Ground Snapping (Stairs & Slope Alignment)
+
+        private void SnapModelToGround()
+        {
+            if (!_enableGroundSnapping || _modelTransform == null) return;
+
+            Ray ray = new Ray(transform.position + Vector3.up * 1f, Vector3.down);
+            RaycastHit[] hits = Physics.RaycastAll(ray, 3f, _groundLayers, QueryTriggerInteraction.Ignore);
+
+            if (hits.Length == 0) return;
+
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            foreach (RaycastHit hit in hits)
+            {
+                if (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform))
+                    continue;
+
+                float targetLocalY = (hit.point.y - transform.position.y) + _feetOffset;
+                Vector3 localPos = _modelTransform.localPosition;
+                localPos.y = Mathf.Lerp(localPos.y, targetLocalY, Time.deltaTime * 20f);
+                _modelTransform.localPosition = localPos;
+                break;
+            }
+        }
+
+        #endregion
+
         private void OnDestroy()
         {
             _phaseSequence?.Kill();
@@ -565,21 +750,29 @@ namespace TrustNoOne.AI
 
         private void OnDrawGizmosSelected()
         {
+            // Yellow = Detection range
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
 
+            // Red = Attack range
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, _attackRadius);
 
-            // Draw cyan spheres for all tracked door trigger zones
-            Gizmos.color = Color.cyan;
-            foreach (TrackedDoor door in _trackedDoors)
+            // Green = Last known player position (during search)
+            if (_currentState == State.Search)
             {
-                if (door?.CenterTransform != null)
-                {
-                    Gizmos.DrawWireSphere(door.CenterTransform.position, _doorPhaseDistance);
-                }
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(_lastKnownPlayerPosition, 0.8f);
+                Gizmos.DrawLine(transform.position, _lastKnownPlayerPosition);
             }
+
+            // Vision Cone in Scene view
+            Vector3 eyePos = transform.position + Vector3.up * _eyeHeight;
+            Vector3 leftRay = Quaternion.Euler(0, -_fieldOfView * 0.5f, 0) * transform.forward;
+            Vector3 rightRay = Quaternion.Euler(0, _fieldOfView * 0.5f, 0) * transform.forward;
+            Gizmos.color = _canSeePlayer ? Color.red : Color.white;
+            Gizmos.DrawRay(eyePos, leftRay * _detectionRadius);
+            Gizmos.DrawRay(eyePos, rightRay * _detectionRadius);
         }
     }
 }
