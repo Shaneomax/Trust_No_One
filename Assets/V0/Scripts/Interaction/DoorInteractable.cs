@@ -12,10 +12,26 @@ namespace V0.Interaction
         [Header("Interaction Prompts")]
         [SerializeField] private string _openPrompt = "Open Door";
         [SerializeField] private string _closePrompt = "Close Door";
+        [SerializeField] private string _lockedPrompt = "Locked (Need Key)";
+        [SerializeField] private string _unlockPrompt = "Unlock Door";
 
         [Header("Door State")]
         [Tooltip("Is the door currently open?")]
         [SerializeField] private bool _isOpen = false;
+
+        [Header("Lock Settings")]
+        [Tooltip("Is the door locked until unlocked with a key?")]
+        [SerializeField] private bool _isLocked = false;
+
+        [Tooltip("Direct reference to the specific Key GameObject needed for this door. (Drag & drop the Key here!)")]
+        [SerializeField] private KeyPickup _requiredKey;
+
+        [Tooltip("Or match by Key ID string (e.g. 'DrawingRoomKey', 'BedroomKey', 'AtticKey')")]
+        [SerializeField] private string _requiredKeyId = "DrawingRoomKey";
+
+        [Header("Audio (Optional)")]
+        [SerializeField] private AudioClip _unlockSound;
+        [SerializeField] private AudioClip _lockedJiggleSound;
 
         [Header("Animation Settings")]
         [Tooltip("Transform to rotate. If left unassigned, uses this GameObject's transform.")]
@@ -36,9 +52,41 @@ namespace V0.Interaction
         [Tooltip("Easing curve for closing.")]
         [SerializeField] private Ease _closeEase = Ease.InQuad;
 
-        public string InteractionPrompt => _isOpen ? _closePrompt : _openPrompt;
+        /// <summary>
+        /// Checks if the player holds the exact key needed for this specific door.
+        /// </summary>
+        public bool PlayerHasKeyForThisDoor()
+        {
+            // 1. If direct KeyPickup reference is assigned in inspector, check that!
+            if (_requiredKey != null)
+            {
+                return KeyPickup.HasKey(_requiredKey);
+            }
+
+            // 2. Otherwise check matching Key ID string
+            if (!string.IsNullOrEmpty(_requiredKeyId))
+            {
+                return KeyPickup.HasKey(_requiredKeyId);
+            }
+
+            // 3. Fallback: if locked with no specific key assigned, any key works
+            return KeyPickup.HasAnyKey;
+        }
+
+        public string InteractionPrompt
+        {
+            get
+            {
+                if (_isLocked)
+                {
+                    return PlayerHasKeyForThisDoor() ? _unlockPrompt : _lockedPrompt;
+                }
+                return _isOpen ? _closePrompt : _openPrompt;
+            }
+        }
 
         public bool IsOpen => _isOpen;
+        public bool IsLocked => _isLocked;
 
         private void Awake()
         {
@@ -50,12 +98,39 @@ namespace V0.Interaction
 
         public void Interact()
         {
-            _isOpen = !_isOpen;
-
             if (_doorTransform == null)
             {
                 _doorTransform = transform;
             }
+
+            if (_isLocked)
+            {
+                if (PlayerHasKeyForThisDoor())
+                {
+                    // Player has the specific key for this door: unlock!
+                    _isLocked = false;
+                    if (_unlockSound != null)
+                    {
+                        AudioSource.PlayClipAtPoint(_unlockSound, transform.position, 1.0f);
+                    }
+                    Debug.Log($"<color=green>[DoorInteractable]</color> Unlocked '{gameObject.name}' with required key!");
+                }
+                else
+                {
+                    // Door is locked: jiggle handle animation
+                    if (_lockedJiggleSound != null)
+                    {
+                        AudioSource.PlayClipAtPoint(_lockedJiggleSound, transform.position, 1.0f);
+                    }
+                    _doorTransform.DOKill();
+                    _doorTransform.DOShakeRotation(0.25f, new Vector3(0, 4f, 0), 10, 90, false);
+                    string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
+                    Debug.Log($"<color=yellow>[DoorInteractable]</color> '{gameObject.name}' is locked. Requires key: '{keyName}'");
+                    return;
+                }
+            }
+
+            _isOpen = !_isOpen;
 
             // Stop any running tween on this transform to smoothly handle rapid interactions
             _doorTransform.DOKill();
@@ -68,7 +143,7 @@ namespace V0.Interaction
 
             if (_isOpen)
             {
-                Debug.Log("PLayer opens the dooe");
+                Debug.Log("Player opens the door");
             }
             else
             {
