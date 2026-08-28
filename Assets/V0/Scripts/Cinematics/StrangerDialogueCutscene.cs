@@ -14,63 +14,72 @@ using UnityEngine.InputSystem;
 namespace V0.Cinematics
 {
     /// <summary>
-    /// Trigger-activated cinematic cutscene that showcases establishing shots of the house and map.
-    /// Supports Cinemachine Virtual Camera priority blending, dynamic camera dollies,
-    /// cinematic 21:9 letterbox bars, atmospheric subtitle cards, and skip functionality.
+    /// Triggered when the player reaches SecondTrigger in front of the chained room.
+    /// Supports a fully customizable list of cinematic shots and dialogue lines (just like Entry Trigger),
+    /// complete with camera switching (e.g. Cam_ChainedRoom, DoorShut_Cam), custom durations,
+    /// subtitle text, and the door slam & lock event.
     /// </summary>
     [RequireComponent(typeof(Collider))]
-    public class HouseFlyoverCutscene : MonoBehaviour
+    public class StrangerDialogueCutscene : MonoBehaviour
     {
         [System.Serializable]
-        public class CinematicShot
+        public class DialogueShot
         {
-            [Tooltip("Descriptive name for this shot (e.g. 'House Approach', 'Barn Overview', 'Upper Window')")]
+            [Tooltip("Descriptive name for this shot")]
             public string shotName = "Shot";
 
-            [Tooltip("The Cinemachine virtual camera for this shot")]
+            [Tooltip("Cinemachine virtual camera for this shot (e.g. Cam_ChainedRoom, DoorShut_Cam)")]
             public CinemachineCamera virtualCamera;
 
-            [Tooltip("How long this shot remains active (seconds)")]
-            public float duration = 4.0f;
+            [Tooltip("How long this shot and its subtitle remain active on screen (seconds)")]
+            public float duration = 5.0f;
 
-            [Tooltip("Optional subtitle text displayed during this shot")]
-            [TextArea(1, 3)]
+            [Tooltip("Subtitle dialogue text displayed during this shot")]
+            [TextArea(2, 4)]
             public string subtitleText = "";
+
+            [Tooltip("Color tint for the subtitle text")]
+            public Color textColor = new Color(1f, 0.88f, 0.6f);
+
+            [Tooltip("If true, triggers the front door auto-slam and lock during this shot")]
+            public bool triggerDoorSlam = false;
+
+            [Tooltip("Shake the camera for impact tremor")]
+            public bool shakeCamera = false;
         }
 
-        [Header("Cinematic Shots")]
-        [Tooltip("List of camera shots played in sequence")]
-        [SerializeField] private List<CinematicShot> _shots = new List<CinematicShot>();
+        [Header("Cinematic Shots & Dialogue")]
+        [Tooltip("List of shots and dialogue lines played in sequence with customizable durations and cameras")]
+        [SerializeField] private List<DialogueShot> _shots = new List<DialogueShot>();
+
+        [Header("Main Front Door Reference")]
+        [Tooltip("The main entrance door that slams shut and locks")]
+        [SerializeField] private DoorInteractable _mainFrontDoor;
 
         [Header("Cinemachine Player Camera")]
         [Tooltip("The player's first-person virtual camera (restored when cutscene ends)")]
         [SerializeField] private CinemachineVirtualCameraBase _playerFollowCamera;
+
+        [Header("Audio (Optional)")]
+        [Tooltip("Loud heavy slam audio played when the front door shuts")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _doorSlamAudio;
+
+        [Header("Timing & Blends")]
+        [Tooltip("Cinemachine transition blend duration (seconds)")]
+        [SerializeField] private float _cameraBlendDuration = 2.0f;
+
+        [Header("Cinematic UI References")]
+        [SerializeField] private CanvasGroup _letterboxCanvasGroup;
+        [SerializeField] private Text _subtitleText;
 
         [Header("Player Control References")]
         [SerializeField] private FirstPersonController _playerController;
         [SerializeField] private PlayerInteraction _playerInteraction;
         [SerializeField] private StarterAssetsInputs _playerInputs;
 
-        [Header("Cinematic UI / Letterbox")]
-        [Tooltip("CanvasGroup controlling the top and bottom cinematic black bars")]
-        [SerializeField] private CanvasGroup _letterboxCanvasGroup;
-
-        [Tooltip("Text component for displaying cinematic subtitles / location cards")]
-        [SerializeField] private Text _subtitleText;
-
-        [Header("Audio (Optional)")]
-        [Tooltip("Atmospheric drone / music stinger played during cutscene")]
-        [SerializeField] private AudioSource _audioSource;
-        [SerializeField] private AudioClip _cutsceneMusicOrAmbience;
-
-        [Header("Cinematic Blends & Timing")]
-        [Tooltip("Smooth blend duration between camera angles (seconds)")]
-        [SerializeField] private float _cameraBlendDuration = 2.5f;
-
-        [Tooltip("Blend style for transitions (EaseInOut is cinematic and smooth)")]
-        [SerializeField] private CinemachineBlendDefinition.Styles _blendStyle = CinemachineBlendDefinition.Styles.EaseInOut;
-
-        [Tooltip("Allow pressing Space, Escape, or E to skip cutscene")]
+        [Header("Settings")]
+        [Tooltip("Allow pressing Space, Escape, or E to skip")]
         [SerializeField] private bool _allowSkip = true;
 
         [Tooltip("Trigger only once")]
@@ -88,10 +97,7 @@ namespace V0.Cinematics
         private void Reset()
         {
             Collider col = GetComponent<Collider>();
-            if (col != null)
-            {
-                col.isTrigger = true;
-            }
+            if (col != null) col.isTrigger = true;
         }
 
         private void Awake()
@@ -103,7 +109,6 @@ namespace V0.Cinematics
         {
             if (_hasTriggered && _playOnce) return;
 
-            // Check if player entered the trigger
             if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null || other.GetComponentInParent<FirstPersonController>() != null)
             {
                 StartCutscene();
@@ -117,22 +122,19 @@ namespace V0.Cinematics
 #if ENABLE_INPUT_SYSTEM
                 if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.eKey.wasPressedThisFrame))
                 {
-                    Debug.Log("<color=yellow>[HouseFlyover]</color> Cutscene skipped by player.");
+                    Debug.Log("<color=yellow>[StrangerDialogueCutscene]</color> Skipped by player.");
                     SkipCutscene();
                 }
 #else
                 if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.E))
                 {
-                    Debug.Log("<color=yellow>[HouseFlyover]</color> Cutscene skipped by player.");
+                    Debug.Log("<color=yellow>[StrangerDialogueCutscene]</color> Skipped by player.");
                     SkipCutscene();
                 }
 #endif
             }
         }
 
-        /// <summary>
-        /// Starts the cinematic flyover cutscene sequence.
-        /// </summary>
         public void StartCutscene()
         {
             if (_isPlaying) return;
@@ -140,9 +142,9 @@ namespace V0.Cinematics
             _isPlaying = true;
 
             OnCutsceneStarted?.Invoke();
-            Debug.Log("<color=cyan>[HouseFlyover]</color> Starting House & Map Cinematic Cutscene!");
+            Debug.Log("<color=cyan>[StrangerDialogueCutscene]</color> Starting Stranger Dialogue Cutscene!");
 
-            // 1. Configure CinemachineBrain for slow, majestic cinematic blending
+            // Configure Cinemachine Brain blend
             Camera mainCam = Camera.main;
             if (mainCam != null)
             {
@@ -150,80 +152,91 @@ namespace V0.Cinematics
                 if (_cachedBrain != null)
                 {
                     _originalBlend = _cachedBrain.DefaultBlend;
-                    _cachedBrain.DefaultBlend = new CinemachineBlendDefinition(_blendStyle, _cameraBlendDuration);
+                    _cachedBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, _cameraBlendDuration);
                 }
             }
 
-            // 2. Freeze player controls
+            // Freeze player movement & camera
             SetPlayerControlsActive(false);
 
-            // 3. Animate Letterbox Bars In smoothly
+            // Animate letterbox black bars in
             ShowLetterbox(true);
 
-            // 4. Play cutscene music / ambience
-            if (_audioSource != null && _cutsceneMusicOrAmbience != null)
-            {
-                _audioSource.clip = _cutsceneMusicOrAmbience;
-                _audioSource.Play();
-            }
-
-            // 5. Run shot sequence coroutine
+            // Run cutscene sequence
             if (_cutsceneCoroutine != null) StopCoroutine(_cutsceneCoroutine);
-            _cutsceneCoroutine = StartCoroutine(PlayShotsRoutine());
+            _cutsceneCoroutine = StartCoroutine(CutsceneRoutine());
         }
 
-        private IEnumerator PlayShotsRoutine()
+        private IEnumerator CutsceneRoutine()
         {
             // Reset all virtual camera priorities
             ResetAllCameraPriorities();
 
-            // Play each shot in order
             for (int i = 0; i < _shots.Count; i++)
             {
-                CinematicShot shot = _shots[i];
+                DialogueShot shot = _shots[i];
                 if (shot == null) continue;
 
-                Debug.Log($"<color=cyan>[HouseFlyover]</color> Playing shot {i + 1}/{_shots.Count}: '{shot.shotName}' ({shot.duration}s)");
+                Debug.Log($"<color=cyan>[StrangerDialogueCutscene]</color> Playing shot {i + 1}/{_shots.Count}: '{shot.shotName}' ({shot.duration}s)");
 
-                // Activate this virtual camera with highest priority
+                // Activate this virtual camera
                 if (shot.virtualCamera != null)
                 {
-                    shot.virtualCamera.Priority.Value = 30 + i;
+                    shot.virtualCamera.Priority.Value = 50 + i;
                 }
 
-                // Smoothly display subtitle text
+                // If this shot triggers the door slam event
+                if (shot.triggerDoorSlam)
+                {
+                    Debug.Log("<color=red>[StrangerDialogueCutscene]</color> Door Slam Triggered!");
+                    if (_audioSource != null && _doorSlamAudio != null)
+                    {
+                        _audioSource.clip = _doorSlamAudio;
+                        _audioSource.Play();
+                    }
+
+                    if (_mainFrontDoor != null)
+                    {
+                        _mainFrontDoor.ForceSlamAndLock(_doorSlamAudio);
+                    }
+                }
+
+                // Camera tremor if enabled
+                if (shot.shakeCamera && shot.virtualCamera != null)
+                {
+                    shot.virtualCamera.transform.DOShakePosition(1.0f, strength: new Vector3(0.06f, 0.05f, 0.06f), vibrato: 14);
+                }
+
+                // Display subtitle text
                 if (_subtitleText != null)
                 {
                     _subtitleText.DOKill();
                     if (!string.IsNullOrEmpty(shot.subtitleText))
                     {
                         _subtitleText.text = shot.subtitleText;
-                        _subtitleText.color = new Color(_subtitleText.color.r, _subtitleText.color.g, _subtitleText.color.b, 0f);
-                        _subtitleText.DOFade(1f, 0.8f).SetDelay(0.3f);
+                        _subtitleText.color = new Color(shot.textColor.r, shot.textColor.g, shot.textColor.b, 0f);
+                        _subtitleText.DOFade(1f, 0.6f).SetDelay(0.2f);
                     }
                     else
                     {
-                        _subtitleText.DOFade(0f, 0.4f);
+                        _subtitleText.DOFade(0f, 0.3f);
                     }
                 }
 
-                // Wait for the shot duration (allowing slow cinematic camera glide)
-                yield return new WaitForSeconds(Mathf.Max(shot.duration, _cameraBlendDuration + 1.0f));
+                // Wait for the full specified duration
+                yield return new WaitForSeconds(Mathf.Max(shot.duration, 1.0f));
 
-                // Fade out current subtitle before next shot
+                // Fade out text before next shot
                 if (_subtitleText != null && !string.IsNullOrEmpty(shot.subtitleText))
                 {
-                    _subtitleText.DOFade(0f, 0.5f);
+                    _subtitleText.DOFade(0f, 0.4f);
                 }
             }
 
-            // Sequence complete -> restore to player camera
+            // Cutscene sequence complete
             EndCutscene();
         }
 
-        /// <summary>
-        /// Restores player control and returns camera back to first person.
-        /// </summary>
         public void EndCutscene()
         {
             if (!_isPlaying) return;
@@ -235,14 +248,21 @@ namespace V0.Cinematics
                 _cutsceneCoroutine = null;
             }
 
-            // Reset camera priorities so PlayerFollowCamera takes over
+            // Ensure front door is locked even if skipped early
+            if (_mainFrontDoor != null && !_mainFrontDoor.IsLocked)
+            {
+                _mainFrontDoor.ForceSlamAndLock();
+            }
+
+            // Reset camera priorities so player camera smoothly takes back control
             ResetAllCameraPriorities();
+
             if (_playerFollowCamera != null)
             {
                 _playerFollowCamera.Priority.Value = 10;
             }
 
-            // Fade out subtitles and letterbox bars
+            // Fade out subtitles and letterbox
             if (_subtitleText != null)
             {
                 _subtitleText.DOKill();
@@ -250,13 +270,12 @@ namespace V0.Cinematics
             }
             ShowLetterbox(false);
 
-            // Re-enable player movement & interaction
+            // Restore player controls
             SetPlayerControlsActive(true);
 
             OnCutsceneCompleted?.Invoke();
-            Debug.Log("<color=green>[HouseFlyover]</color> Cinematic Cutscene completed! Player control restored.");
+            Debug.Log("<color=green>[StrangerDialogueCutscene]</color> Cutscene finished! Front door is locked. Player in control.");
 
-            // Disable trigger collider if play once
             if (_playOnce)
             {
                 Collider col = GetComponent<Collider>();
@@ -271,7 +290,7 @@ namespace V0.Cinematics
 
         private void ResetAllCameraPriorities()
         {
-            foreach (CinematicShot shot in _shots)
+            foreach (DialogueShot shot in _shots)
             {
                 if (shot != null && shot.virtualCamera != null)
                 {
@@ -296,16 +315,8 @@ namespace V0.Cinematics
                 AutoFindReferences();
             }
 
-            if (_playerController != null)
-            {
-                _playerController.enabled = active;
-            }
-
-            if (_playerInteraction != null)
-            {
-                _playerInteraction.enabled = active;
-            }
-
+            if (_playerController != null) _playerController.enabled = active;
+            if (_playerInteraction != null) _playerInteraction.enabled = active;
             if (_playerInputs != null)
             {
                 _playerInputs.cursorLocked = true;
@@ -344,13 +355,29 @@ namespace V0.Cinematics
                 }
             }
 
+            if (_mainFrontDoor == null)
+            {
+                GameObject frontDoorObj = GameObject.Find("SM_Door_Front_01");
+                if (frontDoorObj != null)
+                {
+                    _mainFrontDoor = frontDoorObj.GetComponent<DoorInteractable>();
+                    if (_mainFrontDoor == null) _mainFrontDoor = frontDoorObj.GetComponentInParent<DoorInteractable>();
+                }
+            }
+
             if (_letterboxCanvasGroup == null)
             {
                 GameObject lbObj = GameObject.Find("CinematicLetterboxCanvas");
                 if (lbObj != null)
                 {
                     _letterboxCanvasGroup = lbObj.GetComponent<CanvasGroup>();
+                    _subtitleText = lbObj.GetComponentInChildren<Text>();
                 }
+            }
+
+            if (_audioSource == null)
+            {
+                _audioSource = GetComponent<AudioSource>();
             }
         }
 

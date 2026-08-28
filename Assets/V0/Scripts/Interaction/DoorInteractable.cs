@@ -151,6 +151,30 @@ namespace V0.Interaction
             }
         }
 
+        /// <summary>
+        /// Forces the door to slam shut and lock itself immediately (e.g. triggered by cutscenes / horror events).
+        /// </summary>
+        public void ForceSlamAndLock(AudioClip slamSound = null, float duration = 0.25f)
+        {
+            if (_doorTransform == null) _doorTransform = transform;
+
+            _isOpen = false;
+            _isLocked = true;
+
+            _doorTransform.DOKill();
+            _doorTransform.DOLocalRotate(_closedRotation, duration).SetEase(Ease.InQuad).OnComplete(() =>
+            {
+                // Impact shake
+                _doorTransform.DOShakePosition(0.25f, new Vector3(0.03f, 0.02f, 0.03f), 15);
+            });
+
+            if (slamSound != null)
+            {
+                AudioSource.PlayClipAtPoint(slamSound, transform.position, 1.0f);
+            }
+            Debug.Log($"<color=red>[DoorInteractable]</color> '{gameObject.name}' SLAMMED SHUT and LOCKED!");
+        }
+
         private void OnDestroy()
         {
             if (_doorTransform != null)
