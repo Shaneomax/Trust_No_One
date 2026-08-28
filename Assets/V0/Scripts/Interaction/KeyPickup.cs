@@ -144,7 +144,7 @@ namespace V0.Interaction
             // Smoothly move towards player & scale down slightly (same animation as Flashlight)
             Sequence pickupSeq = DOTween.Sequence();
             pickupSeq.Append(transform.DOMove(targetPosition, _pickupDuration).SetEase(_moveEase));
-            pickupSeq.Join(transform.DOScale(transform.localScale * 0.4f, _pickupDuration).SetEase(_moveEase));
+            pickupSeq.Join(transform.DOScale(transform.localScale * 0.8f, _pickupDuration).SetEase(_moveEase));
             pickupSeq.OnComplete(() =>
             {
                 // Register this specific key as collected

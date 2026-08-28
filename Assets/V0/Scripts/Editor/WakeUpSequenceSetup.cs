@@ -115,6 +115,31 @@ namespace V0.Editor
                 }
             }
 
+            // Subtitle Text inside WakeUpCanvas
+            Text subtitleText = canvasObj.GetComponentInChildren<Text>();
+            if (subtitleText == null)
+            {
+                GameObject subObj = new GameObject("WakeUpSubtitleText");
+                subObj.transform.SetParent(canvasObj.transform, false);
+                subtitleText = subObj.AddComponent<Text>();
+                subtitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                subtitleText.fontSize = 26;
+                subtitleText.fontStyle = FontStyle.Italic;
+                subtitleText.alignment = TextAnchor.MiddleCenter;
+                subtitleText.color = new Color(0.92f, 0.92f, 0.88f, 0f);
+                subtitleText.raycastTarget = false;
+
+                // Subtle shadow for legibility
+                Shadow shadow = subObj.AddComponent<Shadow>();
+                shadow.effectColor = new Color(0f, 0f, 0f, 0.85f);
+                shadow.effectDistance = new Vector2(2f, -2f);
+
+                RectTransform subRT = subtitleText.rectTransform;
+                subRT.anchorMin = new Vector2(0.1f, 0.08f);
+                subRT.anchorMax = new Vector2(0.9f, 0.18f);
+                subRT.sizeDelta = Vector2.zero;
+            }
+
             // 6. Create or Locate WakeUpSequenceController
             GameObject controllerObj = GameObject.Find("WakeUpSequenceController");
             WakeUpSequenceController controller = null;
@@ -141,6 +166,7 @@ namespace V0.Editor
             so.FindProperty("_playerInteraction").objectReferenceValue = player.GetComponent<PlayerInteraction>();
             so.FindProperty("_playerInputs").objectReferenceValue = player.GetComponent<StarterAssetsInputs>();
             so.FindProperty("_blackoutCanvasGroup").objectReferenceValue = canvasGroup;
+            so.FindProperty("_subtitleText").objectReferenceValue = subtitleText;
             so.ApplyModifiedProperties();
 
             Undo.CollapseUndoOperations(undoGroup);

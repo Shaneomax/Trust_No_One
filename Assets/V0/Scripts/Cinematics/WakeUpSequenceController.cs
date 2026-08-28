@@ -34,6 +34,22 @@ namespace V0.Cinematics
         [Tooltip("CanvasGroup controlling the black screen overlay for eye blinking")]
         [SerializeField] private CanvasGroup _blackoutCanvasGroup;
 
+        [Header("Cinematic Subtitles / Thoughts (Preset in Inspector)")]
+        [Tooltip("UI Text element to display waking thoughts/subtitles")]
+        [SerializeField] private UnityEngine.UI.Text _subtitleText;
+
+        [Tooltip("Thought when eyes first flutter open")]
+        [SerializeField] private string _line1FirstBlink = "...Ugh... my head hurts...";
+
+        [Tooltip("Thought when head drops back into dirt after failed lift")]
+        [SerializeField] private string _line2FailedLift = "...Where... where am I...?";
+
+        [Tooltip("Thought when pushed up onto knees")]
+        [SerializeField] private string _line3Kneeling = "...My car crashed... I blacked out...";
+
+        [Tooltip("Thought when standing up on feet")]
+        [SerializeField] private string _line4Standing = "...There's a house up ahead. I need to find help.";
+
         [Header("Eyelid Blink Settings (DOTween Smooth Fades)")]
         [Tooltip("Seconds the screen remains pitch black before first eyelid flutter")]
         [SerializeField] private float _initialBlackoutHold = 1.0f;
@@ -239,6 +255,9 @@ namespace V0.Cinematics
                 _audioSource.PlayOneShot(_groggyBreathOrGroan);
             }
 
+            // Subtitle Line 1: First waking thought
+            ShowSubtitle(_line1FirstBlink, 2.5f);
+
             yield return new WaitForSeconds(_blinkPauseDuration);
 
             // 5. Second Eyelid Flutter (eyes open wider, blur clears)
@@ -288,6 +307,10 @@ namespace V0.Cinematics
                     {
                         _blackoutCanvasGroup.DOFade(0.55f, 0.15f).OnComplete(() => _blackoutCanvasGroup.DOFade(0.12f, 0.3f));
                     }
+
+                    // Subtitle Line 2: Failed lift confusion
+                    ShowSubtitle(_line2FailedLift, 2.2f);
+
                     yield return new WaitForSeconds(0.6f);
                 }
 
@@ -302,13 +325,17 @@ namespace V0.Cinematics
                 camT.DOMove(kneelPos, 1.35f).SetEase(Ease.OutQuad);
                 camT.DORotate(kneelRot, 1.35f).SetEase(Ease.OutQuad);
                 camT.DOShakeRotation(1.35f, strength: new Vector3(2.5f, 3f, 4f), vibrato: 9, randomness: 60);
+
+                // Subtitle Line 3: Realizing what happened
+                ShowSubtitle(_line3Kneeling, 3.5f);
+
                 yield return new WaitForSeconds(1.35f);
 
                 // Pause on knees: Player heaves a breath, head sways unsteadily
-                camT.DORotate(new Vector3(8f, standingRot.eulerAngles.y + 3f, -3f), 0.5f).SetEase(Ease.InOutSine);
-                yield return new WaitForSeconds(0.55f);
-                camT.DORotate(kneelRot, 0.45f).SetEase(Ease.InOutSine);
-                yield return new WaitForSeconds(0.45f);
+                camT.DORotate(new Vector3(8f, standingRot.eulerAngles.y + 3f, -3f), 0.7f).SetEase(Ease.InOutSine);
+                yield return new WaitForSeconds(0.75f);
+                camT.DORotate(kneelRot, 0.65f).SetEase(Ease.InOutSine);
+                yield return new WaitForSeconds(1.2f); // Generous pause to read Line 3
 
                 // -------------------------------------------------------------
                 // STAGE C: Hauling Up to Feet & Staggering Forward
@@ -316,31 +343,35 @@ namespace V0.Cinematics
                 // First push: rising from knees
                 Vector3 midRisePos = playerT.position + Vector3.up * 1.15f + playerT.forward * 0.12f;
                 Vector3 midRiseRot = new Vector3(-2f, standingRot.eulerAngles.y + 2f, 4f);
-                camT.DOMove(midRisePos, 0.55f).SetEase(Ease.OutQuad);
-                camT.DORotate(midRiseRot, 0.55f).SetEase(Ease.OutQuad);
-                yield return new WaitForSeconds(0.55f);
+                camT.DOMove(midRisePos, 0.65f).SetEase(Ease.OutQuad);
+                camT.DORotate(midRiseRot, 0.65f).SetEase(Ease.OutQuad);
+                yield return new WaitForSeconds(0.65f);
 
                 // Knee buckles slightly / vertigo dip
                 Vector3 dipPos = playerT.position + Vector3.up * 1.08f + playerT.forward * 0.10f;
                 Vector3 dipRot = new Vector3(2f, standingRot.eulerAngles.y - 2f, -2.5f);
-                camT.DOMove(dipPos, 0.25f).SetEase(Ease.InOutQuad);
-                camT.DORotate(dipRot, 0.25f).SetEase(Ease.InOutQuad);
-                yield return new WaitForSeconds(0.25f);
+                camT.DOMove(dipPos, 0.35f).SetEase(Ease.InOutQuad);
+                camT.DORotate(dipRot, 0.35f).SetEase(Ease.InOutQuad);
+                yield return new WaitForSeconds(0.35f);
 
                 // Final drive up to full standing posture
-                camT.DOMove(standingPos, 0.8f).SetEase(Ease.OutQuad);
-                camT.DORotate(standingRot.eulerAngles, 0.8f).SetEase(Ease.OutQuad);
+                camT.DOMove(standingPos, 0.9f).SetEase(Ease.OutQuad);
+                camT.DORotate(standingRot.eulerAngles, 0.9f).SetEase(Ease.OutQuad);
 
                 // Smoothly clear remaining darkness with DOTween
                 if (_blackoutCanvasGroup != null)
                 {
-                    _blackoutCanvasGroup.DOFade(0f, 1.0f).SetEase(Ease.InOutSine);
+                    _blackoutCanvasGroup.DOFade(0f, 1.2f).SetEase(Ease.InOutSine);
                 }
-                yield return new WaitForSeconds(0.8f);
+                yield return new WaitForSeconds(0.6f);
 
                 // Final steadying head shake as balance is regained
-                camT.DOShakeRotation(0.35f, strength: new Vector3(1f, 1.8f, 1.2f), vibrato: 6);
+                camT.DOShakeRotation(0.4f, strength: new Vector3(1f, 1.8f, 1.2f), vibrato: 6);
                 yield return new WaitForSeconds(0.4f);
+
+                // Subtitle Line 4: Spotted the house in the distance
+                ShowSubtitle(_line4Standing, 4.0f);
+                yield return new WaitForSeconds(3.8f); // Ample time to read Line 4 and look ahead
             }
 
             // 7. Sequence complete: Seamless handoff to gameplay!
@@ -388,6 +419,20 @@ namespace V0.Cinematics
 
             OnSequenceCompleted?.Invoke();
             Debug.Log("<color=green>[WakeUpSequence]</color> Player is awake and in control!");
+        }
+
+        private void ShowSubtitle(string text, float duration)
+        {
+            if (_subtitleText == null || string.IsNullOrEmpty(text)) return;
+
+            _subtitleText.DOKill();
+            _subtitleText.text = text;
+            _subtitleText.color = new Color(_subtitleText.color.r, _subtitleText.color.g, _subtitleText.color.b, 0f);
+
+            Sequence subSeq = DOTween.Sequence();
+            subSeq.Append(_subtitleText.DOFade(1f, 0.5f).SetEase(Ease.OutQuad));
+            subSeq.AppendInterval(duration);
+            subSeq.Append(_subtitleText.DOFade(0f, 0.7f).SetEase(Ease.InQuad));
         }
 
         private void SkipSequence()
