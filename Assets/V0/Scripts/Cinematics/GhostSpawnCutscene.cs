@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Cinemachine;
@@ -13,38 +14,63 @@ using UnityEngine.InputSystem;
 namespace V0.Cinematics
 {
     /// <summary>
-    /// Triggered when the player reaches the front porch (FirstTrigger).
-    /// Focuses a Cinemachine camera on the chained room door, plays the trapped man's
-    /// desperate screams for help with door impact shaking, displays dialogue subtitles,
-    /// and smoothly returns control to the player.
+    /// Triggered when the player steps on GhostTrigger (outside bedroom door after picking up bedroom key).
+    /// Focuses camera downstairs on the foggy grand entrance where the ghost awakens and becomes active.
+    /// Stranger warns the player not to get caught and teaches stealth mechanics (crouching, avoiding sprinting).
     /// </summary>
     [RequireComponent(typeof(Collider))]
-    public class ChainedRoomCutscene : MonoBehaviour
+    public class GhostSpawnCutscene : MonoBehaviour
     {
-        [Header("Cinemachine Cameras")]
-        [Tooltip("The virtual camera positioned in front of the chained room door")]
-        [SerializeField] private CinemachineCamera _chainedRoomCamera;
+        [System.Serializable]
+        public class DialogueShot
+        {
+            [Tooltip("Descriptive name for this shot")]
+            public string shotName = "Shot";
 
+            [Tooltip("Cinemachine virtual camera for this shot (e.g. Cam_GhostGrandEntrance)")]
+            public CinemachineCamera virtualCamera;
+
+            [Tooltip("How long this shot and its subtitle remain active on screen (seconds)")]
+            public float duration = 5.0f;
+
+            [Tooltip("Subtitle dialogue text displayed during this shot")]
+            [TextArea(2, 4)]
+            public string subtitleText = "";
+
+            [Tooltip("Color tint for the subtitle text")]
+            public Color textColor = new Color(1f, 0.88f, 0.6f);
+
+            [Tooltip("If true, activates the Ghost GameObject during this shot")]
+            public bool activateGhost = false;
+
+            [Tooltip("Shake the camera for horror impact tremor")]
+            public bool shakeCamera = false;
+        }
+
+        [Header("Cinematic Shots & Dialogue")]
+        [Tooltip("List of shots and dialogue lines played in sequence with customizable durations and cameras")]
+        [SerializeField] private List<DialogueShot> _shots = new List<DialogueShot>();
+
+        [Header("Ghost Reference")]
+        [Tooltip("The Ghost GameObject to set active during the cutscene")]
+        [SerializeField] private GameObject _ghostGameObject;
+
+        [Header("Fog System (Grand Entrance)")]
+        [Tooltip("ParticleSystem for visible fog surrounding the ghost at the grand entrance")]
+        [SerializeField] private ParticleSystem _ghostSpawnFog;
+
+        [Header("Cinemachine Player Camera")]
         [Tooltip("The player's first-person virtual camera (restored when cutscene ends)")]
         [SerializeField] private CinemachineVirtualCameraBase _playerFollowCamera;
 
-        [Header("Dialogue Subtitles (Preset in Inspector)")]
-        [Tooltip("Line 1: The trapped man screaming from behind the chained door")]
-        [TextArea(1, 3)]
-        [SerializeField] private string _trappedManDialogue = "[Muffled Voice]: \"PLEASE! SOMEBODY HELP ME! I'M LOCKED IN HERE!\"";
-
-        [Tooltip("Line 2: Player's reaction / thought")]
-        [TextArea(1, 3)]
-        [SerializeField] private string _playerReactionDialogue = "[Player]: \"Someone's trapped in that room... I need to check it.\"";
+        [Header("Audio (Optional)")]
+        [Tooltip("Eerie stinger / ghost screech audio played during ghost spawn")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _ghostSpawnStinger;
 
         [Header("Timing & Blends")]
         [Tooltip("Cinemachine transition blend duration (seconds)")]
         [SerializeField] private float _cameraBlendDuration = 2.5f;
-
-        [Header("Audio (Optional)")]
-        [Tooltip("Audio clip for the scream and door banging")]
-        [SerializeField] private AudioSource _audioSource;
-        [SerializeField] private AudioClip _screamingBangingAudio;
 
         [Header("Cinematic UI References")]
         [SerializeField] private CanvasGroup _letterboxCanvasGroup;
@@ -67,6 +93,8 @@ namespace V0.Cinematics
         private Coroutine _cutsceneCoroutine;
         private CinemachineBlendDefinition _originalBlend;
         private CinemachineBrain _cachedBrain;
+        private TrustNoOne.AI.EnemyAI _ghostEnemyAI;
+        private Animator _ghostAnimator;
 
         public event Action OnCutsceneStarted;
         public event Action OnCutsceneCompleted;
@@ -99,13 +127,13 @@ namespace V0.Cinematics
 #if ENABLE_INPUT_SYSTEM
                 if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.eKey.wasPressedThisFrame))
                 {
-                    Debug.Log("<color=yellow>[ChainedRoomCutscene]</color> Skipped by player.");
+                    Debug.Log("<color=yellow>[GhostSpawnCutscene]</color> Skipped by player.");
                     SkipCutscene();
                 }
 #else
                 if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.E))
                 {
-                    Debug.Log("<color=yellow>[ChainedRoomCutscene]</color> Skipped by player.");
+                    Debug.Log("<color=yellow>[GhostSpawnCutscene]</color> Skipped by player.");
                     SkipCutscene();
                 }
 #endif
@@ -119,9 +147,9 @@ namespace V0.Cinematics
             _isPlaying = true;
 
             OnCutsceneStarted?.Invoke();
-            Debug.Log("<color=cyan>[ChainedRoomCutscene]</color> Starting Chained Room Cutscene!");
+            Debug.Log("<color=cyan>[GhostSpawnCutscene]</color> Starting Ghost Spawn Cutscene at Grand Entrance!");
 
-            // Configure Cinemachine Brain blend for slow, cinematic glide
+            // Configure Cinemachine Brain blend
             Camera mainCam = Camera.main;
             if (mainCam != null)
             {
@@ -146,47 +174,82 @@ namespace V0.Cinematics
 
         private IEnumerator CutsceneRoutine()
         {
-            // Activate Chained Room camera with high priority (100) so Cinemachine smoothly transitions
-            if (_chainedRoomCamera != null)
+            ResetAllCameraPriorities();
+
+            for (int i = 0; i < _shots.Count; i++)
             {
-                _chainedRoomCamera.Priority.Value = 100;
+                DialogueShot shot = _shots[i];
+                if (shot == null) continue;
+
+                Debug.Log($"<color=cyan>[GhostSpawnCutscene]</color> Playing shot {i + 1}/{_shots.Count}: '{shot.shotName}' ({shot.duration}s)");
+
+                // Activate this virtual camera
+                if (shot.virtualCamera != null)
+                {
+                    shot.virtualCamera.Priority.Value = 60 + i;
+                }
+
+                // If this shot activates the Ghost
+                if (shot.activateGhost && _ghostGameObject != null)
+                {
+                    _ghostGameObject.SetActive(true);
+
+                    // Ensure Ghost is in Idle animation during cutscene
+                    if (_ghostEnemyAI == null) _ghostEnemyAI = _ghostGameObject.GetComponent<TrustNoOne.AI.EnemyAI>();
+                    if (_ghostEnemyAI != null) _ghostEnemyAI.SetCutsceneMode(true);
+
+                    if (_ghostAnimator == null) _ghostAnimator = _ghostGameObject.GetComponentInChildren<Animator>();
+                    if (_ghostAnimator != null) _ghostAnimator.SetFloat("Speed", 0f);
+
+                    // Start visible fog around ghost
+                    if (_ghostSpawnFog != null)
+                    {
+                        _ghostSpawnFog.gameObject.SetActive(true);
+                        _ghostSpawnFog.Play();
+                    }
+
+                    Debug.Log("<color=red>[GhostSpawnCutscene]</color> Ghost has materialized in the Grand Entrance fog (Idle animation active)!");
+
+                    if (_audioSource != null && _ghostSpawnStinger != null)
+                    {
+                        _audioSource.clip = _ghostSpawnStinger;
+                        _audioSource.Play();
+                    }
+                }
+
+                // Camera tremor if enabled
+                if (shot.shakeCamera && shot.virtualCamera != null)
+                {
+                    shot.virtualCamera.transform.DOShakePosition(1.2f, strength: new Vector3(0.06f, 0.05f, 0.06f), vibrato: 12);
+                }
+
+                // Display subtitle text
+                if (_subtitleText != null)
+                {
+                    _subtitleText.DOKill();
+                    if (!string.IsNullOrEmpty(shot.subtitleText))
+                    {
+                        _subtitleText.text = shot.subtitleText;
+                        _subtitleText.color = new Color(shot.textColor.r, shot.textColor.g, shot.textColor.b, 0f);
+                        _subtitleText.DOFade(1f, 0.6f).SetDelay(0.2f);
+                    }
+                    else
+                    {
+                        _subtitleText.DOFade(0f, 0.3f);
+                    }
+                }
+
+                // Wait for the full specified duration
+                yield return new WaitForSeconds(Mathf.Max(shot.duration, 1.0f));
+
+                // Fade out text before next shot
+                if (_subtitleText != null && !string.IsNullOrEmpty(shot.subtitleText))
+                {
+                    _subtitleText.DOFade(0f, 0.4f);
+                }
             }
 
-            // Play scream / door impact audio
-            if (_audioSource != null && _screamingBangingAudio != null)
-            {
-                _audioSource.clip = _screamingBangingAudio;
-                _audioSource.Play();
-            }
-
-            // Subtitle Line 1: The Trapped Man Screaming
-            if (_subtitleText != null)
-            {
-                _subtitleText.DOKill();
-                _subtitleText.text = _trappedManDialogue;
-                _subtitleText.color = new Color(1f, 0.4f, 0.4f, 0f); // Tense red-white tint
-                _subtitleText.DOFade(1f, 0.6f).SetDelay(0.4f);
-            }
-
-            // Door banging camera tremor
-            if (_chainedRoomCamera != null)
-            {
-                _chainedRoomCamera.transform.DOShakePosition(1.5f, strength: new Vector3(0.04f, 0.03f, 0.04f), vibrato: 10).SetDelay(0.6f);
-            }
-
-            yield return new WaitForSeconds(3.5f);
-
-            // Subtitle Line 2: Player's Thought / Reaction
-            if (_subtitleText != null)
-            {
-                _subtitleText.DOKill();
-                _subtitleText.text = _playerReactionDialogue;
-                _subtitleText.color = new Color(0.9f, 0.9f, 0.85f, 0f); // Soft white tint
-                _subtitleText.DOFade(1f, 0.5f);
-            }
-
-            yield return new WaitForSeconds(3.2f);
-
+            // Cutscene sequence complete
             EndCutscene();
         }
 
@@ -201,11 +264,23 @@ namespace V0.Cinematics
                 _cutsceneCoroutine = null;
             }
 
-            // Reset camera priorities so player camera smoothly takes back control
-            if (_chainedRoomCamera != null)
+            // Ensure Ghost is active and resume hunting mode
+            if (_ghostGameObject != null)
             {
-                _chainedRoomCamera.Priority.Value = 0;
+                if (!_ghostGameObject.activeSelf) _ghostGameObject.SetActive(true);
+
+                if (_ghostEnemyAI == null) _ghostEnemyAI = _ghostGameObject.GetComponent<TrustNoOne.AI.EnemyAI>();
+                if (_ghostEnemyAI != null) _ghostEnemyAI.SetCutsceneMode(false);
             }
+
+            // Fog naturally stops emitting and dissipates
+            if (_ghostSpawnFog != null)
+            {
+                _ghostSpawnFog.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+
+            // Reset camera priorities so player camera smoothly takes back control
+            ResetAllCameraPriorities();
 
             if (_playerFollowCamera != null)
             {
@@ -224,7 +299,7 @@ namespace V0.Cinematics
             SetPlayerControlsActive(true);
 
             OnCutsceneCompleted?.Invoke();
-            Debug.Log("<color=green>[ChainedRoomCutscene]</color> Cutscene finished! Player in control.");
+            Debug.Log("<color=green>[GhostSpawnCutscene]</color> Cutscene completed! Ghost is now hunting. Player in control.");
 
             if (_playOnce)
             {
@@ -236,6 +311,17 @@ namespace V0.Cinematics
         public void SkipCutscene()
         {
             EndCutscene();
+        }
+
+        private void ResetAllCameraPriorities()
+        {
+            foreach (DialogueShot shot in _shots)
+            {
+                if (shot != null && shot.virtualCamera != null)
+                {
+                    shot.virtualCamera.Priority.Value = 0;
+                }
+            }
         }
 
         private void ShowLetterbox(bool show)
@@ -292,6 +378,11 @@ namespace V0.Cinematics
                 {
                     _playerFollowCamera = followCamObj.GetComponent<CinemachineVirtualCameraBase>();
                 }
+            }
+
+            if (_ghostGameObject == null)
+            {
+                _ghostGameObject = GameObject.Find("Ghost");
             }
 
             if (_letterboxCanvasGroup == null)

@@ -278,6 +278,34 @@ namespace TrustNoOne.AI
             _trackedDoors.Add(tracked);
         }
 
+        /// <summary>
+        /// Freezes enemy AI during cutscenes so the ghost stands in place playing its idle animation.
+        /// </summary>
+        public void SetCutsceneMode(bool inCutscene)
+        {
+            if (inCutscene)
+            {
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                    _agent.velocity = Vector3.zero;
+                }
+                if (_animator != null)
+                {
+                    _animator.SetFloat(SpeedHash, 0f);
+                }
+                enabled = false;
+            }
+            else
+            {
+                enabled = true;
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = false;
+                }
+            }
+        }
+
         private void CacheRenderers()
         {
             GetComponentsInChildren(true, _renderers);

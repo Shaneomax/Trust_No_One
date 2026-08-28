@@ -2294,6 +2294,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -2990,12 +3006,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::V0.Interaction.DoorInteractable
   _openPrompt: Open Door
   _closePrompt: Close Door
-  _lockedPrompt: Locked (Need Key)
-  _unlockPrompt: Unlock Door
+  _lockedPrompt: Stuck (Need Crowbar)
+  _unlockPrompt: Pry Open Door
   _isOpen: 0
   _isLocked: 1
   _requiredKey: {fileID: 1988524792}
   _requiredKeyId: BedRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Ah, damn... that bedroom door is jammed shut!
+      You''ll need a crowbar to force it open!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5
+  - text: '[Stranger Behind Door]: "I know there''s a crowbar somewhere downstairs,
+      but I can''t remember which room... You''ll have to search for it!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "A crowbar downstairs... got it. I need to search the rooms
+      on the ground floor."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 4
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -4371,6 +4403,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -5748,6 +5796,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -29066,6 +29130,167 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1001 &33304634
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1865012283}
+    m_Modifications:
+    - target: {fileID: 1030973328, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Name
+      value: SM_Lamp_Wall_01 (13)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973328, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_RootOrder
+      value: 1275
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 7.378
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.019
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.235
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Range
+      value: 2.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Color.b
+      value: 0.8627451
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9490196
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Intensity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_Bias
+      value: 0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_ColorTemperature
+      value: 3200
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_Strength
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_NearPlane
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_UseColorTemperature
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1801211218295528279, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_NormalBias
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Range
+      value: 2.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Color.b
+      value: 0.8627451
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Color.g
+      value: 0.9490196
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Intensity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_Bias
+      value: 0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_ColorTemperature
+      value: 3200
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_Strength
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_NearPlane
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_UseColorTemperature
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2107991197728192663, guid: abc00000000008672994418595862076, type: 3}
+      propertyPath: m_Shadows.m_NormalBias
+      value: 0.15
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: abc00000000008672994418595862076, type: 3}
 --- !u!1 &41874357
 GameObject:
   m_ObjectHideFlags: 0
@@ -30905,6 +31130,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -30933,6 +31174,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32508,6 +32765,10 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines: []
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32968,6 +33229,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -33394,6 +33671,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &588403209 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
+  m_PrefabInstance: {fileID: 33304634}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &602330731
 GameObject:
   m_ObjectHideFlags: 0
@@ -35158,7 +35440,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.802
+      value: 3.919
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalPosition.y
@@ -35166,7 +35448,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.93
+      value: 0.877
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalRotation.w
@@ -35174,15 +35456,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.7071068
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -35190,7 +35472,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -35668,6 +35950,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -215786,6 +216084,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -215915,6 +216229,7 @@ Transform:
   - {fileID: 146234392}
   - {fileID: 1189203006}
   - {fileID: 575157069}
+  - {fileID: 1851727998}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1174667565 stripped
@@ -216142,7 +216457,6 @@ MonoBehaviour:
     HERE!"'
   _playerReactionDialogue: '[Player]: "Someone''s trapped in that room... I need
     to check it."'
-  _shotDuration: 6.5
   _cameraBlendDuration: 2.5
   _audioSource: {fileID: 0}
   _screamingBangingAudio: {fileID: 0}
@@ -216173,6 +216487,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -217072,6 +217402,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -217310,8 +217656,9 @@ MonoBehaviour:
   _pickupDuration: 0.35
   _moveEase: 5
   _playerHeightOffset: 1
+  _triggerToActivateOnPickup: {fileID: 1851727997}
   _ghostToActivate: {fileID: 1500852710}
-  _spawnGhostOnPickup: 1
+  _spawnGhostOnPickup: 0
   _pickupSound: {fileID: 0}
 --- !u!65 &1362222790
 BoxCollider:
@@ -217991,6 +218338,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -219671,7 +220034,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 7.22
+      value: 6.863
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalPosition.y
@@ -219679,7 +220042,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.998
+      value: 1.073
       objectReference: {fileID: 0}
     - target: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
       propertyPath: m_LocalRotation.w
@@ -220443,6 +220806,81 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b155d59461c260a4da261e7a685e3179, type: 3}
   m_PrefabInstance: {fileID: 954823782}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1842978552
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1842978553}
+  - component: {fileID: 1842978554}
+  m_Layer: 0
+  m_Name: Cam_GhostGrandEntrance
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1842978553
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1842978552}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 4.98, y: 1.269, z: 4.27}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1864238935}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!114 &1842978554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1842978552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+  Priority:
+    Enabled: 1
+    m_Value: 10
+  OutputChannel: 1
+  StandbyUpdate: 2
+  m_StreamingVersion: 20241001
+  m_LegacyPriority: 0
+  Target:
+    TrackingTarget: {fileID: 0}
+    LookAtTarget: {fileID: 0}
+    CustomLookAtTarget: 0
+  Lens:
+    FieldOfView: 50
+    OrthographicSize: 10
+    NearClipPlane: 0.1
+    FarClipPlane: 5000
+    Dutch: 0
+    ModeOverride: 0
+    PhysicalProperties:
+      GateFit: 2
+      SensorSize: {x: 21.946, y: 16.002}
+      LensShift: {x: 0, y: 0}
+      FocusDistance: 10
+      Iso: 200
+      ShutterSpeed: 0.005
+      Aperture: 16
+      BladeCount: 5
+      Curvature: {x: 2, y: 11}
+      BarrelClipping: 0.25
+      Anamorphism: 0
+  BlendHint: 0
 --- !u!1 &1844049295
 GameObject:
   m_ObjectHideFlags: 0
@@ -220623,6 +221061,167 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &1851727997
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1851727998}
+  - component: {fileID: 1851728002}
+  - component: {fileID: 1851728001}
+  - component: {fileID: 1851728000}
+  - component: {fileID: 1851727999}
+  m_Layer: 0
+  m_Name: GhostTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1851727998
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1851727997}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 5.5228, y: 4.2841, z: 6.1663}
+  m_LocalScale: {x: 0.8704, y: 0.6783, z: 1.6472671}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1162930989}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1851727999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1851727997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c018c2244849da7408d906f7269d6216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V0.Cinematics.GhostSpawnCutscene
+  _shots:
+  - shotName: 1. Ghost Awakens in Fog
+    virtualCamera: {fileID: 1842978554}
+    duration: 5
+    subtitleText: '[Stranger Behind Door]: "Listen to me! She''s awake! Do NOT let
+      her catch you!"'
+    textColor: {r: 1, g: 0.45, b: 0.45, a: 1}
+    activateGhost: 1
+    shakeCamera: 1
+  - shotName: 2. Player Disbelief
+    virtualCamera: {fileID: 1842978554}
+    duration: 4.5
+    subtitleText: '[Player]: "What... what is that thing?! Is she even alive?!"'
+    textColor: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    activateGhost: 0
+    shakeCamera: 0
+  - shotName: 3. Stealth Warning & Rules
+    virtualCamera: {fileID: 1842978554}
+    duration: 6
+    subtitleText: "[Stranger Behind Door]: \"Her senses are sharp! Do NOT sprint\u2014she
+      hears everything! Crouch and stay in the shadows!\""
+    textColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+    activateGhost: 0
+    shakeCamera: 0
+  _ghostGameObject: {fileID: 1500852710}
+  _playerFollowCamera: {fileID: 279247178}
+  _audioSource: {fileID: 0}
+  _ghostSpawnStinger: {fileID: 0}
+  _cameraBlendDuration: 2.5
+  _letterboxCanvasGroup: {fileID: 423030204}
+  _subtitleText: {fileID: 2022090134}
+  _playerController: {fileID: 1132628793}
+  _playerInteraction: {fileID: 1132628790}
+  _playerInputs: {fileID: 1132628784}
+  _allowSkip: 1
+  _playOnce: 1
+--- !u!65 &1851728000
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1851727997}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1851728001
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1851727997}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1851728002
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1851727997}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1855662369
 GameObject:
   m_ObjectHideFlags: 0
@@ -221091,6 +221690,7 @@ Transform:
   - {fileID: 875125790}
   - {fileID: 1237648020}
   - {fileID: 1871871560}
+  - {fileID: 1842978553}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1865012282
@@ -222401,6 +223001,7 @@ Transform:
   - {fileID: 1986878917}
   - {fileID: 1920706084}
   - {fileID: 1309683919}
+  - {fileID: 588403209}
   - {fileID: 1150971665}
   - {fileID: 672870032}
   - {fileID: 1756574654}
@@ -222608,19 +223209,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -6.69
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.375
+      value: 1.9031432
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 54.93
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalRotation.x
@@ -222628,7 +223229,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430818, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: m_LocalRotation.z
@@ -222648,15 +223249,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430821, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: field of view
-      value: 40
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430821, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: far clip plane
-      value: 500
+      value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430821, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: near clip plane
-      value: 0.2
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430821, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: orthographic size
@@ -224080,6 +224681,22 @@ MonoBehaviour:
   _isLocked: 0
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 0}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -224183,6 +224800,22 @@ MonoBehaviour:
   _isLocked: 1
   _requiredKey: {fileID: 1362222789}
   _requiredKeyId: DrawingRoomKey
+  _enableLockedDialogue: 1
+  _requireMainDoorLockedFirst: 1
+  _mainFrontDoorReference: {fileID: 533957764}
+  _lockedDialogueLines:
+  - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
+      from our bedroom on the 2nd floor!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.8
+  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time\u2014you might have
+      to force it open!\""
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 5.5
+  - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
+    color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
+    duration: 3.5
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -224738,8 +225371,9 @@ MonoBehaviour:
   _pickupDuration: 0.35
   _moveEase: 5
   _playerHeightOffset: 1
+  _triggerToActivateOnPickup: {fileID: 1851727997}
   _ghostToActivate: {fileID: 0}
-  _spawnGhostOnPickup: 1
+  _spawnGhostOnPickup: 0
   _pickupSound: {fileID: 0}
 --- !u!65 &1988524793
 BoxCollider:
@@ -224770,14 +225404,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1988524791}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.421, y: 2.391, z: 11.312}
+  m_LocalRotation: {x: -0, y: -0, z: -0.18168636, w: 0.98335654}
+  m_LocalPosition: {x: 4.129, y: 1.62, z: 11.426}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1835730455}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -20.936}
 --- !u!1 &2006870893
 GameObject:
   m_ObjectHideFlags: 0

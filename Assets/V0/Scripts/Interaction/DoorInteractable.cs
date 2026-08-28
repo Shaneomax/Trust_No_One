@@ -1,14 +1,27 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using DG.Tweening;
 
 namespace V0.Interaction
 {
     /// <summary>
     /// Interactable door component using DOTween for smooth opening and closing animations.
-    /// Implements IInteractable.
+    /// Implements IInteractable. Supports multi-key matching, locked door handle shake,
+    /// and first-interaction locked clue dialogues from the trapped stranger.
     /// </summary>
     public class DoorInteractable : MonoBehaviour, IInteractable
     {
+        [System.Serializable]
+        public class LockedDialogueLine
+        {
+            [TextArea(1, 3)]
+            public string text;
+            public Color color = new Color(1f, 0.88f, 0.6f);
+            public float duration = 4.5f;
+        }
+
         [Header("Interaction Prompts")]
         [SerializeField] private string _openPrompt = "Open Door";
         [SerializeField] private string _closePrompt = "Close Door";
@@ -28,6 +41,39 @@ namespace V0.Interaction
 
         [Tooltip("Or match by Key ID string (e.g. 'DrawingRoomKey', 'BedroomKey', 'AtticKey')")]
         [SerializeField] private string _requiredKeyId = "DrawingRoomKey";
+
+        [Header("Locked Clue Dialogue (Optional)")]
+        [Tooltip("Trigger dialogue when player first tries to open this locked door without key")]
+        [SerializeField] private bool _enableLockedDialogue = true;
+
+        [Tooltip("Only trigger this dialogue after the main front entrance door has been slammed and locked")]
+        [SerializeField] private bool _requireMainDoorLockedFirst = true;
+
+        [Tooltip("Reference to the main entrance door. Auto-finds SM_Door_Front_01 if left empty.")]
+        [SerializeField] private DoorInteractable _mainFrontDoorReference;
+
+        [Tooltip("List of dialogue lines triggered on first locked interaction")]
+        [SerializeField] private List<LockedDialogueLine> _lockedDialogueLines = new List<LockedDialogueLine>()
+        {
+            new LockedDialogueLine()
+            {
+                text = "[Stranger Behind Door]: \"Hey! That door is locked! You'll need the key from our bedroom on the 2nd floor!\"",
+                color = new Color(1f, 0.88f, 0.6f),
+                duration = 4.8f
+            },
+            new LockedDialogueLine()
+            {
+                text = "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that key! And that bedroom door gets stuck from time to time—you might have to force it open!\"",
+                color = new Color(1f, 0.88f, 0.6f),
+                duration = 5.5f
+            },
+            new LockedDialogueLine()
+            {
+                text = "[Player]: \"2nd floor bedroom... got it. I need to watch out for her.\"",
+                color = new Color(0.95f, 0.95f, 0.9f),
+                duration = 3.5f
+            }
+        };
 
         [Header("Audio (Optional)")]
         [SerializeField] private AudioClip _unlockSound;
@@ -51,6 +97,11 @@ namespace V0.Interaction
 
         [Tooltip("Easing curve for closing.")]
         [SerializeField] private Ease _closeEase = Ease.InQuad;
+
+        private bool _hasTriggeredLockedDialogue = false;
+        private Coroutine _dialogueCoroutine;
+        private static Text _cachedSubtitleText;
+        private static CanvasGroup _cachedLetterboxGroup;
 
         /// <summary>
         /// Checks if the player holds the exact key needed for this specific door.
@@ -126,6 +177,15 @@ namespace V0.Interaction
                     _doorTransform.DOShakeRotation(0.25f, new Vector3(0, 4f, 0), 10, 90, false);
                     string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
                     Debug.Log($"<color=yellow>[DoorInteractable]</color> '{gameObject.name}' is locked. Requires key: '{keyName}'");
+
+                    // Trigger locked clue dialogue on first attempt (only after main door is locked)
+                    if (_enableLockedDialogue && !_hasTriggeredLockedDialogue && IsMainDoorLocked() && _lockedDialogueLines != null && _lockedDialogueLines.Count > 0)
+                    {
+                        _hasTriggeredLockedDialogue = true;
+                        if (_dialogueCoroutine != null) StopCoroutine(_dialogueCoroutine);
+                        _dialogueCoroutine = StartCoroutine(PlayLockedDialogueRoutine());
+                    }
+
                     return;
                 }
             }
@@ -149,6 +209,81 @@ namespace V0.Interaction
             {
                 Debug.Log("Player closes the door");
             }
+        }
+
+        private IEnumerator PlayLockedDialogueRoutine()
+        {
+            FindSubtitleReferences();
+
+            if (_cachedLetterboxGroup != null)
+            {
+                _cachedLetterboxGroup.DOKill();
+                _cachedLetterboxGroup.DOFade(1f, 0.5f);
+            }
+
+            for (int i = 0; i < _lockedDialogueLines.Count; i++)
+            {
+                LockedDialogueLine line = _lockedDialogueLines[i];
+                if (line == null || string.IsNullOrEmpty(line.text)) continue;
+
+                if (_cachedSubtitleText != null)
+                {
+                    _cachedSubtitleText.DOKill();
+                    _cachedSubtitleText.text = line.text;
+                    _cachedSubtitleText.color = new Color(line.color.r, line.color.g, line.color.b, 0f);
+                    _cachedSubtitleText.DOFade(1f, 0.4f);
+                }
+
+                yield return new WaitForSeconds(line.duration);
+
+                if (_cachedSubtitleText != null)
+                {
+                    _cachedSubtitleText.DOFade(0f, 0.4f);
+                }
+                yield return new WaitForSeconds(0.25f);
+            }
+
+            if (_cachedLetterboxGroup != null)
+            {
+                _cachedLetterboxGroup.DOKill();
+                _cachedLetterboxGroup.DOFade(0f, 0.5f);
+            }
+            _dialogueCoroutine = null;
+        }
+
+        private void FindSubtitleReferences()
+        {
+            if (_cachedSubtitleText == null)
+            {
+                GameObject canvasObj = GameObject.Find("CinematicLetterboxCanvas");
+                if (canvasObj != null)
+                {
+                    _cachedSubtitleText = canvasObj.GetComponentInChildren<Text>();
+                    _cachedLetterboxGroup = canvasObj.GetComponent<CanvasGroup>();
+                }
+            }
+        }
+
+        private bool IsMainDoorLocked()
+        {
+            if (!_requireMainDoorLockedFirst) return true;
+
+            if (_mainFrontDoorReference == null)
+            {
+                GameObject frontDoorObj = GameObject.Find("SM_Door_Front_01");
+                if (frontDoorObj != null)
+                {
+                    _mainFrontDoorReference = frontDoorObj.GetComponent<DoorInteractable>();
+                    if (_mainFrontDoorReference == null) _mainFrontDoorReference = frontDoorObj.GetComponentInParent<DoorInteractable>();
+                }
+            }
+
+            if (_mainFrontDoorReference != null)
+            {
+                return _mainFrontDoorReference.IsLocked;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -184,6 +319,74 @@ namespace V0.Interaction
         }
 
 #if UNITY_EDITOR
+        [ContextMenu("Apply Preset: 2nd Floor Bedroom Door (Crowbar Clue)")]
+        public void ApplyPresetBedroomDoorCrowbarClue()
+        {
+            UnityEditor.Undo.RecordObject(this, "Apply Preset Bedroom Door");
+            _lockedPrompt = "Stuck (Need Crowbar)";
+            _unlockPrompt = "Pry Open Door";
+            _enableLockedDialogue = true;
+            _requireMainDoorLockedFirst = true;
+
+            _lockedDialogueLines = new List<LockedDialogueLine>()
+            {
+                new LockedDialogueLine()
+                {
+                    text = "[Stranger Behind Door]: \"Ah, damn... that bedroom door is jammed shut! You'll need a crowbar to force it open!\"",
+                    color = new Color(1f, 0.88f, 0.6f),
+                    duration = 5.0f
+                },
+                new LockedDialogueLine()
+                {
+                    text = "[Stranger Behind Door]: \"I know there's a crowbar somewhere downstairs, but I can't remember which room... You'll have to search for it!\"",
+                    color = new Color(1f, 0.88f, 0.6f),
+                    duration = 5.5f
+                },
+                new LockedDialogueLine()
+                {
+                    text = "[Player]: \"A crowbar downstairs... got it. I need to search the rooms on the ground floor.\"",
+                    color = new Color(0.95f, 0.95f, 0.9f),
+                    duration = 4.0f
+                }
+            };
+            UnityEditor.EditorUtility.SetDirty(this);
+            Debug.Log($"<color=green>[DoorInteractable]</color> Applied 2nd Floor Bedroom Door (Crowbar Clue) preset to '{gameObject.name}'!");
+        }
+
+        [ContextMenu("Apply Preset: Downstairs Door (Bedroom Key Clue)")]
+        public void ApplyPresetDownstairsDoorKeyClue()
+        {
+            UnityEditor.Undo.RecordObject(this, "Apply Preset Downstairs Door");
+            _lockedPrompt = "Locked (Need Key)";
+            _unlockPrompt = "Unlock Door";
+            _enableLockedDialogue = true;
+            _requireMainDoorLockedFirst = true;
+
+            _lockedDialogueLines = new List<LockedDialogueLine>()
+            {
+                new LockedDialogueLine()
+                {
+                    text = "[Stranger Behind Door]: \"Hey! That door is locked! You'll need the key from our bedroom on the 2nd floor!\"",
+                    color = new Color(1f, 0.88f, 0.6f),
+                    duration = 4.8f
+                },
+                new LockedDialogueLine()
+                {
+                    text = "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that key! And that bedroom door gets stuck from time to time—you might have to force it open!\"",
+                    color = new Color(1f, 0.88f, 0.6f),
+                    duration = 5.5f
+                },
+                new LockedDialogueLine()
+                {
+                    text = "[Player]: \"2nd floor bedroom... got it. I need to watch out for her.\"",
+                    color = new Color(0.95f, 0.95f, 0.9f),
+                    duration = 3.5f
+                }
+            };
+            UnityEditor.EditorUtility.SetDirty(this);
+            Debug.Log($"<color=green>[DoorInteractable]</color> Applied Downstairs Door (Bedroom Key Clue) preset to '{gameObject.name}'!");
+        }
+
         [ContextMenu("Set Current Rotation As Open")]
         private void SetCurrentRotationAsOpen()
         {

@@ -107,21 +107,21 @@ namespace V0.Editor
             // 4. DEACTIVATE ROGUE HIGH-POWER LIGHTS
             //    Turn off 100m range spotlights in root that wash out scene
             // ============================================================
-            Light[] allSceneLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
-            int rogueCleaned = 0;
-            foreach (var l in allSceneLights)
-            {
-                if (l == null) continue;
-                if (l.transform.parent == null &&
-                    (l.gameObject.name == "Point Light" ||
-                     l.gameObject.name == "Point Light (1)" ||
-                     (l.type == LightType.Spot && l.range >= 50f)))
-                {
-                    Undo.RecordObject(l.gameObject, "Deactivate Rogue Root Light");
-                    l.gameObject.SetActive(false);
-                    rogueCleaned++;
-                }
-            }
+            // Light[] allSceneLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+            // int rogueCleaned = 0;
+            // foreach (var l in allSceneLights)
+            // {
+            //     if (l == null) continue;
+            //     if (l.transform.parent == null &&
+            //         (l.gameObject.name == "Point Light" ||
+            //          l.gameObject.name == "Point Light (1)" ||
+            //          (l.type == LightType.Spot && l.range >= 50f)))
+            //     {
+            //         Undo.RecordObject(l.gameObject, "Deactivate Rogue Root Light");
+            //         l.gameObject.SetActive(false);
+            //         rogueCleaned++;
+            //     }
+            // }
 
             // ============================================================
             // 5. COLOR PALETTE — RE4 Remake Interior (NO REDDISH VIBE!)

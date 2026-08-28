@@ -29,12 +29,15 @@ namespace V0.Interaction
         [Tooltip("Height offset added to player position (chest height)")]
         [SerializeField] private float _playerHeightOffset = 1.0f;
 
-        [Header("Ghost Activation Trigger")]
+        [Header("Ghost & Trigger Activation")]
+        [Tooltip("Trigger to activate (e.g. GhostTrigger) when this key is picked up. If null, auto-finds 'GhostTrigger'.")]
+        [SerializeField] private GameObject _triggerToActivateOnPickup;
+
         [Tooltip("Optional reference to the Ghost GameObject. If null, auto-finds 'Ghost' in the scene.")]
         [SerializeField] private GameObject _ghostToActivate;
 
-        [Tooltip("Activate the Ghost when this key is picked up?")]
-        [SerializeField] private bool _spawnGhostOnPickup = true;
+        [Tooltip("Activate the Ghost immediately on key pickup? (False recommended so Ghost spawns during GhostTrigger cutscene)")]
+        [SerializeField] private bool _spawnGhostOnPickup = false;
 
         [Header("Audio (Optional)")]
         [SerializeField] private AudioClip _pickupSound;
@@ -157,7 +160,24 @@ namespace V0.Interaction
                 OnKeyCollected?.Invoke(_keyId);
                 Debug.Log($"<color=yellow>[KeyPickup]</color> Collected key: '{_keyId}' ({gameObject.name})");
 
-                // Spawn / Activate Ghost
+                // Activate trigger (e.g. GhostTrigger)
+                if (_triggerToActivateOnPickup != null)
+                {
+                    _triggerToActivateOnPickup.SetActive(true);
+                    Debug.Log($"<color=cyan>[KeyPickup]</color> Activated trigger '{_triggerToActivateOnPickup.name}' on key pickup!");
+                }
+                else
+                {
+                    GameObject ghostTrigger = GameObject.Find("GhostTrigger");
+                    if (ghostTrigger == null) ghostTrigger = GameObject.Find("TriggerPoint/GhostTrigger");
+                    if (ghostTrigger != null)
+                    {
+                        ghostTrigger.SetActive(true);
+                        Debug.Log("<color=cyan>[KeyPickup]</color> Auto-activated 'GhostTrigger' on key pickup!");
+                    }
+                }
+
+                // Spawn / Activate Ghost (if immediate mode enabled)
                 if (_spawnGhostOnPickup && _ghostToActivate != null)
                 {
                     _ghostToActivate.SetActive(true);
