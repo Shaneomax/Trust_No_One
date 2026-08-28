@@ -14,6 +14,7 @@ namespace StarterAssets
 		public bool sprint;
 		public bool interact;
 		public bool flashLight;
+		public bool crouch;
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -55,6 +56,22 @@ namespace StarterAssets
 		{
 			FlashLightInput(value.isPressed);
 		}
+
+		public void OnChrouch(InputValue value)
+		{
+			if (value.isPressed)
+			{
+				crouch = true;
+			}
+		}
+
+		public void OnCrouch(InputValue value)
+		{
+			if (value.isPressed)
+			{
+				crouch = true;
+			}
+		}
 #endif
 
 
@@ -86,6 +103,14 @@ namespace StarterAssets
 		public void FlashLightInput(bool newFlashLightState)
 		{
 			flashLight = newFlashLightState;
+		}
+
+		public void CrouchInput(bool newCrouchState)
+		{
+			if (newCrouchState)
+			{
+				crouch = true;
+			}
 		}
 		
 		private void OnApplicationFocus(bool hasFocus)

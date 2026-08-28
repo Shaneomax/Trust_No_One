@@ -63,12 +63,6 @@ namespace TrustNoOne.AI
         [Tooltip("Damage dealt per attack")]
         [SerializeField] private float _attackDamage = 25f;
 
-        [Header("Player Collision & Push Prevention")]
-        [Tooltip("Prevent the player from walking into or shoving the ghost")]
-        [SerializeField] private bool _preventPlayerPush = true;
-
-        [Tooltip("Minimum distance kept between player and ghost (player is blocked if closer)")]
-        [SerializeField] private float _minPlayerDistance = 0.85f;
 
         [Header("Movement Speeds")]
         [Tooltip("Speed when patrolling (plays Walk animation)")]
@@ -119,6 +113,7 @@ namespace TrustNoOne.AI
         // Player input & movement cache for hearing and push prevention
         private StarterAssetsInputs _playerInputs;
         private CharacterController _playerCharController;
+        private FirstPersonController _playerFPC;
 
         // Line of Sight & Search State
         private bool _canSeePlayer;
@@ -158,6 +153,16 @@ namespace TrustNoOne.AI
             _agent = GetComponent<NavMeshAgent>();
             _ownCollider = GetComponent<Collider>();
             _spawnPosition = transform.position;
+
+            // Make all ghost colliders triggers so the player's CharacterController passes straight through
+            Collider[] ghostColliders = GetComponentsInChildren<Collider>(true);
+            foreach (Collider gc in ghostColliders)
+            {
+                if (gc != null)
+                {
+                    gc.isTrigger = true;
+                }
+            }
 
             // Lock Rigidbody so physics collisions/shoves cannot move the ghost
             Rigidbody rb = GetComponent<Rigidbody>();
@@ -199,6 +204,7 @@ namespace TrustNoOne.AI
             {
                 _playerInputs = _player.GetComponent<StarterAssetsInputs>();
                 _playerCharController = _player.GetComponent<CharacterController>();
+                _playerFPC = _player.GetComponent<FirstPersonController>();
             }
         }
 
@@ -343,51 +349,7 @@ namespace TrustNoOne.AI
         private void LateUpdate()
         {
             SnapModelToGround();
-            PreventPlayerPushing();
         }
-
-        #region Player Collision & Push Prevention
-
-        /// <summary>
-        /// Prevents the player from pushing, walking through, or displacing the ghost.
-        /// If the player tries to run into the ghost, the player is firmly blocked and pushed back.
-        /// </summary>
-        private void PreventPlayerPushing()
-        {
-            if (!_preventPlayerPush || _player == null) return;
-
-            Vector3 ghostPos = transform.position;
-            Vector3 playerPos = _player.position;
-
-            // Only push if on roughly the same vertical level
-            if (Mathf.Abs(playerPos.y - ghostPos.y) > 2.0f) return;
-
-            Vector3 toPlayer = playerPos - ghostPos;
-            toPlayer.y = 0f;
-            float horizontalDist = toPlayer.magnitude;
-
-            if (horizontalDist < _minPlayerDistance)
-            {
-                Vector3 pushDir = toPlayer.normalized;
-                if (pushDir == Vector3.zero)
-                {
-                    pushDir = -transform.forward;
-                }
-
-                float pushDistance = _minPlayerDistance - horizontalDist;
-
-                if (_playerCharController != null && _playerCharController.enabled)
-                {
-                    _playerCharController.Move(pushDir * pushDistance);
-                }
-                else
-                {
-                    _player.position += pushDir * pushDistance;
-                }
-            }
-        }
-
-        #endregion
 
         #region Hearing & Sprint Sound Detection
 
@@ -449,6 +411,16 @@ namespace TrustNoOne.AI
                 return true;
             }
 
+            // If player is crouching, movement is completely silent (stealth mode)
+            if (_playerFPC != null && _playerFPC.IsCrouching)
+            {
+                return false;
+            }
+            if (_playerInputs != null && _playerInputs.crouch)
+            {
+                return false;
+            }
+
             // Check CharacterController physical movement speed (sprint is ~6m/s, walk is ~4m/s)
             if (_playerCharController != null)
             {
@@ -479,12 +451,28 @@ namespace TrustNoOne.AI
                 return false;
             }
 
+            // Check if player is crouching behind cover
+            bool isCrouching = false;
+            if (_playerFPC != null)
+            {
+                isCrouching = _playerFPC.IsCrouching;
+            }
+            else if (_playerInputs != null)
+            {
+                isCrouching = _playerInputs.crouch;
+            }
+
             Vector3 eyePos = transform.position + Vector3.up * _eyeHeight;
-            Vector3 playerTarget = _player.position + Vector3.up * 0.9f; // Player chest height
+
+            // When crouching, target point is low to ground (0.45m instead of 0.9m)
+            // Low obstacles like half-walls, desks, crates, and window frames will intercept the raycast
+            float targetHeight = isCrouching ? 0.45f : 0.9f;
+            Vector3 playerTarget = _player.position + Vector3.up * targetHeight;
             Vector3 dirToPlayer = playerTarget - eyePos;
 
-            // Check field of view angle (unless player is in close proximity)
-            if (distanceToPlayer > _closeProximityRadius)
+            // Check field of view angle (crouching also sharpens stealth by reducing close-proximity 360-degree awareness)
+            float effectiveProximity = isCrouching ? (_closeProximityRadius * 0.6f) : _closeProximityRadius;
+            if (distanceToPlayer > effectiveProximity)
             {
                 float angle = Vector3.Angle(transform.forward, dirToPlayer);
                 if (angle > _fieldOfView * 0.5f)

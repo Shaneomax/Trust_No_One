@@ -21,6 +21,22 @@ namespace StarterAssets
 		[Tooltip("Acceleration and deceleration")]
 		public float SpeedChangeRate = 10.0f;
 
+		[Header("Crouch Settings")]
+		[Tooltip("Move speed while crouching in m/s")]
+		public float CrouchSpeed = 2.0f;
+		[Tooltip("Height of character controller when crouching")]
+		public float CrouchHeight = 1.1f;
+		[Tooltip("Camera local Y position when crouching")]
+		public float CrouchCameraHeight = 0.65f;
+		[Tooltip("Speed of transition between crouching and standing")]
+		public float CrouchTransitionSpeed = 10.0f;
+
+		/// <summary>
+		/// Whether the character is currently crouching.
+		/// Used by EnemyAI to determine if the player is hidden behind cover.
+		/// </summary>
+		public bool IsCrouching { get; private set; }
+
 		[Space(10)]
 		[Tooltip("The height the player can jump")]
 		public float JumpHeight = 1.2f;
@@ -64,6 +80,13 @@ namespace StarterAssets
 		private float _jumpTimeoutDelta;
 		private float _fallTimeoutDelta;
 
+		// crouch internal state
+		private float _standingHeight = 2.0f;
+		private Vector3 _standingCenter = new Vector3(0f, 1.0f, 0f);
+		private Vector3 _crouchCenter = new Vector3(0f, 0.55f, 0f);
+		private float _defaultCameraY = 1.375f;
+		private Transform _capsuleMeshTransform;
+
 	
 #if ENABLE_INPUT_SYSTEM
 		private PlayerInput _playerInput;
@@ -105,6 +128,23 @@ namespace StarterAssets
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
+			// cache standing and crouch dimensions
+			_standingHeight = _controller.height;
+			_standingCenter = _controller.center;
+			_crouchCenter = new Vector3(_standingCenter.x, CrouchHeight * 0.5f, _standingCenter.z);
+
+			if (CinemachineCameraTarget != null)
+			{
+				_defaultCameraY = CinemachineCameraTarget.transform.localPosition.y;
+			}
+
+			// find visual body capsule child if present
+			Transform capsuleChild = transform.Find("Capsule");
+			if (capsuleChild != null)
+			{
+				_capsuleMeshTransform = capsuleChild;
+			}
+
 			// reset our timeouts on start
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
@@ -112,6 +152,7 @@ namespace StarterAssets
 
 		private void Update()
 		{
+			Crouch();
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
@@ -120,6 +161,110 @@ namespace StarterAssets
 		private void LateUpdate()
 		{
 			CameraRotation();
+		}
+
+		/// <summary>
+		/// Uncrouches the player and returns them to full standing height.
+		/// </summary>
+		public void StandUp()
+		{
+			IsCrouching = false;
+			if (_input != null)
+			{
+				_input.crouch = false;
+			}
+		}
+
+		/// <summary>
+		/// Crouches the player and lowers their height.
+		/// </summary>
+		public void CrouchDown()
+		{
+			IsCrouching = true;
+			if (_input != null)
+			{
+				_input.crouch = false;
+			}
+		}
+
+		private void Crouch()
+		{
+			// Check if crouch button was pressed this frame
+			bool crouchPressedThisFrame = false;
+
+			if (_input != null && _input.crouch)
+			{
+				_input.crouch = false; // Immediately consume the trigger!
+				crouchPressedThisFrame = true;
+			}
+
+#if ENABLE_INPUT_SYSTEM
+			if (!crouchPressedThisFrame && Keyboard.current != null && Keyboard.current.leftCtrlKey.wasPressedThisFrame)
+			{
+				crouchPressedThisFrame = true;
+			}
+#else
+			if (!crouchPressedThisFrame && Input.GetKeyDown(KeyCode.LeftControl))
+			{
+				crouchPressedThisFrame = true;
+			}
+#endif
+
+			// 1. SPRINT TO UNCROUCH: If crouching and sprint is pressed, immediately stand up!
+			if (IsCrouching && _input != null && _input.sprint)
+			{
+				StandUp();
+			}
+
+			// 2. PRESS LEFT CONTROL TO TOGGLE:
+			// If crouching -> stand up immediately!
+			// If standing -> crouch down!
+			if (crouchPressedThisFrame)
+			{
+				if (IsCrouching)
+				{
+					StandUp();
+				}
+				else
+				{
+					CrouchDown();
+				}
+			}
+
+			// If crouching, keep sprint disabled so player moves at crouch speed
+			if (IsCrouching && _input != null)
+			{
+				_input.sprint = false;
+			}
+
+			// Smoothly interpolate CharacterController height and center
+			float targetHeight = IsCrouching ? CrouchHeight : _standingHeight;
+			Vector3 targetCenter = IsCrouching ? _crouchCenter : _standingCenter;
+			float targetCamY = IsCrouching ? CrouchCameraHeight : _defaultCameraY;
+
+			_controller.height = Mathf.Lerp(_controller.height, targetHeight, Time.deltaTime * CrouchTransitionSpeed);
+			_controller.center = Vector3.Lerp(_controller.center, targetCenter, Time.deltaTime * CrouchTransitionSpeed);
+
+			// Smoothly interpolate camera target Y
+			if (CinemachineCameraTarget != null)
+			{
+				Vector3 camPos = CinemachineCameraTarget.transform.localPosition;
+				camPos.y = Mathf.Lerp(camPos.y, targetCamY, Time.deltaTime * CrouchTransitionSpeed);
+				CinemachineCameraTarget.transform.localPosition = camPos;
+			}
+
+			// Smoothly scale the visual body capsule if present
+			if (_capsuleMeshTransform != null)
+			{
+				float heightRatio = _controller.height / _standingHeight;
+				Vector3 localScale = _capsuleMeshTransform.localScale;
+				localScale.y = Mathf.Lerp(localScale.y, heightRatio, Time.deltaTime * CrouchTransitionSpeed);
+				_capsuleMeshTransform.localScale = localScale;
+
+				Vector3 localPos = _capsuleMeshTransform.localPosition;
+				localPos.y = Mathf.Lerp(localPos.y, _controller.center.y, Time.deltaTime * CrouchTransitionSpeed);
+				_capsuleMeshTransform.localPosition = localPos;
+			}
 		}
 
 		private void GroundedCheck()
@@ -153,8 +298,16 @@ namespace StarterAssets
 
 		private void Move()
 		{
-			// set target speed based on move speed, sprint speed and if sprint is pressed
-			float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+			// set target speed based on crouch, sprint, or normal walk
+			float targetSpeed = MoveSpeed;
+			if (IsCrouching)
+			{
+				targetSpeed = CrouchSpeed;
+			}
+			else if (_input.sprint)
+			{
+				targetSpeed = SprintSpeed;
+			}
 
 			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
@@ -211,8 +364,13 @@ namespace StarterAssets
 					_verticalVelocity = -2f;
 				}
 
-				// Jump
-				if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+				// 3. JUMP TO UNCROUCH: If crouching and Jump is pressed, stand up!
+				if (_input.jump && IsCrouching)
+				{
+					_input.jump = false; // Consume jump
+					StandUp();
+				}
+				else if (_input.jump && !IsCrouching && _jumpTimeoutDelta <= 0.0f)
 				{
 					// the square root of H * -2 * G = how much velocity needed to reach desired height
 					_verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
