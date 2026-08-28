@@ -216062,12 +216062,10 @@ MonoBehaviour:
   _attackRadius: 2
   _attackCooldown: 2
   _attackDamage: 25
-  _preventPlayerPush: 0
-  _minPlayerDistance: 0.85
   _patrolSpeed: 1.8
   _chaseSpeed: 2.5
   _doorGameObjects: []
-  _doorPhaseDistance: 0.5
+  _doorPhaseDistance: 0.7
   _doorPhasingSpeed: 0.45
   _enableGroundSnapping: 1
   _feetOffset: 0.09

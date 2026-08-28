@@ -76,7 +76,7 @@ namespace TrustNoOne.AI
         [SerializeField] private List<GameObject> _doorGameObjects = new List<GameObject>();
 
         [Tooltip("How close the ghost needs to be to a door to start phasing through it (meters)")]
-        [SerializeField] private float _doorPhaseDistance = 1.8f;
+        [SerializeField] private float _doorPhaseDistance = 2.2f;
 
         [Tooltip("Slowed speed when slipping through a closed door")]
         [SerializeField] private float _doorPhasingSpeed = 0.45f;
@@ -259,6 +259,19 @@ namespace TrustNoOne.AI
                 if (!tracked.ChildColliders.Contains(c))
                 {
                     tracked.ChildColliders.Add(c);
+                }
+            }
+
+            // Also check parent for box colliders (e.g. SM_Door_interior_01 or BoxColliderObject)
+            if (doorInteractable.transform.parent != null)
+            {
+                Collider[] parentCols = doorInteractable.transform.parent.GetComponentsInChildren<Collider>(true);
+                foreach (Collider c in parentCols)
+                {
+                    if (!tracked.ChildColliders.Contains(c))
+                    {
+                        tracked.ChildColliders.Add(c);
+                    }
                 }
             }
 
@@ -501,14 +514,14 @@ namespace TrustNoOne.AI
                     return true;
                 }
 
-                // If hit an open door, line of sight passes through
+                // Ghost supernatural line of sight passes through doors (open OR closed) so ghost pursues through doors!
                 DoorInteractable door = hit.collider.GetComponentInParent<DoorInteractable>();
-                if (door != null && door.IsOpen)
+                if (door != null)
                 {
                     continue;
                 }
 
-                // Blocked by a solid wall, table, or closed door!
+                // Blocked by a solid wall, table, or furniture!
                 return false;
             }
 
@@ -746,17 +759,21 @@ namespace TrustNoOne.AI
 
         private void UpdateDoorPhasing()
         {
+            if (_trackedDoors.Count == 0)
+            {
+                InitializeDoors();
+            }
+
             TrackedDoor nearestDoor = null;
             float minDistance = float.MaxValue;
 
-            Vector2 ghost2D = new Vector2(transform.position.x, transform.position.z);
+            Vector3 ghostPos = transform.position;
 
             foreach (TrackedDoor door in _trackedDoors)
             {
                 if (door == null || door.Interactable == null || door.CenterTransform == null) continue;
 
-                Vector2 door2D = new Vector2(door.CenterTransform.position.x, door.CenterTransform.position.z);
-                float dist = Vector2.Distance(ghost2D, door2D);
+                float dist = Vector3.Distance(ghostPos, door.CenterTransform.position);
 
                 if (dist < minDistance)
                 {
@@ -785,7 +802,7 @@ namespace TrustNoOne.AI
                     _agent.speed = _doorPhasingSpeed;
                 }
             }
-            else if (_isPhasing && minDistance > _doorPhaseDistance + 0.3f)
+            else if (_isPhasing && minDistance > _doorPhaseDistance + 0.6f)
             {
                 EndDoorPhasing();
             }
@@ -797,14 +814,12 @@ namespace TrustNoOne.AI
             _currentPhasingDoor = door;
             _agent.speed = _doorPhasingSpeed;
 
-            if (_ownCollider != null)
+            // Temporarily convert door colliders to triggers so the ghost's NavMeshAgent can walk through them
+            foreach (Collider col in door.ChildColliders)
             {
-                foreach (Collider col in door.ChildColliders)
+                if (col != null)
                 {
-                    if (col != null)
-                    {
-                        Physics.IgnoreCollision(_ownCollider, col, true);
-                    }
+                    col.isTrigger = true;
                 }
             }
 
@@ -824,19 +839,22 @@ namespace TrustNoOne.AI
                     _phaseSequence.Join(mat.DOColor(spectralColor, "_BaseColor", 0.35f));
                 }
             }
+
+            Debug.Log("<color=cyan>[EnemyAI]</color> Ghost is phasing through closed door!");
         }
 
         private void EndDoorPhasing()
         {
             _isPhasing = false;
 
-            if (_ownCollider != null && _currentPhasingDoor != null)
+            if (_currentPhasingDoor != null)
             {
+                // Restore door colliders to solid
                 foreach (Collider col in _currentPhasingDoor.ChildColliders)
                 {
                     if (col != null)
                     {
-                        Physics.IgnoreCollision(_ownCollider, col, false);
+                        col.isTrigger = false;
                     }
                 }
             }
