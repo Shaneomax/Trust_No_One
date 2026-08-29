@@ -52,9 +52,16 @@ namespace TrustNoOne.AI
 
         private NavMeshAgent _agent;
         private bool _isOpeningDoor = false;
+        private bool _isStationary = false;
         private DoorInteractable _currentDoorTarget;
         private float _doorCooldownTimer = 0f;
         private readonly HashSet<DoorInteractable> _openedDoors = new HashSet<DoorInteractable>();
+
+        public bool IsStationary
+        {
+            get => _isStationary;
+            set => _isStationary = value;
+        }
 
         // Animator parameter hashes
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
@@ -185,6 +192,18 @@ namespace TrustNoOne.AI
             if (_doorCooldownTimer > 0f)
             {
                 _doorCooldownTimer -= Time.deltaTime;
+            }
+
+            // If in stationary mode (e.g. standing beside the knife after cutscene), remain idle
+            if (_isStationary)
+            {
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                    _agent.velocity = Vector3.zero;
+                }
+                UpdateAnimator(0f);
+                return;
             }
 
             // If currently performing the door opening animation, stand 100% still and wait until finished
@@ -457,6 +476,115 @@ namespace TrustNoOne.AI
                 _modelTransform.localPosition = localPos;
                 break;
             }
+        }
+        /// <summary>
+        /// Commands Enemy 2 to navigate directly to the target destination (e.g. Knife).
+        /// - Follows NavMesh path directly to the destination.
+        /// - If he encounters any closed door in front of him along the path, he opens it with animation.
+        /// - Once he passes through the door, onDoorPassed is fired (to close the door).
+        /// - When he arrives at destination, he faces the destination rotation, plays Idle, and becomes permanently stationary.
+        /// </summary>
+        public void MoveToDestination(Transform destination, System.Action onDoorPassed, System.Action onArrived)
+        {
+            StopAllCoroutines();
+            StartCoroutine(MoveToDestinationRoutine(destination, onDoorPassed, onArrived));
+        }
+
+        private IEnumerator MoveToDestinationRoutine(Transform destination, System.Action onDoorPassed, System.Action onArrived)
+        {
+            _isOpeningDoor = false;
+            _isStationary = false;
+
+            if (destination == null || _agent == null || !_agent.isOnNavMesh)
+            {
+                yield break;
+            }
+
+            Vector3 targetPos = destination.position;
+            _agent.isStopped = false;
+            _agent.speed = _walkSpeed;
+            _agent.stoppingDistance = 0.5f;
+            _agent.SetDestination(targetPos);
+            UpdateAnimator(_walkSpeed);
+
+            DoorInteractable lastOpenedDoor = null;
+            bool doorPassedCalled = false;
+
+            while (true)
+            {
+                // 1. Check for closed doors directly in front of Enemy 2 along his path
+                if (_doorCooldownTimer <= 0f && CheckForDoorAhead(out DoorInteractable closedDoor))
+                {
+                    lastOpenedDoor = closedDoor;
+                    yield return StartCoroutine(OpenDoorSequence(closedDoor));
+
+                    // After door opens, re-engage navigation to destination!
+                    if (_agent != null && _agent.isOnNavMesh)
+                    {
+                        _agent.isStopped = false;
+                        _agent.speed = _walkSpeed;
+                        _agent.SetDestination(targetPos);
+                        UpdateAnimator(_walkSpeed);
+                    }
+                }
+
+                // 2. Track when Enemy 2 passes through the door into the room
+                if (!doorPassedCalled && lastOpenedDoor != null)
+                {
+                    float distToDoor = Vector3.Distance(transform.position, lastOpenedDoor.transform.position);
+                    if (distToDoor > 1.6f) // Enemy 2 has traversed through the door
+                    {
+                        doorPassedCalled = true;
+                        onDoorPassed?.Invoke();
+                    }
+                }
+
+                // 3. Keep moving towards destination
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    float distToDestination = Vector3.Distance(transform.position, targetPos);
+
+                    // Update movement animation
+                    float currentSpeed = _agent.velocity.magnitude > 0.1f ? _walkSpeed : 0.5f;
+                    UpdateAnimator(currentSpeed);
+
+                    if (distToDestination <= 0.8f && !_agent.pathPending)
+                    {
+                        // Arrived at knife destination!
+                        _agent.isStopped = true;
+                        _agent.velocity = Vector3.zero;
+                        break;
+                    }
+                }
+
+                yield return null;
+            }
+
+            // If door passed wasn't invoked yet, invoke now
+            if (!doorPassedCalled)
+            {
+                onDoorPassed?.Invoke();
+            }
+
+            // 4. Stand at destination, face destination rotation, and switch to Idle
+            UpdateAnimator(0f);
+            if (destination != null)
+            {
+                Quaternion faceRot = destination.rotation;
+                float turnTimer = 0f;
+                while (turnTimer < 0.6f)
+                {
+                    turnTimer += Time.deltaTime;
+                    transform.rotation = Quaternion.Slerp(transform.rotation, faceRot, turnTimer / 0.6f);
+                    yield return null;
+                }
+            }
+
+            _isStationary = true;
+            _isOpeningDoor = false;
+            UpdateAnimator(0f);
+
+            onArrived?.Invoke();
         }
     }
 }

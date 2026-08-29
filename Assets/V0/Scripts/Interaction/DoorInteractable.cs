@@ -261,6 +261,28 @@ namespace V0.Interaction
             }
         }
 
+        /// <summary>
+        /// Explicitly opens the door if currently closed.
+        /// </summary>
+        public void OpenDoor()
+        {
+            if (!_isOpen)
+            {
+                Interact();
+            }
+        }
+
+        /// <summary>
+        /// Explicitly closes the door if currently open.
+        /// </summary>
+        public void CloseDoor()
+        {
+            if (_isOpen)
+            {
+                Interact();
+            }
+        }
+
         private IEnumerator PlayLockedDialogueRoutine()
         {
             FindSubtitleReferences();
