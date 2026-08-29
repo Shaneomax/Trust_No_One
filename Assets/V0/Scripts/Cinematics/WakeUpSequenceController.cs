@@ -44,11 +44,8 @@ namespace V0.Cinematics
         [Tooltip("Thought when head drops back into dirt after failed lift")]
         [SerializeField] private string _line2FailedLift = "...Where... where am I...?";
 
-        [Tooltip("Thought when pushed up onto knees")]
-        [SerializeField] private string _line3Kneeling = "...My car crashed... I blacked out...";
-
         [Tooltip("Thought when standing up on feet")]
-        [SerializeField] private string _line4Standing = "...There's a house up ahead. I need to find help.";
+        [SerializeField] private string _line3Standing = "...There's a house up ahead. I need to find help.";
 
         [Header("Eyelid Blink Settings (DOTween Smooth Fades)")]
         [Tooltip("Seconds the screen remains pitch black before first eyelid flutter")]
@@ -326,16 +323,13 @@ namespace V0.Cinematics
                 camT.DORotate(kneelRot, 1.35f).SetEase(Ease.OutQuad);
                 camT.DOShakeRotation(1.35f, strength: new Vector3(2.5f, 3f, 4f), vibrato: 9, randomness: 60);
 
-                // Subtitle Line 3: Realizing what happened
-                yield return ShowSubtitleAndWait(_line3Kneeling, 3.5f);
-
                 yield return new WaitForSeconds(1.35f);
 
                 // Pause on knees: Player heaves a breath, head sways unsteadily
                 camT.DORotate(new Vector3(8f, standingRot.eulerAngles.y + 3f, -3f), 0.7f).SetEase(Ease.InOutSine);
                 yield return new WaitForSeconds(0.75f);
                 camT.DORotate(kneelRot, 0.65f).SetEase(Ease.InOutSine);
-                yield return new WaitForSeconds(1.2f); // Generous pause to read Line 3
+                yield return new WaitForSeconds(0.6f);
 
                 // -------------------------------------------------------------
                 // STAGE C: Hauling Up to Feet & Staggering Forward
@@ -369,9 +363,8 @@ namespace V0.Cinematics
                 camT.DOShakeRotation(0.4f, strength: new Vector3(1f, 1.8f, 1.2f), vibrato: 6);
                 yield return new WaitForSeconds(0.4f);
 
-                // Subtitle Line 4: Spotted the house
-                yield return ShowSubtitleAndWait(_line4Standing, 0.5f);
-                // No extra dead-wait — player gets control as soon as Line 4 finishes
+                // Subtitle Line 3: Spotted the house / need help
+                yield return ShowSubtitleAndWait(_line3Standing, 2.5f);
             }
 
             // 7. Sequence complete: Seamless handoff to gameplay!

@@ -370,8 +370,7 @@ MonoBehaviour:
   _subtitleText: {fileID: 1018182358}
   _line1FirstBlink: ...Ugh... my head hurts...
   _line2FailedLift: ...Where... where am I...?
-  _line3Kneeling: ...My car crashed... I blacked out...
-  _line4Standing: ...There's a house up ahead. I need to find help.
+  _line3Standing: ...There's a house up ahead. I need to find help.
   _initialBlackoutHold: 1.2
   _firstBlinkOpenDuration: 1.3
   _firstBlinkOpenAlpha: 0.5
@@ -218800,7 +218799,8 @@ MonoBehaviour:
   _obstructionLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  _hearingRadius: 16
+  _sprintHearingRadius: 18
+  _walkHearingRadius: 10
   _hearThroughWalls: 1
   _searchDuration: 5
   _searchSpeed: 1.6
@@ -218820,6 +218820,9 @@ MonoBehaviour:
   _patrolWaypoints: []
   _patrolWanderRadius: 15
   _patrolWaitDuration: 2.5
+  _audioSource: {fileID: 0}
+  _screamSound: {fileID: 0}
+  _screamDuration: 1.2
   _player: {fileID: 1132628782}
   _animator: {fileID: 428100276}
   _modelTransform: {fileID: 428100275}

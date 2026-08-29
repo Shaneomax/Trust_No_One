@@ -5,6 +5,7 @@ using UnityEngine.AI;
 using DG.Tweening;
 using StarterAssets;
 using V0.Interaction;
+using V0.UI;
 
 namespace TrustNoOne.AI
 {
@@ -41,17 +42,17 @@ namespace TrustNoOne.AI
 
         [Header("Hearing & Footstep Detection")]
         [Tooltip("Maximum distance the ghost can hear the player sprinting (loud footsteps)")]
-        [SerializeField] private float _sprintHearingRadius = 18f;
+        [SerializeField] private float _sprintHearingRadius = 14f;
 
-        [Tooltip("Maximum distance the ghost can hear the player normal walking (standard footsteps)")]
-        [SerializeField] private float _walkHearingRadius = 10f;
+        [Tooltip("Maximum distance the ghost can hear the player normal walking (standard footsteps in close proximity)")]
+        [SerializeField] private float _walkHearingRadius = 4.5f;
 
-        [Tooltip("Can the ghost hear footsteps through walls? (true = 360 sound sphere, false = muffled by walls)")]
-        [SerializeField] private bool _hearThroughWalls = true;
+        [Tooltip("Can the ghost hear footsteps through walls? (false = walls and floors muffle footsteps)")]
+        [SerializeField] private bool _hearThroughWalls = false;
 
         [Header("Search / Lost Sight Settings")]
         [Tooltip("Time enemy spends searching at player's last known or heard position before resuming patrol")]
-        [SerializeField] private float _searchDuration = 5f;
+        [SerializeField] private float _searchDuration = 3.5f;
 
         [Tooltip("Movement speed when walking to investigate last known spot")]
         [SerializeField] private float _searchSpeed = 1.6f;
@@ -100,6 +101,16 @@ namespace TrustNoOne.AI
         [SerializeField] private float _patrolWanderRadius = 15f;
         [SerializeField] private float _patrolWaitDuration = 2.5f;
 
+        [Header("Audio & Scream upon Detection")]
+        [Tooltip("AudioSource component for playing scream and horror sounds")]
+        [SerializeField] private AudioSource _audioSource;
+
+        [Tooltip("Audio clip played when the ghost spots the player and stands still screaming")]
+        [SerializeField] private AudioClip _screamSound;
+
+        [Tooltip("Duration the ghost stands still screaming before sprinting to chase (seconds)")]
+        [SerializeField] private float _screamDuration = 1.2f;
+
         [Header("References (Auto-detected if unassigned)")]
         [SerializeField] private Transform _player;
         [SerializeField] private Animator _animator;
@@ -112,6 +123,10 @@ namespace TrustNoOne.AI
         private float _lastAttackTime = -999f;
         private float _patrolWaitTimer;
         private bool _isWaitingAtPoint;
+
+        // Scream & Alert reaction state
+        private bool _isScreaming = false;
+        private Coroutine _screamCoroutine;
 
         // Player input & movement cache for hearing and push prevention
         private StarterAssetsInputs _playerInputs;
@@ -183,6 +198,19 @@ namespace TrustNoOne.AI
             if (_modelTransform == null && _animator != null)
             {
                 _modelTransform = _animator.transform;
+            }
+
+            if (_audioSource == null)
+            {
+                _audioSource = GetComponent<AudioSource>();
+                if (_audioSource == null)
+                {
+                    _audioSource = gameObject.AddComponent<AudioSource>();
+                    _audioSource.spatialBlend = 1f;
+                    _audioSource.minDistance = 3f;
+                    _audioSource.maxDistance = 25f;
+                    _audioSource.rolloffMode = AudioRolloffMode.Linear;
+                }
             }
 
             CacheRenderers();
@@ -288,6 +316,13 @@ namespace TrustNoOne.AI
         {
             if (inCutscene)
             {
+                if (_screamCoroutine != null)
+                {
+                    StopCoroutine(_screamCoroutine);
+                    _screamCoroutine = null;
+                }
+                _isScreaming = false;
+
                 if (_agent != null && _agent.isOnNavMesh)
                 {
                     _agent.isStopped = true;
@@ -297,6 +332,7 @@ namespace TrustNoOne.AI
                 {
                     _animator.SetFloat(SpeedHash, 0f);
                 }
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
                 enabled = false;
             }
             else
@@ -307,6 +343,17 @@ namespace TrustNoOne.AI
                     _agent.isStopped = false;
                 }
             }
+        }
+
+        private void OnDisable()
+        {
+            if (_screamCoroutine != null)
+            {
+                StopCoroutine(_screamCoroutine);
+                _screamCoroutine = null;
+            }
+            _isScreaming = false;
+            DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
         }
 
         private void CacheRenderers()
@@ -337,9 +384,11 @@ namespace TrustNoOne.AI
 
         private void Start()
         {
+            _currentState = State.Patrol;
             _agent.speed = _patrolSpeed;
             _agent.stoppingDistance = _attackRadius * 0.8f;
             SetNextPatrolDestination();
+            DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
         }
 
         private void Update()
@@ -360,14 +409,30 @@ namespace TrustNoOne.AI
             }
             else
             {
-                // 2. If enemy CANNOT see the player, check if it HEARS the player sprinting!
+                // 2. If enemy CANNOT see the player, check if it HEARS the player!
                 EvaluateHearing(distanceToPlayer);
             }
 
             // 3. Check door proximity for phasing
             UpdateDoorPhasing();
 
-            // 4. State Machine
+            // 4. Update UI Detection Indicator (Yellow for Search, Red for Detected/Chase, None for Patrol)
+            UpdateDetectionUI();
+
+            // If standing still screaming upon spotting player, face player and wait
+            if (_isScreaming)
+            {
+                Vector3 lookDir = (_player.position - transform.position);
+                lookDir.y = 0f;
+                if (lookDir.sqrMagnitude > 0.01f)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(lookDir), Time.deltaTime * 10f);
+                }
+                UpdateAnimator();
+                return;
+            }
+
+            // 5. State Machine
             switch (_currentState)
             {
                 case State.Patrol:
@@ -594,21 +659,11 @@ namespace TrustNoOne.AI
 
         private void HandlePatrol(float distanceToPlayer)
         {
-            // If enemy sees player -> immediately Chase or Attack
+            // If enemy sees player -> immediately scream and stand still, then Chase!
             if (_canSeePlayer)
             {
                 _isWaitingAtPoint = false;
-
-                if (distanceToPlayer <= _attackRadius)
-                {
-                    _currentState = State.Attack;
-                }
-                else
-                {
-                    _currentState = State.Chase;
-                    _agent.isStopped = false;
-                    if (!_isPhasing) _agent.speed = _chaseSpeed;
-                }
+                TriggerSpotPlayerScream(distanceToPlayer);
                 return;
             }
 
@@ -672,21 +727,12 @@ namespace TrustNoOne.AI
 
         private void HandleSearch()
         {
-            // If player is spotted (or found while searching) -> immediately Chase or Attack!
+            // If player is spotted (or found while searching) -> scream, then Chase / Attack!
             if (_canSeePlayer)
             {
-                Debug.Log("<color=red>[EnemyAI]</color> Found player! Attacking!");
+                Debug.Log("<color=red>[EnemyAI]</color> Found player while searching!");
                 float dist = Vector3.Distance(transform.position, _player.position);
-                if (dist <= _attackRadius)
-                {
-                    _currentState = State.Attack;
-                }
-                else
-                {
-                    _currentState = State.Chase;
-                    _agent.isStopped = false;
-                    if (!_isPhasing) _agent.speed = _chaseSpeed;
-                }
+                TriggerSpotPlayerScream(dist);
                 return;
             }
 
@@ -809,8 +855,114 @@ namespace TrustNoOne.AI
         {
             if (_animator == null || !_hasSpeedParam) return;
 
-            float currentSpeed = _agent.isStopped ? 0f : _agent.velocity.magnitude;
+            float currentSpeed = (_agent.isStopped || _isScreaming) ? 0f : _agent.velocity.magnitude;
             _animator.SetFloat(SpeedHash, currentSpeed);
+        }
+
+        #endregion
+
+        #region Scream & Alert Sequence
+
+        /// <summary>
+        /// Triggers the ghost to stand still and scream / roar before chasing the player.
+        /// </summary>
+        private void TriggerSpotPlayerScream(float distanceToPlayer)
+        {
+            if (_isScreaming) return;
+
+            if (_screamCoroutine != null) StopCoroutine(_screamCoroutine);
+            _screamCoroutine = StartCoroutine(SpotPlayerScreamRoutine(distanceToPlayer));
+        }
+
+        private IEnumerator SpotPlayerScreamRoutine(float initialDistance)
+        {
+            _isScreaming = true;
+
+            // Immediately halt movement
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.velocity = Vector3.zero;
+            }
+
+            // Set Idle / Scream stance in Animator
+            if (_animator != null)
+            {
+                _animator.SetFloat(SpeedHash, 0f);
+            }
+
+            // Play scream sound
+            if (_audioSource != null && _screamSound != null)
+            {
+                _audioSource.PlayOneShot(_screamSound);
+            }
+
+            // Trigger Red Detected UI
+            DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.Detected);
+
+            Debug.Log("<color=red>[EnemyAI]</color> Ghost SPOTTED the player! Screaming in horror before chasing!");
+
+            // Stand still facing the player for the duration of the scream
+            float timer = 0f;
+            while (timer < _screamDuration)
+            {
+                timer += Time.deltaTime;
+                if (_player != null)
+                {
+                    Vector3 lookDir = (_player.position - transform.position);
+                    lookDir.y = 0f;
+                    if (lookDir.sqrMagnitude > 0.01f)
+                    {
+                        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(lookDir), Time.deltaTime * 10f);
+                    }
+                }
+                yield return null;
+            }
+
+            _isScreaming = false;
+
+            // Now begin sprinting / chasing player!
+            if (_player != null)
+            {
+                float currentDistance = Vector3.Distance(transform.position, _player.position);
+                if (currentDistance <= _attackRadius && _canSeePlayer)
+                {
+                    _currentState = State.Attack;
+                    if (_agent != null && _agent.isOnNavMesh) _agent.isStopped = true;
+                }
+                else
+                {
+                    _currentState = State.Chase;
+                    if (_agent != null && _agent.isOnNavMesh)
+                    {
+                        _agent.isStopped = false;
+                        if (!_isPhasing) _agent.speed = _chaseSpeed;
+                        _agent.SetDestination(_player.position);
+                    }
+                }
+            }
+        }
+
+        private void UpdateDetectionUI()
+        {
+            if (!enabled || !gameObject.activeInHierarchy)
+            {
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
+                return;
+            }
+
+            if (_currentState == State.Chase || _currentState == State.Attack || _isScreaming)
+            {
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.Detected);
+            }
+            else if (_currentState == State.Search)
+            {
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.Searching);
+            }
+            else
+            {
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
+            }
         }
 
         #endregion
