@@ -49,6 +49,10 @@ namespace TrustNoOne.AI
         [Tooltip("Drag & Drop the Knife or destination spot where Enemy 2 should go during the cutscene.")]
         [SerializeField] private Transform _knifeDestination;
 
+        [Header("Hand Knife Reference")]
+        [Tooltip("The knife GameObject attached to Enemy 2's hand (set active when picked up)")]
+        [SerializeField] private GameObject _handKnife;
+
         [Header("References (Auto-detected if unassigned)")]
         [SerializeField] private Transform _player;
         [SerializeField] private Animator _animator;
@@ -72,6 +76,12 @@ namespace TrustNoOne.AI
         {
             get => _knifeDestination;
             set => _knifeDestination = value;
+        }
+
+        public GameObject HandKnife
+        {
+            get => _handKnife;
+            set => _handKnife = value;
         }
 
         // Animator parameter hashes
@@ -545,7 +555,7 @@ namespace TrustNoOne.AI
             Vector3 targetPos = targetTransform.position;
             _agent.isStopped = false;
             _agent.speed = _walkSpeed;
-            _agent.stoppingDistance = 1.0f; // Close pickup reach distance to knife!
+            _agent.stoppingDistance = 0.25f; // Close pickup reach distance to knife!
             _agent.SetDestination(targetPos);
             UpdateAnimator(_walkSpeed);
 
@@ -740,6 +750,123 @@ namespace TrustNoOne.AI
 
             Debug.Log("<color=green><b>[DeceiverAI]</b></color> Arrived directly in front of player!");
             onArrived?.Invoke();
+        }
+
+        /// <summary>
+        /// Commands Enemy 2 to play the knife pickup animation:
+        /// 1. Plays the 'PickUP' animation state.
+        /// 2. Halfway through the pickup gesture, disables/destroys tableKnife and enables handKnife.
+        /// 3. Transitions cleanly back to Idle.
+        /// </summary>
+        public void PlayPickupKnife(GameObject tableKnife, GameObject handKnife = null, float animDuration = 2.2f, System.Action onCompleted = null)
+        {
+            StopAllCoroutines();
+            StartCoroutine(PickupKnifeRoutine(tableKnife, handKnife, animDuration, onCompleted));
+        }
+
+        private IEnumerator PickupKnifeRoutine(GameObject tableKnife, GameObject handKnife, float animDuration, System.Action onCompleted)
+        {
+            _isStationary = true;
+            _isOpeningDoor = false;
+            _isNavigatingToDestination = false;
+
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.velocity = Vector3.zero;
+            }
+
+            GameObject resolvedHandKnife = handKnife != null ? handKnife : _handKnife;
+            if (resolvedHandKnife == null)
+            {
+                Transform[] allChildren = GetComponentsInChildren<Transform>(true);
+                foreach (Transform child in allChildren)
+                {
+                    if (child.name.ToLower().Contains("knife") && child.gameObject != tableKnife)
+                    {
+                        resolvedHandKnife = child.gameObject;
+                        break;
+                    }
+                }
+            }
+
+            // 1. Trigger PickUP animation
+            if (_animator != null)
+            {
+                _animator.SetFloat(SpeedHash, 0f);
+
+                bool hasPickUpParam = false;
+                foreach (var p in _animator.parameters)
+                {
+                    if (p.name == "PickUp") { hasPickUpParam = true; break; }
+                }
+
+                if (hasPickUpParam)
+                {
+                    _animator.SetTrigger("PickUp");
+                }
+
+                // Check state name variations and force Play if needed
+                _animator.CrossFadeInFixedTime("PickUP", 0.1f, 0, 0f);
+            }
+
+            Debug.Log("<color=yellow>[DeceiverAI]</color> Playing PickUP animation for knife...");
+
+            // 2. Wait until hand reaches the table (~42% of animation duration)
+            float swapTime = animDuration * 0.42f;
+            yield return new WaitForSeconds(swapTime);
+
+            // 3. Swap knife: Hide/destroy table knife and activate hand knife!
+            if (tableKnife != null)
+            {
+                tableKnife.SetActive(false);
+                Destroy(tableKnife, 0.1f);
+                Debug.Log("<color=green>[DeceiverAI]</color> Table knife destroyed/hidden.");
+            }
+
+            if (resolvedHandKnife != null)
+            {
+                resolvedHandKnife.SetActive(true);
+                Debug.Log($"<color=green>[DeceiverAI]</color> Hand knife '{resolvedHandKnife.name}' activated in Enemy 2's hand!");
+            }
+
+            // 4. Wait for remaining pickup animation duration
+            float remaining = Mathf.Max(0.1f, animDuration - swapTime);
+            yield return new WaitForSeconds(remaining);
+
+            // 5. Crossfade back to Idle
+            if (_animator != null)
+            {
+                _animator.CrossFadeInFixedTime("Idle", 0.2f);
+            }
+
+            yield return new WaitForSeconds(0.3f);
+
+            onCompleted?.Invoke();
+        }
+
+        /// <summary>
+        /// Resumes normal following behavior after cutscenes.
+        /// </summary>
+        public void ResumeFollowingPlayer()
+        {
+            StopAllCoroutines();
+            _isStationary = false;
+            _isNavigatingToDestination = false;
+            _isOpeningDoor = false;
+            _doorCooldownTimer = 0f;
+
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = false;
+                _agent.speed = _walkSpeed;
+                _agent.stoppingDistance = _followDistance;
+                if (_player != null)
+                {
+                    _agent.SetDestination(_player.position);
+                }
+            }
+            Debug.Log("<color=green>[DeceiverAI]</color> Resumed following player!");
         }
     }
 }

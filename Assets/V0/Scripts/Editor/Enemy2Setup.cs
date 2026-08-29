@@ -114,11 +114,13 @@ namespace V0.Editor
             // 1. Add Parameters if missing
             bool hasSpeed = false;
             bool hasOpenDoor = false;
+            bool hasPickUp = false;
 
             foreach (AnimatorControllerParameter p in controller.parameters)
             {
                 if (p.name == "Speed") hasSpeed = true;
                 if (p.name == "OpenDoor") hasOpenDoor = true;
+                if (p.name == "PickUp") hasPickUp = true;
             }
 
             if (!hasSpeed)
@@ -129,12 +131,17 @@ namespace V0.Editor
             {
                 controller.AddParameter("OpenDoor", AnimatorControllerParameterType.Trigger);
             }
+            if (!hasPickUp)
+            {
+                controller.AddParameter("PickUp", AnimatorControllerParameterType.Trigger);
+            }
 
             // 2. Find States
             AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
             AnimatorState idleState = null;
             AnimatorState walkingState = null;
             AnimatorState doorOpeningState = null;
+            AnimatorState pickUpState = null;
 
             foreach (ChildAnimatorState childState in stateMachine.states)
             {
@@ -142,6 +149,29 @@ namespace V0.Editor
                 if (stateName.Contains("idle")) idleState = childState.state;
                 else if (stateName.Contains("walk")) walkingState = childState.state;
                 else if (stateName.Contains("door")) doorOpeningState = childState.state;
+                else if (stateName.Contains("pick")) pickUpState = childState.state;
+            }
+
+            // If pickUpState is missing, attempt to find the PickUP animation clip and create state
+            if (pickUpState == null)
+            {
+                string[] guids = AssetDatabase.FindAssets("PickUP t:AnimationClip");
+                AnimationClip pickClip = null;
+                foreach (string guid in guids)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (path.Contains("Enemy2"))
+                    {
+                        pickClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                        if (pickClip != null) break;
+                    }
+                }
+
+                if (pickClip != null)
+                {
+                    pickUpState = stateMachine.AddState("PickUP");
+                    pickUpState.motion = pickClip;
+                }
             }
 
             if (idleState == null || walkingState == null) return;
@@ -153,6 +183,7 @@ namespace V0.Editor
             idleState.transitions = new AnimatorStateTransition[0];
             walkingState.transitions = new AnimatorStateTransition[0];
             if (doorOpeningState != null) doorOpeningState.transitions = new AnimatorStateTransition[0];
+            if (pickUpState != null) pickUpState.transitions = new AnimatorStateTransition[0];
 
             // 4. Idle -> Walking (Speed > 0.1)
             AnimatorStateTransition idleToWalk = idleState.AddTransition(walkingState);
@@ -166,7 +197,7 @@ namespace V0.Editor
             walkToIdle.duration = 0.2f;
             walkToIdle.AddCondition(AnimatorConditionMode.Less, 0.1f, "Speed");
 
-            // 6. Door Opening Transitions (Explicit one-shot transitions to prevent looping)
+            // 6. Door Opening Transitions
             if (doorOpeningState != null)
             {
                 // Idle -> DoorOpening
@@ -195,9 +226,38 @@ namespace V0.Editor
                 doorToWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
             }
 
+            // 7. PickUP Animation Transitions
+            if (pickUpState != null)
+            {
+                // Idle -> PickUP
+                AnimatorStateTransition idleToPick = idleState.AddTransition(pickUpState);
+                idleToPick.hasExitTime = false;
+                idleToPick.duration = 0.1f;
+                idleToPick.AddCondition(AnimatorConditionMode.If, 0, "PickUp");
+
+                // Walking -> PickUP
+                AnimatorStateTransition walkToPick = walkingState.AddTransition(pickUpState);
+                walkToPick.hasExitTime = false;
+                walkToPick.duration = 0.1f;
+                walkToPick.AddCondition(AnimatorConditionMode.If, 0, "PickUp");
+
+                // PickUP -> Idle (Exit Time = 0.90)
+                AnimatorStateTransition pickToIdle = pickUpState.AddTransition(idleState);
+                pickToIdle.hasExitTime = true;
+                pickToIdle.exitTime = 0.90f;
+                pickToIdle.duration = 0.2f;
+
+                // PickUP -> Walking (Exit Time = 0.90, Speed > 0.1)
+                AnimatorStateTransition pickToWalk = pickUpState.AddTransition(walkingState);
+                pickToWalk.hasExitTime = true;
+                pickToWalk.exitTime = 0.90f;
+                pickToWalk.duration = 0.2f;
+                pickToWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
+            }
+
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
-            Debug.Log("<color=green>✓ [Enemy2Setup]</color> Configured Animator Controller transitions and parameters!");
+            Debug.Log("<color=green>✓ [Enemy2Setup]</color> Configured Animator Controller transitions and parameters (Speed, OpenDoor, PickUp)!");
         }
     }
 }
