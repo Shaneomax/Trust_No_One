@@ -40,10 +40,14 @@ namespace TrustNoOne.AI
         [SerializeField] private bool _canOpenLockedDoors = false;
 
         [Header("Stairs & Ground Snapping")]
-        [Tooltip("Smoothly aligns feet with stairs and floor geometry")]
-        [SerializeField] private bool _enableGroundSnapping = true;
+        [Tooltip("Smoothly aligns feet with stairs and floor geometry (Default false to prevent props like tables lifting feet)")]
+        [SerializeField] private bool _enableGroundSnapping = false;
         [SerializeField] private float _feetOffset = 0f;
         [SerializeField] private LayerMask _groundLayers = ~0;
+
+        [Header("Cutscene & Target Destinations")]
+        [Tooltip("Drag & Drop the Knife or destination spot where Enemy 2 should go during the cutscene.")]
+        [SerializeField] private Transform _knifeDestination;
 
         [Header("References (Auto-detected if unassigned)")]
         [SerializeField] private Transform _player;
@@ -53,6 +57,7 @@ namespace TrustNoOne.AI
         private NavMeshAgent _agent;
         private bool _isOpeningDoor = false;
         private bool _isStationary = false;
+        private bool _isNavigatingToDestination = false;
         private DoorInteractable _currentDoorTarget;
         private float _doorCooldownTimer = 0f;
         private readonly HashSet<DoorInteractable> _openedDoors = new HashSet<DoorInteractable>();
@@ -61,6 +66,12 @@ namespace TrustNoOne.AI
         {
             get => _isStationary;
             set => _isStationary = value;
+        }
+
+        public Transform KnifeDestination
+        {
+            get => _knifeDestination;
+            set => _knifeDestination = value;
         }
 
         // Animator parameter hashes
@@ -183,6 +194,12 @@ namespace TrustNoOne.AI
 
         private void Update()
         {
+            // If navigating to a specific destination (e.g. knife during cutscene), suppress follow player logic!
+            if (_isNavigatingToDestination)
+            {
+                return;
+            }
+
             if (_player == null)
             {
                 CachePlayer();
@@ -432,6 +449,15 @@ namespace TrustNoOne.AI
             if (_hasSpeedParam)
             {
                 _animator.SetFloat(SpeedHash, speed);
+
+                if (speed <= 0.05f)
+                {
+                    AnimatorStateInfo state = _animator.GetCurrentAnimatorStateInfo(0);
+                    if (state.IsName("Walking") && !state.IsName("DoorOpening"))
+                    {
+                        _animator.CrossFadeInFixedTime("Idle", 0.15f);
+                    }
+                }
             }
             else
             {
@@ -455,34 +481,19 @@ namespace TrustNoOne.AI
 
         private void SnapModelToGround()
         {
-            if (!_enableGroundSnapping || _modelTransform == null || _modelTransform == transform) return;
-
-            Ray ray = new Ray(transform.position + Vector3.up * 1f, Vector3.down);
-            int hitCount = Physics.RaycastNonAlloc(ray, _groundHitBuffer, 3f, _groundLayers, QueryTriggerInteraction.Ignore);
-
-            if (hitCount == 0) return;
-
-            System.Array.Sort(_groundHitBuffer, 0, hitCount, RaycastHitDistanceComparer.Instance);
-
-            for (int i = 0; i < hitCount; i++)
+            if (_modelTransform != null && _modelTransform != transform)
             {
-                RaycastHit hit = _groundHitBuffer[i];
-                if (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform))
-                    continue;
-
-                float targetLocalY = (hit.point.y - transform.position.y) + _feetOffset;
-                Vector3 localPos = _modelTransform.localPosition;
-                localPos.y = Mathf.Lerp(localPos.y, targetLocalY, Time.deltaTime * 20f);
-                _modelTransform.localPosition = localPos;
-                break;
+                _modelTransform.localPosition = Vector3.zero;
             }
         }
+
         /// <summary>
         /// Commands Enemy 2 to navigate directly to the target destination (e.g. Knife).
         /// - Follows NavMesh path directly to the destination.
+        /// - Stops exactly 2 meters away from the knife (like player distance).
         /// - If he encounters any closed door in front of him along the path, he opens it with animation.
         /// - Once he passes through the door, onDoorPassed is fired (to close the door).
-        /// - When he arrives at destination, he faces the destination rotation, plays Idle, and becomes permanently stationary.
+        /// - When he arrives 2m from destination, he faces the knife, plays Idle, and becomes permanently stationary.
         /// </summary>
         public void MoveToDestination(Transform destination, System.Action onDoorPassed, System.Action onArrived)
         {
@@ -494,18 +505,51 @@ namespace TrustNoOne.AI
         {
             _isOpeningDoor = false;
             _isStationary = false;
+            _isNavigatingToDestination = true;
 
-            if (destination == null || _agent == null || !_agent.isOnNavMesh)
+            // Resolve target destination
+            Transform targetTransform = destination != null ? destination : _knifeDestination;
+            if (targetTransform == null)
             {
+                GameObject knife = GameObject.Find("SM_Knife");
+                if (knife != null) targetTransform = knife.transform;
+            }
+
+            if (targetTransform == null)
+            {
+                Debug.LogError("<color=red>[DeceiverAI]</color> MoveToDestination failed: No Knife or Destination Transform provided!");
+                _isNavigatingToDestination = false;
                 yield break;
             }
 
-            Vector3 targetPos = destination.position;
+            if (_agent == null)
+            {
+                _agent = GetComponent<NavMeshAgent>();
+            }
+
+            if (_agent == null)
+            {
+                _isNavigatingToDestination = false;
+                yield break;
+            }
+
+            // Ensure agent is on NavMesh
+            if (!_agent.isOnNavMesh)
+            {
+                if (NavMesh.SamplePosition(transform.position, out NavMeshHit navHit, 5.0f, NavMesh.AllAreas))
+                {
+                    _agent.Warp(navHit.position);
+                }
+            }
+
+            Vector3 targetPos = targetTransform.position;
             _agent.isStopped = false;
             _agent.speed = _walkSpeed;
-            _agent.stoppingDistance = 0.5f;
+            _agent.stoppingDistance = 1.0f; // Close pickup reach distance to knife!
             _agent.SetDestination(targetPos);
             UpdateAnimator(_walkSpeed);
+
+            Debug.Log($"<color=cyan><b>[DeceiverAI]</b></color> Moving to knife (stopping at pickup distance ~1.0m): <b>{targetTransform.gameObject.name}</b> at {targetPos}");
 
             DoorInteractable lastOpenedDoor = null;
             bool doorPassedCalled = false;
@@ -523,6 +567,7 @@ namespace TrustNoOne.AI
                     {
                         _agent.isStopped = false;
                         _agent.speed = _walkSpeed;
+                        _agent.stoppingDistance = 0.25f;
                         _agent.SetDestination(targetPos);
                         UpdateAnimator(_walkSpeed);
                     }
@@ -539,7 +584,7 @@ namespace TrustNoOne.AI
                     }
                 }
 
-                // 3. Keep moving towards destination
+                // 3. Keep moving towards destination (stopping at reach/pickup distance ~1.0m)
                 if (_agent != null && _agent.isOnNavMesh)
                 {
                     float distToDestination = Vector3.Distance(transform.position, targetPos);
@@ -548,10 +593,11 @@ namespace TrustNoOne.AI
                     float currentSpeed = _agent.velocity.magnitude > 0.1f ? _walkSpeed : 0.5f;
                     UpdateAnimator(currentSpeed);
 
-                    if (distToDestination <= 0.8f && !_agent.pathPending)
+                    if ((distToDestination <= 1.1f || (_agent.hasPath && _agent.remainingDistance <= 1.1f)) && !_agent.pathPending)
                     {
-                        // Arrived at knife destination!
+                        // Reached knife pickup distance! Stop here beside the table!
                         _agent.isStopped = true;
+                        _agent.ResetPath();
                         _agent.velocity = Vector3.zero;
                         break;
                     }
@@ -566,24 +612,133 @@ namespace TrustNoOne.AI
                 onDoorPassed?.Invoke();
             }
 
-            // 4. Stand at destination, face destination rotation, and switch to Idle
-            UpdateAnimator(0f);
-            if (destination != null)
+            // 4. Stand at pickup distance, smoothly face the knife, and switch to Idle animation
+            if (_animator != null)
             {
-                Quaternion faceRot = destination.rotation;
+                if (_hasSpeedParam) _animator.SetFloat(SpeedHash, 0f);
+                _animator.CrossFadeInFixedTime("Idle", 0.15f);
+            }
+
+            Vector3 toKnife = (targetPos - transform.position);
+            toKnife.y = 0f;
+            if (toKnife.sqrMagnitude > 0.01f)
+            {
+                Quaternion faceRot = Quaternion.LookRotation(toKnife);
                 float turnTimer = 0f;
-                while (turnTimer < 0.6f)
+                while (turnTimer < 0.5f)
                 {
                     turnTimer += Time.deltaTime;
-                    transform.rotation = Quaternion.Slerp(transform.rotation, faceRot, turnTimer / 0.6f);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, faceRot, turnTimer / 0.5f);
                     yield return null;
                 }
             }
 
             _isStationary = true;
+            _isNavigatingToDestination = false;
             _isOpeningDoor = false;
-            UpdateAnimator(0f);
 
+            if (_animator != null)
+            {
+                if (_hasSpeedParam) _animator.SetFloat(SpeedHash, 0f);
+                _animator.CrossFadeInFixedTime("Idle", 0.15f);
+            }
+
+            Debug.Log("<color=green><b>[DeceiverAI]</b></color> Arrived at knife pickup distance (~1.0m) and entered permanent stationary Idle.");
+            onArrived?.Invoke();
+        }
+
+        /// <summary>
+        /// Commands Enemy 2 to rapidly pursue/approach the player during the OkayEnding cutscene.
+        /// </summary>
+        public void ApproachPlayer(Transform playerTransform, float speed = 4.0f, System.Action onArrived = null)
+        {
+            StopAllCoroutines();
+            StartCoroutine(ApproachPlayerRoutine(playerTransform, speed, onArrived));
+        }
+
+        private IEnumerator ApproachPlayerRoutine(Transform playerTransform, float speed, System.Action onArrived)
+        {
+            _isStationary = false;
+            _isOpeningDoor = false;
+            _isNavigatingToDestination = true;
+
+            if (_agent == null) _agent = GetComponent<NavMeshAgent>();
+
+            if (_agent != null)
+            {
+                if (!_agent.isOnNavMesh)
+                {
+                    if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5.0f, NavMesh.AllAreas))
+                    {
+                        _agent.Warp(hit.position);
+                    }
+                }
+
+                _agent.isStopped = false;
+                _agent.speed = speed;
+                _agent.stoppingDistance = 1.8f;
+                _agent.SetDestination(playerTransform.position);
+                UpdateAnimator(speed);
+            }
+
+            Debug.Log($"<color=red><b>[DeceiverAI]</b></color> Approaching player aggressively at speed {speed}!");
+
+            while (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.SetDestination(playerTransform.position);
+                UpdateAnimator(speed);
+
+                // Handle any doors along the path
+                if (_doorCooldownTimer <= 0f && CheckForDoorAhead(out DoorInteractable door))
+                {
+                    yield return StartCoroutine(OpenDoorSequence(door));
+                    if (_agent != null && _agent.isOnNavMesh)
+                    {
+                        _agent.isStopped = false;
+                        _agent.speed = speed;
+                        _agent.stoppingDistance = 1.8f;
+                        _agent.SetDestination(playerTransform.position);
+                    }
+                }
+
+                float dist = Vector3.Distance(transform.position, playerTransform.position);
+                if (dist <= 2.0f && !_agent.pathPending)
+                {
+                    _agent.isStopped = true;
+                    _agent.ResetPath();
+                    _agent.velocity = Vector3.zero;
+                    break;
+                }
+
+                yield return null;
+            }
+
+            // Smoothly face player
+            Vector3 toPlayer = (playerTransform.position - transform.position);
+            toPlayer.y = 0f;
+            if (toPlayer.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(toPlayer);
+                float timer = 0f;
+                while (timer < 0.5f)
+                {
+                    timer += Time.deltaTime;
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, timer / 0.5f);
+                    yield return null;
+                }
+            }
+
+            _isStationary = true;
+            _isNavigatingToDestination = false;
+            _isOpeningDoor = false;
+
+            if (_animator != null)
+            {
+                if (_hasSpeedParam) _animator.SetFloat(SpeedHash, 0f);
+                _animator.CrossFadeInFixedTime("Idle", 0.15f);
+            }
+
+            Debug.Log("<color=green><b>[DeceiverAI]</b></color> Arrived directly in front of player!");
             onArrived?.Invoke();
         }
     }

@@ -149,7 +149,15 @@ namespace V0.Editor
             so.FindProperty("_letterboxCanvasGroup").objectReferenceValue = canvasGroup;
             so.FindProperty("_subtitleText").objectReferenceValue = subtitleText;
 
-            so.ApplyModifiedProperties();
+            // Wire Stranger DeceiverAI properties
+            if (stranger != null)
+            {
+                SerializedObject strangerSO = new SerializedObject(stranger);
+                SerializedProperty knifeProp = strangerSO.FindProperty("_knifeDestination");
+                if (knifeProp != null) knifeProp.objectReferenceValue = knifeDestination;
+                strangerSO.ApplyModifiedProperties();
+                EditorUtility.SetDirty(stranger.gameObject);
+            }
 
             EditorUtility.SetDirty(triggerObj);
             UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();

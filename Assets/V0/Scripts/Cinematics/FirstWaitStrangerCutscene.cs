@@ -103,7 +103,7 @@ namespace V0.Cinematics
             // 3. Smoothly rotate player camera / view directly to look at the Stranger
             if (_stranger != null)
             {
-                yield return StartCoroutine(SmoothLookAtStranger(_stranger.transform, 0.8f));
+                yield return StartCoroutine(SmoothLookAtStranger(_stranger.transform, 0.6f));
             }
 
             // 4. Show Subtitle Dialogue: "Wait here, I'll go get the truck key."
@@ -115,8 +115,17 @@ namespace V0.Cinematics
                 _subtitleText.DOFade(1f, 0.4f);
             }
 
-            // Wait for dialogue line to deliver
-            yield return new WaitForSeconds(_dialogueDuration);
+            // Keep eyes locked on Stranger while he speaks
+            float dialogueTimer = 0f;
+            while (dialogueTimer < _dialogueDuration)
+            {
+                dialogueTimer += Time.deltaTime;
+                if (_stranger != null)
+                {
+                    TrackStrangerWithCamera(_stranger.transform, Time.deltaTime * 8f);
+                }
+                yield return null;
+            }
 
             // Hide Subtitle
             if (_subtitleText != null)
@@ -128,10 +137,17 @@ namespace V0.Cinematics
             bool doorClosed = false;
             bool strangerArrived = false;
 
-            if (_stranger != null && _knifeDestination != null)
+            Transform targetKnife = _knifeDestination != null ? _knifeDestination : (_stranger != null ? _stranger.KnifeDestination : null);
+            if (targetKnife == null)
+            {
+                GameObject knifeObj = GameObject.Find("SM_Knife");
+                if (knifeObj != null) targetKnife = knifeObj.transform;
+            }
+
+            if (_stranger != null)
             {
                 _stranger.MoveToDestination(
-                    _knifeDestination,
+                    targetKnife,
                     onDoorPassed: () =>
                     {
                         if (!doorClosed)
@@ -157,12 +173,16 @@ namespace V0.Cinematics
                 strangerArrived = true;
             }
 
-            // Wait until the door is closed and stranger has reached the knife destination
-            float maxWait = 14.0f;
+            // Continuous Camera Tracking: Keep player's view locked on Stranger while he walks, opens door, and enters room!
+            float maxWait = 16.0f;
             float elapsed = 0f;
             while ((!doorClosed || !strangerArrived) && elapsed < maxWait)
             {
                 elapsed += Time.deltaTime;
+                if (_stranger != null)
+                {
+                    TrackStrangerWithCamera(_stranger.transform, Time.deltaTime * 6f);
+                }
                 yield return null;
             }
 
@@ -187,6 +207,30 @@ namespace V0.Cinematics
             {
                 gameObject.SetActive(false);
             }
+        }
+
+        private void TrackStrangerWithCamera(Transform strangerTransform, float lerpSpeed)
+        {
+            if (_playerController == null || strangerTransform == null) return;
+
+            Vector3 eyePos = _playerController.CinemachineCameraTarget != null
+                ? _playerController.CinemachineCameraTarget.transform.position
+                : _playerController.transform.position + Vector3.up * 1.6f;
+
+            Vector3 targetLookPos = strangerTransform.position + Vector3.up * 1.5f;
+            Vector3 dir = (targetLookPos - eyePos).normalized;
+
+            float targetYaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+            float targetPitch = -Mathf.Asin(Mathf.Clamp(dir.y, -1f, 1f)) * Mathf.Rad2Deg;
+
+            float startYaw = _playerController.transform.eulerAngles.y;
+            float startPitch = _playerController.CinemachineCameraTarget != null ? _playerController.CinemachineCameraTarget.transform.localEulerAngles.x : 0f;
+            if (startPitch > 180f) startPitch -= 360f;
+
+            float curYaw = Mathf.LerpAngle(startYaw, targetYaw, lerpSpeed);
+            float curPitch = Mathf.Lerp(startPitch, targetPitch, lerpSpeed);
+
+            _playerController.ResetLookOrientation(curPitch, curYaw);
         }
 
         private IEnumerator SmoothLookAtStranger(Transform strangerTransform, float duration)
