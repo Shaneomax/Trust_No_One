@@ -3609,6 +3609,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -4339,6 +4341,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -5743,6 +5747,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -7148,6 +7154,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32904,6 +32912,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32960,6 +32970,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -35391,6 +35403,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -36003,6 +36017,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -39099,6 +39115,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -241420,6 +241438,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -242388,6 +242408,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -242875,6 +242897,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -244241,6 +244265,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -244484,7 +244510,7 @@ MonoBehaviour:
   - {fileID: 1903525950}
   _ghostToActivate: {fileID: 1500852710}
   _spawnGhostOnPickup: 0
-  _pickupSound: {fileID: 0}
+  _pickupSound: {fileID: 8300000, guid: 25c5dde03bcdd944da2258f5274114ee, type: 3}
 --- !u!65 &1362222790
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -245340,6 +245366,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -253274,6 +253302,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -253661,6 +253691,8 @@ MonoBehaviour:
   _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
   _unlockDialogueDuration: 4.5
   _unlockDialogueAudio: {fileID: 0}
+  _openCloseDoorSound: {fileID: 8300000, guid: 2e11079ca3d0d454e864a3c31549bed0, type: 3}
+  _doorSoundVolume: 0.8
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}

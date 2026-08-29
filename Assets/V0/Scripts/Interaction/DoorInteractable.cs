@@ -108,6 +108,10 @@ namespace V0.Interaction
         [SerializeField] private AudioClip _unlockDialogueAudio;
 
         [Header("Audio (Optional)")]
+        [Tooltip("Audio clip played when opening or closing the door (Auto-finds Open_Or_CloseDoor.mp3 if null)")]
+        [SerializeField] private AudioClip _openCloseDoorSound;
+        [Range(0f, 1f)]
+        [SerializeField] private float _doorSoundVolume = 0.8f;
         [SerializeField] private AudioClip _unlockSound;
         [SerializeField] private AudioClip _lockedJiggleSound;
 
@@ -279,6 +283,8 @@ namespace V0.Interaction
             _doorTransform.DOLocalRotate(targetRotation, _animationDuration)
                 .SetEase(targetEase);
 
+            PlayDoorSound();
+
             if (_isOpen)
             {
                 Debug.Log("Player opens the door");
@@ -286,6 +292,31 @@ namespace V0.Interaction
             else
             {
                 Debug.Log("Player closes the door");
+            }
+        }
+
+        private void PlayDoorSound()
+        {
+            if (_openCloseDoorSound == null)
+            {
+                _openCloseDoorSound = Resources.Load<AudioClip>("Open_Or_CloseDoor");
+                if (_openCloseDoorSound == null)
+                {
+                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                    foreach (var c in allClips)
+                    {
+                        if (c.name.ToLower().Contains("open_or_close") || (c.name.ToLower().Contains("door") && !c.name.ToLower().Contains("jiggle")))
+                        {
+                            _openCloseDoorSound = c;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (_openCloseDoorSound != null)
+            {
+                AudioSource.PlayClipAtPoint(_openCloseDoorSound, transform.position, _doorSoundVolume);
             }
         }
 

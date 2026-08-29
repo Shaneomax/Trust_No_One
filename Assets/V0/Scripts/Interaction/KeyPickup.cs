@@ -139,8 +139,32 @@ namespace V0.Interaction
                 ? playerTransform.position + Vector3.up * _playerHeightOffset
                 : transform.position;
 
-            // Play pickup audio if assigned
-            if (_pickupSound != null)
+            // Play pickup audio specifically for DrawingRoomKey
+            if (_keyId.Equals("DrawingRoomKey", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_pickupSound == null)
+                {
+                    _pickupSound = Resources.Load<AudioClip>("Key_Pickup");
+                    if (_pickupSound == null)
+                    {
+                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                        foreach (var c in allClips)
+                        {
+                            if (c.name.Equals("Key_Pickup", StringComparison.OrdinalIgnoreCase) || c.name.ToLower().Contains("key_pickup"))
+                            {
+                                _pickupSound = c;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (_pickupSound != null)
+                {
+                    AudioSource.PlayClipAtPoint(_pickupSound, transform.position, 1.0f);
+                }
+            }
+            else if (_pickupSound != null)
             {
                 AudioSource.PlayClipAtPoint(_pickupSound, transform.position, 1.0f);
             }
