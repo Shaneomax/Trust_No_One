@@ -346,6 +346,9 @@ namespace V0.Cinematics
                 AutoFindReferences();
             }
 
+            // Disable flashlight during cutscene, restore after
+            FlashlightController.SetGlobalCutsceneMode(!active);
+
             if (_playerInputs != null)
             {
                 _playerInputs.cursorLocked = true;

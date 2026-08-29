@@ -481,6 +481,9 @@ namespace V0.Cinematics
 
         private void SetPlayerControlsActive(bool active)
         {
+            // Disable flashlight during cutscene, restore after
+            FlashlightController.SetGlobalCutsceneMode(!active);
+
             if (_playerInputs != null)
             {
                 _playerInputs.cursorLocked = true;

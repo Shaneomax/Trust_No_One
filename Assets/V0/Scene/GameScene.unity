@@ -33342,7 +33342,7 @@ MonoBehaviour:
     triggerDoorSlam: 0
     shakeCamera: 0
   - shotName: 4. Front Door Slam & Lock Event
-    virtualCamera: {fileID: 0}
+    virtualCamera: {fileID: 1871871561}
     duration: 5
     subtitleText: '[Player]: "What the hell was that noise?! ...The front door just
       slammed shut!"'
@@ -228921,9 +228921,9 @@ SceneRoots:
   - {fileID: 584958908}
   - {fileID: 1362222788}
   - {fileID: 1988524794}
+  - {fileID: 1551482503}
   - {fileID: 1162930989}
   - {fileID: 423030208}
   - {fileID: 1864238935}
   - {fileID: 1073629563}
   - {fileID: 1017190500}
-  - {fileID: 1551482503}
