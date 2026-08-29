@@ -271,97 +271,75 @@ namespace V0.Cinematics
 
             yield return new WaitForSeconds(0.5f);
 
-            // 6. Multi-Stage Physical Struggle (Player struggles to stand up from the ground)
+            // 6. Multi-Stage Physical Struggle (Smooth, organic cinematic rise from the ground)
             if (_wakeUpCamera != null)
             {
                 Transform camT = _wakeUpCamera.transform;
 
                 // -------------------------------------------------------------
-                // STAGE A: The Failed Head Lift (Weakness causes slump back down)
+                // STAGE A: Groggy Head Stir / Partial Lift (Smooth InOutSine)
                 // -------------------------------------------------------------
                 if (_enableFailedHeadLift)
                 {
-                    Vector3 headLiftPos = groundPos + Vector3.up * 0.18f;
-                    Vector3 headLiftRot = new Vector3(_groundRestPitch + 8f, standingRot.eulerAngles.y - 1f, _groundRestRoll * 0.4f);
+                    Vector3 headLiftPos = groundPos + Vector3.up * 0.15f;
+                    Vector3 headLiftRot = new Vector3(_groundRestPitch + 6f, standingRot.eulerAngles.y, _groundRestRoll * 0.4f);
 
-                    // Player strains to lift head off dirt
-                    camT.DOMove(headLiftPos, 0.75f).SetEase(Ease.OutQuad);
-                    camT.DORotate(headLiftRot, 0.75f).SetEase(Ease.OutQuad);
-                    yield return new WaitForSeconds(0.4f);
+                    // Player gently strains to lift head off dirt
+                    camT.DOMove(headLiftPos, 1.1f).SetEase(Ease.InOutSine);
+                    camT.DORotate(headLiftRot, 1.1f).SetEase(Ease.InOutSine);
+                    yield return new WaitForSeconds(1.15f);
 
-                    // Muscle tremors / shivering weakness
-                    camT.DOShakeRotation(0.35f, strength: new Vector3(2.5f, 2f, 3.5f), vibrato: 8, randomness: 90);
-                    yield return new WaitForSeconds(0.4f);
+                    // Head gently rests back down into dirt
+                    camT.DOMove(groundPos, 0.85f).SetEase(Ease.InOutSine);
+                    camT.DORotate(groundRot.eulerAngles, 0.85f).SetEase(Ease.InOutSine);
+                    yield return new WaitForSeconds(0.9f);
 
-                    // Arm slips! Head thumps back down into the dirt
-                    camT.DOMove(groundPos, 0.32f).SetEase(Ease.InQuad);
-                    camT.DORotate(groundRot.eulerAngles, 0.32f).SetEase(Ease.InQuad);
-                    yield return new WaitForSeconds(0.32f);
-
-                    // Impact jolt & quick reflexive eye blink
-                    camT.DOShakePosition(0.2f, strength: new Vector3(0.015f, 0.04f, 0.015f), vibrato: 10);
                     if (_blackoutCanvasGroup != null)
                     {
-                        _blackoutCanvasGroup.DOFade(0.55f, 0.15f).OnComplete(() => _blackoutCanvasGroup.DOFade(0.12f, 0.3f));
+                        _blackoutCanvasGroup.DOFade(0.4f, 0.3f).SetEase(Ease.InOutSine).OnComplete(() => _blackoutCanvasGroup.DOFade(0.12f, 0.4f).SetEase(Ease.InOutSine));
                     }
 
                     // Subtitle Line 2: Failed lift confusion
                     ShowSubtitle(_line2FailedLift, 2.2f);
-
-                    yield return new WaitForSeconds(0.6f);
+                    yield return new WaitForSeconds(0.8f);
                 }
 
                 // -------------------------------------------------------------
-                // STAGE B: Pushing Up Onto Hands and Knees (Shaking effort)
+                // STAGE B: Smoothly Pushing Up Onto Hands and Knees
                 // -------------------------------------------------------------
                 Vector3 kneelPos = playerT.position + Vector3.up * _kneelingHeight;
-                // Looking slightly down at hands/ground, roll leveled out
-                Vector3 kneelRot = new Vector3(10f, standingRot.eulerAngles.y - 3f, 3f);
+                Vector3 kneelRot = new Vector3(8f, standingRot.eulerAngles.y, 0f);
 
-                // Arm push upward with muscle trembling
-                camT.DOMove(kneelPos, 1.35f).SetEase(Ease.OutQuad);
-                camT.DORotate(kneelRot, 1.35f).SetEase(Ease.OutQuad);
-                camT.DOShakeRotation(1.35f, strength: new Vector3(2.5f, 3f, 4f), vibrato: 9, randomness: 60);
+                // Smooth, steady push upward
+                camT.DOMove(kneelPos, 1.8f).SetEase(Ease.InOutSine);
+                camT.DORotate(kneelRot, 1.8f).SetEase(Ease.InOutSine);
+                yield return new WaitForSeconds(1.85f);
 
-                yield return new WaitForSeconds(1.35f);
-
-                // Pause on knees: Player heaves a breath, head sways unsteadily
-                camT.DORotate(new Vector3(8f, standingRot.eulerAngles.y + 3f, -3f), 0.7f).SetEase(Ease.InOutSine);
-                yield return new WaitForSeconds(0.75f);
-                camT.DORotate(kneelRot, 0.65f).SetEase(Ease.InOutSine);
-                yield return new WaitForSeconds(0.6f);
+                // Pause on knees: Gentle natural head sway looking at surroundings
+                camT.DORotate(new Vector3(6f, standingRot.eulerAngles.y + 4f, 0f), 1.0f).SetEase(Ease.InOutSine);
+                yield return new WaitForSeconds(1.05f);
+                camT.DORotate(kneelRot, 0.9f).SetEase(Ease.InOutSine);
+                yield return new WaitForSeconds(0.95f);
 
                 // -------------------------------------------------------------
-                // STAGE C: Hauling Up to Feet & Staggering Forward
+                // STAGE C: Smoothly Hauling Up to Feet
                 // -------------------------------------------------------------
-                // First push: rising from knees
-                Vector3 midRisePos = playerT.position + Vector3.up * 1.15f + playerT.forward * 0.12f;
-                Vector3 midRiseRot = new Vector3(-2f, standingRot.eulerAngles.y + 2f, 4f);
-                camT.DOMove(midRisePos, 0.65f).SetEase(Ease.OutQuad);
-                camT.DORotate(midRiseRot, 0.65f).SetEase(Ease.OutQuad);
-                yield return new WaitForSeconds(0.65f);
+                // Fluid, uninterrupted rising to full standing height
+                camT.DOMove(standingPos, 2.0f).SetEase(Ease.InOutSine);
+                camT.DORotate(standingRot.eulerAngles, 2.0f).SetEase(Ease.InOutSine);
 
-                // Knee buckles slightly / vertigo dip
-                Vector3 dipPos = playerT.position + Vector3.up * 1.08f + playerT.forward * 0.10f;
-                Vector3 dipRot = new Vector3(2f, standingRot.eulerAngles.y - 2f, -2.5f);
-                camT.DOMove(dipPos, 0.35f).SetEase(Ease.InOutQuad);
-                camT.DORotate(dipRot, 0.35f).SetEase(Ease.InOutQuad);
-                yield return new WaitForSeconds(0.35f);
-
-                // Final drive up to full standing posture
-                camT.DOMove(standingPos, 0.9f).SetEase(Ease.OutQuad);
-                camT.DORotate(standingRot.eulerAngles, 0.9f).SetEase(Ease.OutQuad);
-
-                // Smoothly clear remaining darkness with DOTween
+                // Smoothly fade away remaining darkness
                 if (_blackoutCanvasGroup != null)
                 {
-                    _blackoutCanvasGroup.DOFade(0f, 1.2f).SetEase(Ease.InOutSine);
+                    _blackoutCanvasGroup.DOFade(0f, 1.5f).SetEase(Ease.InOutSine);
                 }
-                yield return new WaitForSeconds(0.6f);
+                yield return new WaitForSeconds(2.05f);
 
-                // Final steadying head shake as balance is regained
-                camT.DOShakeRotation(0.4f, strength: new Vector3(1f, 1.8f, 1.2f), vibrato: 6);
-                yield return new WaitForSeconds(0.4f);
+                // Align player look orientation smoothly before handover
+                if (_playerController != null)
+                {
+                    _playerController.ResetLookOrientation(0f, standingRot.eulerAngles.y);
+                }
 
                 // Subtitle Line 3: Spotted the house / need help
                 yield return ShowSubtitleAndWait(_line3Standing, 2.5f);

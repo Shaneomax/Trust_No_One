@@ -38682,7 +38682,7 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 0.8867924, g: 0.8867924, b: 0.8867924, a: 1}
-  m_Intensity: 8
+  m_Intensity: 11
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -246492,13 +246492,14 @@ GameObject:
   - component: {fileID: 1692687006}
   - component: {fileID: 1692687005}
   - component: {fileID: 1692687004}
+  - component: {fileID: 1692687007}
   m_Layer: 0
   m_Name: LastTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1692687003
 Transform:
   m_ObjectHideFlags: 0
@@ -246592,6 +246593,38 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1692687002}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1692687007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1692687002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c03aa0bfb979d248ae239e59eeeba8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V0.Cinematics.LastTriggerCutscene
+  _stranger: {fileID: 0}
+  _stumbleDuration: 1
+  _fallDuration: 1.1
+  _fallTiltAngle: 60
+  _collapsedCameraY: 0.25
+  _stabSound: {fileID: 0}
+  _groanSound: {fileID: 0}
+  _audioSource: {fileID: 0}
+  _dialogueText: '[Stranger]: "You are not leaving."'
+  _dialogueColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  _dialogueDuration: 4
+  _endingSceneName: GoodEnding
+  _slowFadeDuration: 3
+  _objectToActivate: {fileID: 0}
+  _additionalObjectsToActivate: []
+  _letterboxCanvasGroup: {fileID: 423030204}
+  _subtitleText: {fileID: 2022090134}
+  _playerController: {fileID: 1132628793}
+  _playerInputs: {fileID: 1132628784}
+  _playOnce: 1
 --- !u!1 &1693301632
 GameObject:
   m_ObjectHideFlags: 0
