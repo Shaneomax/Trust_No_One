@@ -36,6 +36,23 @@ namespace V0.Cinematics
         [Header("Animation Settings")]
         [SerializeField] private float _pickupAnimDuration = 2.2f;
 
+        public enum ActivationTiming
+        {
+            OnCutsceneEnd,
+            OnKnifePickup,
+            OnCutsceneStart
+        }
+
+        [Header("GameObject(s) To SetActive(true)")]
+        [Tooltip("Drag & drop the GameObject that should be activated (SetActive true) during or after the cutscene.")]
+        [SerializeField] private GameObject _objectToActivate;
+
+        [Tooltip("Optional list if you have multiple GameObjects to activate")]
+        [SerializeField] private List<GameObject> _additionalObjectsToActivate = new List<GameObject>();
+
+        [Tooltip("When should the GameObject(s) be activated? Default: OnCutsceneEnd")]
+        [SerializeField] private ActivationTiming _activationTiming = ActivationTiming.OnCutsceneEnd;
+
         [Header("Dialogue Settings")]
         [TextArea(1, 3)]
         [SerializeField] private string _playerDialogue = "[Player]: \"What's that for...?\"";
@@ -60,6 +77,7 @@ namespace V0.Cinematics
 
         private bool _hasTriggered = false;
         private bool _isPlaying = false;
+        private bool _hasActivatedObjects = false;
 
         private void Reset()
         {
@@ -97,6 +115,11 @@ namespace V0.Cinematics
             // 1. Lock Player Movement & Controls
             SetPlayerControlsActive(false);
 
+            if (_activationTiming == ActivationTiming.OnCutsceneStart)
+            {
+                TriggerObjectActivation();
+            }
+
             // 2. Fade in Letterbox Bars
             if (_letterboxCanvasGroup != null)
             {
@@ -122,6 +145,11 @@ namespace V0.Cinematics
             else
             {
                 pickupDone = true;
+            }
+
+            if (_activationTiming == ActivationTiming.OnKnifePickup)
+            {
+                TriggerObjectActivation();
             }
 
             // Track Stranger with camera while he picks up the knife
@@ -193,6 +221,9 @@ namespace V0.Cinematics
 
             yield return new WaitForSeconds(0.4f);
 
+            // Activate assigned GameObject(s) if not yet triggered
+            TriggerObjectActivation();
+
             // Resume Stranger AI so he can follow the player
             if (_stranger != null)
             {
@@ -207,6 +238,30 @@ namespace V0.Cinematics
             if (_playOnce)
             {
                 gameObject.SetActive(false);
+            }
+        }
+
+        private void TriggerObjectActivation()
+        {
+            if (_hasActivatedObjects) return;
+            _hasActivatedObjects = true;
+
+            if (_objectToActivate != null)
+            {
+                _objectToActivate.SetActive(true);
+                Debug.Log($"<color=green><b>[SecondWaitCutscene]</b></color> Activated GameObject: <b>{_objectToActivate.name}</b>");
+            }
+
+            if (_additionalObjectsToActivate != null)
+            {
+                foreach (GameObject go in _additionalObjectsToActivate)
+                {
+                    if (go != null)
+                    {
+                        go.SetActive(true);
+                        Debug.Log($"<color=green><b>[SecondWaitCutscene]</b></color> Activated GameObject: <b>{go.name}</b>");
+                    }
+                }
             }
         }
 
