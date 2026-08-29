@@ -59,6 +59,21 @@ namespace StarterAssets
 		[Tooltip("What layers the character uses as ground")]
 		public LayerMask GroundLayers;
 
+		[Header("Footsteps Audio")]
+		[Tooltip("Footstep audio clip played while moving")]
+		public AudioClip FootstepAudioClip;
+		[Tooltip("Base volume for footsteps")]
+		[Range(0f, 1f)] public float FootstepVolume = 0.5f;
+		[Tooltip("Interval between footsteps when walking (seconds)")]
+		public float WalkStepInterval = 0.52f;
+		[Tooltip("Interval between footsteps when sprinting (seconds)")]
+		public float SprintStepInterval = 0.35f;
+		[Tooltip("Interval between footsteps when crouching (seconds)")]
+		public float CrouchStepInterval = 0.70f;
+
+		private AudioSource _footstepSource;
+		private float _footstepTimer = 0f;
+
 		[Header("Cinemachine")]
 		[Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
 		public GameObject CinemachineCameraTarget;
@@ -170,6 +185,21 @@ namespace StarterAssets
 			{
 				_input.ResetInputs();
 			}
+			if (_footstepSource != null && _footstepSource.isPlaying)
+			{
+				_footstepSource.Stop();
+			}
+		}
+
+		/// <summary>
+		/// Explicitly silences footstep audio immediately.
+		/// </summary>
+		public void StopFootsteps()
+		{
+			if (_footstepSource != null && _footstepSource.isPlaying)
+			{
+				_footstepSource.Stop();
+			}
 		}
 
 		/// <summary>
@@ -203,6 +233,18 @@ namespace StarterAssets
 			}
 		}
 
+		public void StopMovement()
+		{
+			_speed = 0.0f;
+			_verticalVelocity = 0.0f;
+			_rotationVelocity = 0.0f;
+			if (_input != null)
+			{
+				_input.ResetInputs();
+			}
+			StopFootsteps();
+		}
+
 		private void SyncTargetPitchFromTransform()
 		{
 			if (CinemachineCameraTarget != null)
@@ -219,6 +261,82 @@ namespace StarterAssets
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
+			UpdateFootsteps();
+		}
+
+		private void UpdateFootsteps()
+		{
+			if (_footstepSource == null)
+			{
+				_footstepSource = gameObject.AddComponent<AudioSource>();
+				_footstepSource.playOnAwake = false;
+				_footstepSource.spatialBlend = 0f;
+				_footstepSource.loop = true;
+			}
+
+			if (FootstepAudioClip == null)
+			{
+				FootstepAudioClip = Resources.Load<AudioClip>("FootStep");
+				if (FootstepAudioClip == null)
+				{
+					AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+					foreach (var c in allClips)
+					{
+						if (c.name.ToLower().Contains("footstep"))
+						{
+							FootstepAudioClip = c;
+							break;
+						}
+					}
+				}
+			}
+
+			if (FootstepAudioClip != null && _footstepSource.clip != FootstepAudioClip)
+			{
+				_footstepSource.clip = FootstepAudioClip;
+			}
+
+			// If disabled, not grounded, or in a global cutscene, immediately stop footstep audio
+			if (!enabled || !Grounded || _controller == null || V0.Interaction.FlashlightController.IsGlobalCutscene)
+			{
+				if (_footstepSource.isPlaying) _footstepSource.Stop();
+				return;
+			}
+
+			float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+			bool isMoving = currentHorizontalSpeed > 0.2f && _input != null && _input.move != Vector2.zero;
+
+			if (isMoving && _footstepSource.clip != null)
+			{
+				float targetPitch = 1.0f;
+				float targetVolume = FootstepVolume;
+
+				if (IsCrouching)
+				{
+					targetPitch = 0.75f;
+					targetVolume = FootstepVolume * 0.4f;
+				}
+				else if (_input.sprint)
+				{
+					targetPitch = 1.35f;
+					targetVolume = FootstepVolume * 1.2f;
+				}
+
+				_footstepSource.pitch = targetPitch;
+				_footstepSource.volume = targetVolume;
+
+				if (!_footstepSource.isPlaying)
+				{
+					_footstepSource.Play();
+				}
+			}
+			else
+			{
+				if (_footstepSource.isPlaying)
+				{
+					_footstepSource.Stop();
+				}
+			}
 		}
 
 		private void LateUpdate()

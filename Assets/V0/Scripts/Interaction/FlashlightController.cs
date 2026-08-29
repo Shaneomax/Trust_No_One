@@ -31,6 +31,7 @@ namespace V0.Interaction
         public bool HasFlashlight => _hasFlashlight;
         public bool IsLightOn => _isLightOn;
         public bool IsInCutscene => _isInCutscene;
+        public static bool IsGlobalCutscene => _instance != null && _instance._isInCutscene;
 
         private void Awake()
         {

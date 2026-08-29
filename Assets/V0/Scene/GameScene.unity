@@ -20,9 +20,9 @@ RenderSettings:
   m_FogDensity: 0.007
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.30, g: 0.32, b: 0.38, a: 1}
-  m_AmbientEquatorColor: {r: 0.25, g: 0.25, b: 0.28, a: 1}
-  m_AmbientGroundColor: {r: 0.20, g: 0.20, b: 0.22, a: 1}
+  m_AmbientSkyColor: {r: 0.1254902, g: 0.1882353, b: 0.29411766, a: 1}
+  m_AmbientEquatorColor: {r: 0.08627451, g: 0.1254902, b: 0.19607843, a: 1}
+  m_AmbientGroundColor: {r: 0.05490196, g: 0.07058824, b: 0.09411765, a: 1}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 1, g: 1, b: 1, a: 1}
@@ -34821,6 +34821,9 @@ MonoBehaviour:
   _canOpenLockedDoors: 0
   _knifeDestination: {fileID: 1031811996}
   _handKnife: {fileID: 218706324}
+  _footstepAudioClip: {fileID: 0}
+  _footstepVolume: 0.6
+  _footstepInterval: 0.52
   _player: {fileID: 1132628782}
   _animator: {fileID: 418162877}
   _modelTransform: {fileID: 418162878}
@@ -36725,7 +36728,7 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
+  m_Intensity: 1.1
   m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -37641,8 +37644,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
-  m_Range: 7.5
+  m_Intensity: 1.1
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -39940,7 +39943,7 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
+  m_Intensity: 1.1
   m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -41477,8 +41480,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
-  m_Range: 7.5
+  m_Intensity: 1.1
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -41604,8 +41607,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
-  m_Range: 7.5
+  m_Intensity: 1.1
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -42201,8 +42204,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
-  m_Range: 7.5
+  m_Intensity: 1.1
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -43500,8 +43503,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
-  m_Range: 7.5
+  m_Intensity: 1.1
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -43627,8 +43630,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
-  m_Range: 7.5
+  m_Intensity: 1.1
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -241986,8 +241989,8 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.87058824, b: 0.4117647, a: 1}
-  m_Intensity: 2.6
-  m_Range: 6.5
+  m_Intensity: 0.9
+  m_Range: 2.2
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -242520,6 +242523,73 @@ Transform:
   - {fileID: 1851727998}
   - {fileID: 1903525954}
   - {fileID: 1692687003}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1166834425
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1166834428}
+  - component: {fileID: 1166834427}
+  - component: {fileID: 1166834426}
+  m_Layer: 0
+  m_Name: HouseAmbienceTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1166834426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1166834425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dec3cc38582f5254faa1c08f30ccde60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V0.Audio.AmbienceZoneTrigger
+  _isInsideZone: 1
+--- !u!65 &1166834427
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1166834425}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 20, y: 8, z: 20}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &1166834428
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1166834425}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 2.5, z: 4.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1174667565 stripped
@@ -245490,7 +245560,7 @@ Light:
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
-  m_Intensity: 2.6
+  m_Intensity: 1.1
   m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -248469,7 +248539,7 @@ Light:
   m_Type: 2
   m_Color: {r: 1, g: 0.9490196, b: 0.8627451, a: 1}
   m_Intensity: 1.1
-  m_Range: 7.5
+  m_Range: 2.7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -248672,6 +248742,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1807537621}
   m_CullTransparentMesh: 1
+--- !u!1 &1809025308
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1809025310}
+  - component: {fileID: 1809025309}
+  m_Layer: 0
+  m_Name: '[AmbienceManager]'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1809025309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809025308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2241bf7f2e0c1fb4eaa7204430034d2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V0.Audio.HouseAmbienceManager
+  _outsideAmbienceClip: {fileID: 8300000, guid: 666234ed6b08eab4db3a730aa4f6c453, type: 3}
+  _insideAmbienceClip: {fileID: 8300000, guid: a383e8d62c69f5144ae2743bfa9c6eed, type: 3}
+  _outsideMaxVolume: 0.6
+  _insideMaxVolume: 0.45
+  _outsideBleedWhenInside: 0.08
+  _fadeDuration: 2
+  _fadeEase: 4
+  _startOutside: 1
+--- !u!4 &1809025310
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809025308}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1812588758
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -257115,3 +257237,5 @@ SceneRoots:
   - {fileID: 94098475}
   - {fileID: 861803492}
   - {fileID: 1657708075}
+  - {fileID: 1809025310}
+  - {fileID: 1166834428}

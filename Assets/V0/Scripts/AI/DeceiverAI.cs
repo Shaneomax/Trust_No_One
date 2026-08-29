@@ -47,12 +47,20 @@ namespace TrustNoOne.AI
         [Tooltip("The knife GameObject attached to Enemy 2's hand (set active when picked up)")]
         [SerializeField] private GameObject _handKnife;
 
+        [Header("Footsteps Audio")]
+        [Tooltip("Footstep audio clip for Enemy 2 (Auto-finds FootStep.mp3 if null)")]
+        [SerializeField] private AudioClip _footstepAudioClip;
+        [SerializeField] private float _footstepVolume = 0.60f;
+        [SerializeField] private float _footstepInterval = 0.52f;
+
         [Header("References (Auto-detected if unassigned)")]
         [SerializeField] private Transform _player;
         [SerializeField] private Animator _animator;
         [SerializeField] private Transform _modelTransform;
 
         private NavMeshAgent _agent;
+        private AudioSource _footstepAudioSource;
+        private float _footstepTimer = 0f;
         private bool _isOpeningDoor = false;
         private bool _isStationary = false;
         private bool _isNavigatingToDestination = false;
@@ -133,6 +141,14 @@ namespace TrustNoOne.AI
             CachePlayer();
         }
 
+        private void OnDisable()
+        {
+            if (_footstepAudioSource != null && _footstepAudioSource.isPlaying)
+            {
+                _footstepAudioSource.Stop();
+            }
+        }
+
         private void Start()
         {
             CachePlayer();
@@ -198,6 +214,8 @@ namespace TrustNoOne.AI
 
         private void Update()
         {
+            UpdateFootsteps();
+
             // If navigating to a specific destination (e.g. knife during cutscene), suppress follow player logic!
             if (_isNavigatingToDestination)
             {
@@ -861,6 +879,69 @@ namespace TrustNoOne.AI
                 }
             }
             Debug.Log("<color=green>[DeceiverAI]</color> Resumed following player!");
+        }
+
+        private void UpdateFootsteps()
+        {
+            if (_footstepAudioSource == null)
+            {
+                _footstepAudioSource = gameObject.AddComponent<AudioSource>();
+                _footstepAudioSource.playOnAwake = false;
+                _footstepAudioSource.spatialBlend = 1.0f; // 3D Spatial Audio
+                _footstepAudioSource.minDistance = 1.5f;
+                _footstepAudioSource.maxDistance = 18.0f;
+                _footstepAudioSource.rolloffMode = AudioRolloffMode.Linear;
+                _footstepAudioSource.loop = true;
+            }
+
+            if (_footstepAudioClip == null)
+            {
+                _footstepAudioClip = Resources.Load<AudioClip>("FootStep");
+                if (_footstepAudioClip == null)
+                {
+                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                    foreach (var c in allClips)
+                    {
+                        if (c.name.ToLower().Contains("footstep"))
+                        {
+                            _footstepAudioClip = c;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (_footstepAudioClip != null && _footstepAudioSource.clip != _footstepAudioClip)
+            {
+                _footstepAudioSource.clip = _footstepAudioClip;
+            }
+
+            if (_isStationary || _isOpeningDoor || _agent == null || !_agent.isOnNavMesh || V0.Interaction.FlashlightController.IsGlobalCutscene)
+            {
+                if (_footstepAudioSource.isPlaying) _footstepAudioSource.Stop();
+                return;
+            }
+
+            float currentSpeed = _agent.velocity.magnitude;
+            bool isMoving = currentSpeed > 0.25f && !_agent.isStopped;
+
+            if (isMoving && _footstepAudioSource.clip != null)
+            {
+                _footstepAudioSource.pitch = 0.90f; // Heavier stride for stranger
+                _footstepAudioSource.volume = _footstepVolume;
+
+                if (!_footstepAudioSource.isPlaying)
+                {
+                    _footstepAudioSource.Play();
+                }
+            }
+            else
+            {
+                if (_footstepAudioSource.isPlaying)
+                {
+                    _footstepAudioSource.Stop();
+                }
+            }
         }
     }
 }
