@@ -75,6 +75,10 @@ namespace V0.Interaction
             }
         };
 
+        [Header("On Lock - Activate GameObject")]
+        [Tooltip("Drag any GameObject here. It will be SetActive(true) when this door is slammed and locked (e.g. a SecondTrigger, UI hint, etc.)")]
+        [SerializeField] private GameObject _objectToActivateOnLock;
+
         [Header("Audio (Optional)")]
         [SerializeField] private AudioClip _unlockSound;
         [SerializeField] private AudioClip _lockedJiggleSound;
@@ -307,6 +311,14 @@ namespace V0.Interaction
             {
                 AudioSource.PlayClipAtPoint(slamSound, transform.position, 1.0f);
             }
+
+            // Activate any assigned GameObject when door locks (e.g. SecondTrigger, hint UI)
+            if (_objectToActivateOnLock != null)
+            {
+                _objectToActivateOnLock.SetActive(true);
+                Debug.Log($"<color=cyan>[DoorInteractable]</color> Door locked → Activated '{_objectToActivateOnLock.name}'!");
+            }
+
             Debug.Log($"<color=red>[DoorInteractable]</color> '{gameObject.name}' SLAMMED SHUT and LOCKED!");
         }
 

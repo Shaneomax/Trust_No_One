@@ -2310,6 +2310,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -3028,6 +3029,7 @@ MonoBehaviour:
       on the ground floor."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 4
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -4419,6 +4421,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -5812,6 +5815,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -31146,6 +31150,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -31190,6 +31195,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32769,6 +32775,7 @@ MonoBehaviour:
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines: []
+  _objectToActivateOnLock: {fileID: 1988524791}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -33245,6 +33252,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -35966,6 +35974,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -216100,6 +216109,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -216503,6 +216513,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -217418,6 +217429,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -218355,6 +218367,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -224699,6 +224712,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -224818,6 +224832,7 @@ MonoBehaviour:
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
     color: {r: 0.95, g: 0.95, b: 0.9, a: 1}
     duration: 3.5
+  _objectToActivateOnLock: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -225355,7 +225370,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1988524792
 MonoBehaviour:
   m_ObjectHideFlags: 0
