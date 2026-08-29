@@ -35,6 +35,10 @@ namespace StarterAssets
 			{
 				LookInput(value.Get<Vector2>());
 			}
+			else
+			{
+				LookInput(Vector2.zero);
+			}
 		}
 
 		public void OnJump(InputValue value)
@@ -111,6 +115,19 @@ namespace StarterAssets
 			{
 				crouch = true;
 			}
+		}
+
+		/// <summary>
+		/// Clears all input axes and state flags. Useful during cutscenes and transitions.
+		/// </summary>
+		public void ResetInputs()
+		{
+			move = Vector2.zero;
+			look = Vector2.zero;
+			jump = false;
+			sprint = false;
+			interact = false;
+			crouch = false;
 		}
 		
 		private void OnApplicationFocus(bool hasFocus)

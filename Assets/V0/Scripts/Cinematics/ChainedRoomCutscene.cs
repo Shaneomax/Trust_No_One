@@ -201,7 +201,13 @@ namespace V0.Cinematics
                 _cutsceneCoroutine = null;
             }
 
-            // Reset camera priorities so player camera smoothly takes back control
+            // Reset Cinemachine Brain blend to Cut so camera doesn't slowly rotate/pan on its own
+            if (_cachedBrain != null)
+            {
+                _cachedBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
+            }
+
+            // Reset camera priorities so player camera immediately takes back control
             if (_chainedRoomCamera != null)
             {
                 _chainedRoomCamera.Priority.Value = 0;
@@ -254,15 +260,23 @@ namespace V0.Cinematics
                 AutoFindReferences();
             }
 
-            if (_playerController != null) _playerController.enabled = active;
-            if (_playerInteraction != null) _playerInteraction.enabled = active;
             if (_playerInputs != null)
             {
                 _playerInputs.cursorLocked = true;
                 _playerInputs.cursorInputForLook = active;
-                _playerInputs.move = Vector2.zero;
-                _playerInputs.sprint = false;
+                _playerInputs.ResetInputs();
             }
+
+            if (_playerController != null)
+            {
+                _playerController.enabled = active;
+                if (active)
+                {
+                    _playerController.ResetLookOrientation();
+                }
+            }
+
+            if (_playerInteraction != null) _playerInteraction.enabled = active;
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;

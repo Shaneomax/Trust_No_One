@@ -145,13 +145,16 @@ namespace V0.Cinematics
 
         private void SetPlayerControlsActive(bool active)
         {
-            if (_playerController != null) _playerController.enabled = active;
             if (_playerInputs != null)
             {
                 _playerInputs.cursorLocked = true;
                 _playerInputs.cursorInputForLook = active;
-                _playerInputs.move = Vector2.zero;
-                _playerInputs.sprint = false;
+                _playerInputs.ResetInputs();
+            }
+            if (_playerController != null)
+            {
+                _playerController.enabled = active;
+                if (active) _playerController.ResetLookOrientation();
             }
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;

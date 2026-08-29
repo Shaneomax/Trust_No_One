@@ -148,6 +148,69 @@ namespace StarterAssets
 			// reset our timeouts on start
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
+
+			// Initialize target pitch
+			SyncTargetPitchFromTransform();
+		}
+
+		private void OnEnable()
+		{
+			_rotationVelocity = 0.0f;
+			if (_input != null)
+			{
+				_input.ResetInputs();
+			}
+			SyncTargetPitchFromTransform();
+		}
+
+		private void OnDisable()
+		{
+			_rotationVelocity = 0.0f;
+			if (_input != null)
+			{
+				_input.ResetInputs();
+			}
+		}
+
+		/// <summary>
+		/// Safely resets or synchronizes look pitch and yaw to eliminate any post-cutscene drift.
+		/// </summary>
+		public void ResetLookOrientation(float? pitch = null, float? yaw = null)
+		{
+			if (pitch.HasValue)
+			{
+				_cinemachineTargetPitch = ClampAngle(pitch.Value, BottomClamp, TopClamp);
+			}
+			else
+			{
+				SyncTargetPitchFromTransform();
+			}
+
+			if (CinemachineCameraTarget != null)
+			{
+				CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch, 0.0f, 0.0f);
+			}
+
+			if (yaw.HasValue)
+			{
+				transform.rotation = Quaternion.Euler(0.0f, yaw.Value, 0.0f);
+			}
+
+			_rotationVelocity = 0.0f;
+			if (_input != null)
+			{
+				_input.ResetInputs();
+			}
+		}
+
+		private void SyncTargetPitchFromTransform()
+		{
+			if (CinemachineCameraTarget != null)
+			{
+				float pitch = CinemachineCameraTarget.transform.localEulerAngles.x;
+				if (pitch > 180f) pitch -= 360f;
+				_cinemachineTargetPitch = ClampAngle(pitch, BottomClamp, TopClamp);
+			}
 		}
 
 		private void Update()

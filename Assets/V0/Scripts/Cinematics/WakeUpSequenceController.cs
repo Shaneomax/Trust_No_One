@@ -393,6 +393,16 @@ namespace V0.Cinematics
 
             _activeTweenSequence?.Kill();
 
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                CinemachineBrain brain = mainCam.GetComponent<CinemachineBrain>();
+                if (brain != null)
+                {
+                    brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
+                }
+            }
+
             if (_wakeUpCamera != null)
             {
                 _wakeUpCamera.transform.DOKill();
@@ -471,20 +481,25 @@ namespace V0.Cinematics
 
         private void SetPlayerControlsActive(bool active)
         {
+            if (_playerInputs != null)
+            {
+                _playerInputs.cursorLocked = true;
+                _playerInputs.cursorInputForLook = active;
+                _playerInputs.ResetInputs();
+            }
+
             if (_playerController != null)
             {
                 _playerController.enabled = active;
+                if (active)
+                {
+                    _playerController.ResetLookOrientation();
+                }
             }
 
             if (_playerInteraction != null)
             {
                 _playerInteraction.enabled = active;
-            }
-
-            if (_playerInputs != null)
-            {
-                _playerInputs.cursorLocked = true;
-                _playerInputs.cursorInputForLook = active;
             }
 
             Cursor.lockState = CursorLockMode.Locked;
