@@ -37,10 +37,11 @@ namespace V0.Interaction
         [SerializeField] private StarterAssetsInputs _input;
 
         private IInteractable _currentInteractable;
+        private IInteractable _lastInteractable;
 
         // Tracks original rendering layer masks so we can cleanly restore them
         private readonly Dictionary<Renderer, uint> _highlightedRenderers = new Dictionary<Renderer, uint>();
-        private readonly HashSet<Renderer> _currentlyActiveRenderers = new HashSet<Renderer>();
+        private readonly List<Renderer> _cachedTargetRenderers = new List<Renderer>();
 
         public IInteractable CurrentInteractable => _currentInteractable;
 
@@ -99,81 +100,39 @@ namespace V0.Interaction
         {
             if (!_enableOutline)
             {
-                ClearAllOutlines();
+                if (_highlightedRenderers.Count > 0) ClearAllOutlines();
                 return;
             }
 
-            _currentlyActiveRenderers.Clear();
+            // High performance: Only update renderers when the looked-at interactable actually changes!
+            if (_currentInteractable == _lastInteractable) return;
+            _lastInteractable = _currentInteractable;
 
-            // ONLY highlight when player is in interaction range AND looking directly at the object!
+            // Clear previous highlight
+            ClearAllOutlines();
+
+            // Highlight new target
             if (_currentInteractable != null)
             {
                 MonoBehaviour mb = _currentInteractable as MonoBehaviour;
                 if (mb != null)
                 {
-                    AddRenderersToActive(mb.gameObject);
-                }
-            }
+                    _cachedTargetRenderers.Clear();
+                    mb.GetComponentsInChildren(true, _cachedTargetRenderers);
 
-            // Apply outline layer to the active target
-            foreach (Renderer r in _currentlyActiveRenderers)
-            {
-                if (r == null) continue;
-                if (!_highlightedRenderers.ContainsKey(r))
-                {
-                    _highlightedRenderers[r] = r.renderingLayerMask;
-                    r.renderingLayerMask |= _outlineRenderingLayer;
-
-                    if (_debugLogs)
+                    foreach (Renderer r in _cachedTargetRenderers)
                     {
-                        Debug.Log($"<color=cyan>[PlayerInteraction]</color> Highlighted: <b>{r.gameObject.name}</b>");
+                        if (r != null && r.enabled && !_highlightedRenderers.ContainsKey(r))
+                        {
+                            _highlightedRenderers[r] = r.renderingLayerMask;
+                            r.renderingLayerMask |= _outlineRenderingLayer;
+
+                            if (_debugLogs)
+                            {
+                                Debug.Log($"<color=cyan>[PlayerInteraction]</color> Highlighted: <b>{r.gameObject.name}</b>");
+                            }
+                        }
                     }
-                }
-            }
-
-            // Remove outline when looking away or stepping out of range
-            List<Renderer> toRemove = null;
-            foreach (var kvp in _highlightedRenderers)
-            {
-                Renderer r = kvp.Key;
-                if (r == null)
-                {
-                    toRemove ??= new List<Renderer>();
-                    toRemove.Add(r);
-                    continue;
-                }
-
-                if (!_currentlyActiveRenderers.Contains(r))
-                {
-                    r.renderingLayerMask = kvp.Value; // Restore original mask
-                    toRemove ??= new List<Renderer>();
-                    toRemove.Add(r);
-
-                    if (_debugLogs)
-                    {
-                        Debug.Log($"<color=gray>[PlayerInteraction]</color> Un-highlighted: <b>{r.gameObject.name}</b>");
-                    }
-                }
-            }
-
-            if (toRemove != null)
-            {
-                foreach (Renderer r in toRemove)
-                {
-                    _highlightedRenderers.Remove(r);
-                }
-            }
-        }
-
-        private void AddRenderersToActive(GameObject target)
-        {
-            if (target == null) return;
-            Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
-            foreach (Renderer r in renderers)
-            {
-                if (r != null && r.enabled)
-                {
-                    _currentlyActiveRenderers.Add(r);
                 }
             }
         }
@@ -188,7 +147,7 @@ namespace V0.Interaction
                 }
             }
             _highlightedRenderers.Clear();
-            _currentlyActiveRenderers.Clear();
+            _cachedTargetRenderers.Clear();
         }
 
         private void HandleInteraction()

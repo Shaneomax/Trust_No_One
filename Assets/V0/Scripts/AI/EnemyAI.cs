@@ -142,6 +142,16 @@ namespace TrustNoOne.AI
         private float _searchLookTimer;
         private float _searchLookAngle;
 
+        // Preallocated raycast buffers for Zero-GC allocations in WebGL
+        private readonly RaycastHit[] _raycastHitBuffer = new RaycastHit[16];
+        private readonly RaycastHit[] _groundHitBuffer = new RaycastHit[8];
+
+        private class RaycastHitDistanceComparer : IComparer<RaycastHit>
+        {
+            public static readonly RaycastHitDistanceComparer Instance = new RaycastHitDistanceComparer();
+            public int Compare(RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance);
+        }
+
         // Door tracking with child collider search
         private class TrackedDoor
         {
@@ -619,16 +629,18 @@ namespace TrustNoOne.AI
                 }
             }
 
-            // Raycast check for walls, tables, and closed doors
+            // Raycast check for walls, tables, and closed doors (Zero-GC NonAlloc)
             Ray ray = new Ray(eyePos, dirToPlayer.normalized);
-            RaycastHit[] hits = Physics.RaycastAll(ray, distanceToPlayer, _obstructionLayers, QueryTriggerInteraction.Ignore);
+            int hitCount = Physics.RaycastNonAlloc(ray, _raycastHitBuffer, distanceToPlayer, _obstructionLayers, QueryTriggerInteraction.Ignore);
 
-            if (hits.Length == 0) return true;
+            if (hitCount == 0) return true;
 
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            System.Array.Sort(_raycastHitBuffer, 0, hitCount, RaycastHitDistanceComparer.Instance);
 
-            foreach (RaycastHit hit in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                RaycastHit hit = _raycastHitBuffer[i];
+
                 // Ignore self and child colliders
                 if (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform))
                     continue;
@@ -1101,14 +1113,15 @@ namespace TrustNoOne.AI
             if (!_enableGroundSnapping || _modelTransform == null) return;
 
             Ray ray = new Ray(transform.position + Vector3.up * 1f, Vector3.down);
-            RaycastHit[] hits = Physics.RaycastAll(ray, 3f, _groundLayers, QueryTriggerInteraction.Ignore);
+            int hitCount = Physics.RaycastNonAlloc(ray, _groundHitBuffer, 3f, _groundLayers, QueryTriggerInteraction.Ignore);
 
-            if (hits.Length == 0) return;
+            if (hitCount == 0) return;
 
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            System.Array.Sort(_groundHitBuffer, 0, hitCount, RaycastHitDistanceComparer.Instance);
 
-            foreach (RaycastHit hit in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                RaycastHit hit = _groundHitBuffer[i];
                 if (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform))
                     continue;
 
