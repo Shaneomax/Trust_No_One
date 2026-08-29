@@ -103,14 +103,14 @@ namespace TrustNoOne.AI
 
         [Header("Spawn Grace Period (Player Headstart)")]
         [Tooltip("Headstart time in seconds after spawning where the ghost ignores the player, giving the player time to run and hide")]
-        [SerializeField] private float _spawnGracePeriod = 6.0f;
+        [SerializeField] private float _spawnGracePeriod = 3.5f;
         private float _spawnGraceTimer = 0f;
 
         [Header("Audio & Scream upon Detection")]
         [Tooltip("AudioSource component for playing scream and horror sounds")]
         [SerializeField] private AudioSource _audioSource;
 
-        [Tooltip("Audio clip played when the ghost spots the player and stands still screaming")]
+        [Tooltip("Audio clip played when the ghost spots the player and stands still screaming (Auto-finds Ghost_Scream.mp3)")]
         [SerializeField] private AudioClip _screamSound;
 
         [Tooltip("Duration the ghost stands still screaming before sprinting to chase (seconds)")]
@@ -938,10 +938,45 @@ namespace TrustNoOne.AI
                 _animator.SetFloat(SpeedHash, 0f);
             }
 
-            // Play scream sound
-            if (_audioSource != null && _screamSound != null)
+            // Auto-resolve scream sound if null
+            if (_screamSound == null)
             {
-                _audioSource.PlayOneShot(_screamSound);
+                #if UNITY_EDITOR
+                _screamSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Ghost_Scream.mp3");
+                #endif
+                if (_screamSound == null)
+                {
+                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                    foreach (var c in allClips)
+                    {
+                        if (c.name.ToLower().Contains("ghost_scream") || c.name.ToLower().Contains("scream"))
+                        {
+                            _screamSound = c;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (_audioSource == null)
+            {
+                _audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+                _audioSource.spatialBlend = 1.0f; // 3D Spatial Audio
+                _audioSource.minDistance = 2.0f;
+                _audioSource.maxDistance = 28.0f;
+            }
+
+            // Play scream sound
+            if (_screamSound != null)
+            {
+                if (_audioSource != null)
+                {
+                    _audioSource.PlayOneShot(_screamSound, 1.0f);
+                }
+                else
+                {
+                    AudioSource.PlayClipAtPoint(_screamSound, transform.position, 1.0f);
+                }
             }
 
             // Trigger Red Detected UI

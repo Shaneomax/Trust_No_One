@@ -245881,9 +245881,9 @@ MonoBehaviour:
   _patrolWaypoints: []
   _patrolWanderRadius: 15
   _patrolWaitDuration: 2.5
-  _spawnGracePeriod: 6
+  _spawnGracePeriod: 3.5
   _audioSource: {fileID: 0}
-  _screamSound: {fileID: 0}
+  _screamSound: {fileID: 8300000, guid: b50c0cbd9bdb4ad46b2be820871b51fe, type: 3}
   _screamDuration: 1.2
   _player: {fileID: 1132628782}
   _animator: {fileID: 428100276}
