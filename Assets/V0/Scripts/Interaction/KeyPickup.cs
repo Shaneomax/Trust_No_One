@@ -1,6 +1,7 @@
 using UnityEngine;
 using DG.Tweening;
 using System;
+using System.Collections.Generic;
 
 namespace V0.Interaction
 {
@@ -30,11 +31,8 @@ namespace V0.Interaction
         [SerializeField] private float _playerHeightOffset = 1.0f;
 
         [Header("Ghost & Trigger Activation")]
-        [Tooltip("Trigger to activate (e.g. GhostTrigger) when this key is picked up. If null, auto-finds 'GhostTrigger'.")]
-        [SerializeField] private GameObject _triggerToActivateOnPickup;
-
-        [Tooltip("Optional Key ID filter to activate trigger. If left empty or matches (e.g. 'DrawingRoomKey', 'BedRoomKey', 'BedroomKey'), activates GhostTrigger.")]
-        [SerializeField] private string _activateTriggerOnlyForThisKeyId = "";
+        [Tooltip("List of GameObjects to SetActive(true) when this key is picked up. Drag any triggers, spawners, etc. here.")]
+        [SerializeField] private List<GameObject> _objectsToActivateOnPickup = new List<GameObject>();
 
         [Tooltip("Optional reference to the Ghost GameObject. If null, auto-finds 'Ghost' in the scene.")]
         [SerializeField] private GameObject _ghostToActivate;
@@ -149,7 +147,7 @@ namespace V0.Interaction
 
             // Capture locals for lambda closure
             string capturedKeyId = _keyId;
-            GameObject capturedTrigger = _triggerToActivateOnPickup;
+            List<GameObject> capturedObjects = new List<GameObject>(_objectsToActivateOnPickup);
             GameObject capturedGhost = _ghostToActivate;
             bool capturedSpawnGhost = _spawnGhostOnPickup;
 
@@ -168,18 +166,22 @@ namespace V0.Interaction
                 OnKeyCollected?.Invoke(capturedKeyId);
                 Debug.Log($"<color=yellow>[KeyPickup]</color> Collected key: '{capturedKeyId}'");
 
-                // ONLY when DrawingRoomKey is picked up → activate GhostTrigger
-                if (string.Equals(capturedKeyId, "DrawingRoomKey", StringComparison.OrdinalIgnoreCase))
+                // Activate all objects in the list on pickup
+                if (capturedObjects != null && capturedObjects.Count > 0)
                 {
-                    if (capturedTrigger != null)
+                    foreach (GameObject obj in capturedObjects)
                     {
-                        capturedTrigger.SetActive(true);
-                        Debug.Log($"<color=green>[KeyPickup]</color> DrawingRoomKey collected! Activated GhostTrigger '{capturedTrigger.name}'!");
+                        if (obj != null)
+                        {
+                            obj.SetActive(true);
+                            Debug.Log($"<color=green>[KeyPickup]</color> Key '{capturedKeyId}' collected! Activated '{obj.name}'!");
+                        }
                     }
-                    else
-                    {
-                        ActivateGhostTrigger();
-                    }
+                }
+                // Fallback: DrawingRoomKey auto-finds and activates GhostTrigger if no list assigned
+                else if (string.Equals(capturedKeyId, "DrawingRoomKey", StringComparison.OrdinalIgnoreCase))
+                {
+                    ActivateGhostTrigger();
                 }
 
                 // Spawn / Activate Ghost immediately (if enabled)

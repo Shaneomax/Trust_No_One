@@ -216240,6 +216240,7 @@ Transform:
   - {fileID: 1189203006}
   - {fileID: 575157069}
   - {fileID: 1851727998}
+  - {fileID: 1903525954}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1174667565 stripped
@@ -217668,8 +217669,9 @@ MonoBehaviour:
   _pickupDuration: 0.35
   _moveEase: 5
   _playerHeightOffset: 1
-  _triggerToActivateOnPickup: {fileID: 1851727997}
-  _activateTriggerOnlyForThisKeyId: 
+  _objectsToActivateOnPickup:
+  - {fileID: 1851727997}
+  - {fileID: 1903525950}
   _ghostToActivate: {fileID: 1500852710}
   _spawnGhostOnPickup: 0
   _pickupSound: {fileID: 0}
@@ -223778,6 +223780,149 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1030973329, guid: abc00000000008672994418595862076, type: 3}
   m_PrefabInstance: {fileID: 1897015719}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1903525950
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1903525954}
+  - component: {fileID: 1903525953}
+  - component: {fileID: 1903525952}
+  - component: {fileID: 1903525951}
+  - component: {fileID: 1903525955}
+  m_Layer: 0
+  m_Name: GoodEnding
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!65 &1903525951
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1903525950}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1903525952
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1903525950}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1903525953
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1903525950}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1903525954
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1903525950}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.106, y: 0.8534, z: -46.7}
+  m_LocalScale: {x: 102.80406, y: 2.7269, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1162930989}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1903525955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1903525950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 528ccd7256996e740a729daaba0b3621, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V0.Cinematics.GoodEndingTrigger
+  _lines:
+  - text: '[Stranger]: "Don''t leave me... please... you can''t just leave me here!"'
+    color: {r: 1, g: 0.88, b: 0.6, a: 1}
+    duration: 4.5
+  - text: '[Stranger]: "One day... I WILL get out of here... and I will haunt you
+      for the rest of your life!"'
+    color: {r: 1, g: 0.3, b: 0.3, a: 1}
+    duration: 5.5
+  - text: '[Player]: *stumbles back in terror, runs for the truck*'
+    color: {r: 0.85, g: 0.85, b: 0.9, a: 1}
+    duration: 3.5
+  _goodEndingSceneName: GoodEnding
+  _transitionDelay: 1.5
+  _fadeDuration: 1.5
+  _letterboxCanvasGroup: {fileID: 423030204}
+  _subtitleText: {fileID: 2022090134}
+  _playerController: {fileID: 1132628793}
+  _playerInputs: {fileID: 1132628784}
 --- !u!1001 &1903774153
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -225388,8 +225533,7 @@ MonoBehaviour:
   _pickupDuration: 0.35
   _moveEase: 5
   _playerHeightOffset: 1
-  _triggerToActivateOnPickup: {fileID: 1851727997}
-  _activateTriggerOnlyForThisKeyId: 
+  _objectsToActivateOnPickup: []
   _ghostToActivate: {fileID: 0}
   _spawnGhostOnPickup: 0
   _pickupSound: {fileID: 0}
