@@ -1,13 +1,10 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
-using DG.Tweening;
 
 namespace V0.UI
 {
     /// <summary>
     /// Manages the top-left horror game objective display.
-    /// Uses high-performance OnGUI and UI Canvas rendering to guarantee 100% visibility on all screen resolutions and cameras.
+    /// Pure OnGUI rendering eliminates all Canvas layer conflicts, font missing errors, and text overlapping bugs.
     /// </summary>
     public class ObjectiveManager : MonoBehaviour
     {
@@ -17,17 +14,11 @@ namespace V0.UI
         [SerializeField] private string _currentObjective = "Seek Help from the House";
         [SerializeField] private bool _showObjective = true;
 
-        [Header("UI Component References (Optional Canvas Mode)")]
-        [SerializeField] private CanvasGroup _canvasGroup;
-        [SerializeField] private Text _headerText;
-        [SerializeField] private Text _objectiveText;
-
         [Header("Styling")]
         [SerializeField] private Color _headerColor = new Color(1f, 0.82f, 0.35f, 1f); // Horror amber gold
         [SerializeField] private Color _textColor = Color.white;
         [SerializeField] private Color _shadowColor = new Color(0f, 0f, 0f, 0.95f);
 
-        private float _displayAlpha = 1f;
         private float _highlightTimer = 0f;
         private GUIStyle _headerStyle;
         private GUIStyle _objectiveStyle;
@@ -39,6 +30,8 @@ namespace V0.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoInitAtStartup()
         {
+            CleanupDuplicateSceneUI();
+
             if (Instance == null)
             {
                 ObjectiveManager found = Object.FindFirstObjectByType<ObjectiveManager>();
@@ -60,8 +53,20 @@ namespace V0.UI
             }
         }
 
+        private static void CleanupDuplicateSceneUI()
+        {
+            // Destroy any old leftover Canvas UI containers to prevent any text ghosting/overlapping
+            GameObject oldCanvas = GameObject.Find("ObjectiveCanvas");
+            if (oldCanvas != null) Destroy(oldCanvas);
+
+            GameObject oldContainer = GameObject.Find("ObjectiveContainer");
+            if (oldContainer != null) Destroy(oldContainer);
+        }
+
         private void Awake()
         {
+            CleanupDuplicateSceneUI();
+
             if (Instance == null)
             {
                 Instance = this;
@@ -72,8 +77,6 @@ namespace V0.UI
                 Destroy(gameObject);
                 return;
             }
-
-            AutoWireCanvasReferences();
         }
 
         private void Start()
@@ -82,7 +85,6 @@ namespace V0.UI
             {
                 _currentObjective = "Seek Help from the House";
             }
-            UpdateCanvasUI();
         }
 
         private void Update()
@@ -90,24 +92,6 @@ namespace V0.UI
             if (_highlightTimer > 0f)
             {
                 _highlightTimer -= Time.deltaTime;
-            }
-        }
-
-        public void AutoWireCanvasReferences()
-        {
-            if (_canvasGroup == null) _canvasGroup = GetComponentInChildren<CanvasGroup>();
-            if (_objectiveText == null)
-            {
-                Text[] texts = GetComponentsInChildren<Text>(true);
-                if (texts.Length > 1)
-                {
-                    _headerText = texts[0];
-                    _objectiveText = texts[1];
-                }
-                else if (texts.Length == 1)
-                {
-                    _objectiveText = texts[0];
-                }
             }
         }
 
@@ -133,36 +117,9 @@ namespace V0.UI
         {
             _currentObjective = newObjective;
             _showObjective = true;
-            _displayAlpha = 1f;
-            _highlightTimer = 1.8f;
+            _highlightTimer = 2.0f;
 
             Debug.Log($"<color=yellow><b>[ObjectiveManager]</b></color> <color=white><b>{newObjective}</b></color>");
-
-            UpdateCanvasUI();
-        }
-
-        private void UpdateCanvasUI()
-        {
-            if (_headerText != null)
-            {
-                _headerText.text = "OBJECTIVE";
-                _headerText.color = _headerColor;
-            }
-
-            if (_objectiveText != null)
-            {
-                _objectiveText.DOKill();
-                _objectiveText.text = _currentObjective;
-                _objectiveText.color = new Color(1f, 0.9f, 0.5f);
-                _objectiveText.DOColor(_textColor, 1.2f).SetDelay(0.3f);
-                _objectiveText.transform.DOPunchScale(new Vector3(0.08f, 0.08f, 0f), 0.4f, 2, 0.5f);
-            }
-
-            if (_canvasGroup != null)
-            {
-                _canvasGroup.DOKill();
-                _canvasGroup.alpha = 1f;
-            }
         }
 
         /// <summary>
@@ -173,11 +130,6 @@ namespace V0.UI
             if (Instance != null)
             {
                 Instance._showObjective = false;
-                if (Instance._canvasGroup != null)
-                {
-                    Instance._canvasGroup.DOKill();
-                    Instance._canvasGroup.DOFade(0f, 0.5f);
-                }
             }
         }
 
@@ -215,20 +167,24 @@ namespace V0.UI
 
             InitGUIStyles();
 
-            // Screen space coordinates (Top-Left)
-            float startX = 42f;
-            float startY = 38f;
+            GUI.depth = -100; // Draw on top of all UI layers
+
+            // Coordinates (Top-Left)
+            float startX = 45f;
+            float startY = 40f;
             float width = 600f;
 
-            // Highlight pulse color for new objectives
-            Color activeTextColor = _highlightTimer > 0f ? Color.Lerp(_textColor, new Color(1f, 0.92f, 0.55f), _highlightTimer / 1.8f) : _textColor;
+            // Highlight pulse color for newly updated objectives
+            Color activeTextColor = _highlightTimer > 0f
+                ? Color.Lerp(_textColor, new Color(1f, 0.92f, 0.55f), _highlightTimer / 2.0f)
+                : _textColor;
             _objectiveStyle.normal.textColor = activeTextColor;
 
-            // 1. Draw Header Shadow & Text ("OBJECTIVE")
+            // 1. Draw Header ("OBJECTIVE")
             GUI.Label(new Rect(startX + 1.5f, startY + 1.5f, width, 22f), "OBJECTIVE", _shadowHeaderStyle);
             GUI.Label(new Rect(startX, startY, width, 22f), "OBJECTIVE", _headerStyle);
 
-            // 2. Draw Objective Shadow & Text (e.g. "Seek Help from the House")
+            // 2. Draw Active Objective
             float objY = startY + 20f;
             GUI.Label(new Rect(startX + 1.5f, objY + 1.5f, width, 60f), _currentObjective, _shadowObjectiveStyle);
             GUI.Label(new Rect(startX, objY, width, 60f), _currentObjective, _objectiveStyle);
