@@ -292,6 +292,7 @@ namespace V0.Cinematics
             });
 
             OnCutsceneCompleted?.Invoke();
+            ObjectiveManager.SetObjective("Search for chainsaw to break the chain");
             Debug.Log("<color=green>[StrangerDialogueCutscene]</color> Cutscene finished! Front door is locked. Player in control.");
 
             if (_playOnce)

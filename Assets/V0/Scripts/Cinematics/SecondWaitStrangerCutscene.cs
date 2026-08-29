@@ -233,6 +233,7 @@ namespace V0.Cinematics
             SetPlayerControlsActive(true);
             _isPlaying = false;
 
+            V0.UI.ObjectiveManager.SetObjective("Exit The House");
             Debug.Log("<color=green><b>[SecondWaitCutscene]</b> Cutscene Complete! Stranger holding knife and ready to follow.</color>");
 
             if (_playOnce)

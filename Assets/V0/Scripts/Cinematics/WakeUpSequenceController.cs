@@ -398,6 +398,7 @@ namespace V0.Cinematics
             // Enable player controls
             SetPlayerControlsActive(true);
 
+            V0.UI.ObjectiveManager.SetObjective("Seek Help from the House");
             OnSequenceCompleted?.Invoke();
             Debug.Log("<color=green>[WakeUpSequence]</color> Player is awake and in control!");
         }

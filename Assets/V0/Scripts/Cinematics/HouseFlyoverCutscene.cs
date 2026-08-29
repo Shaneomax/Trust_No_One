@@ -265,6 +265,7 @@ namespace V0.Cinematics
             });
 
             OnCutsceneCompleted?.Invoke();
+            V0.UI.ObjectiveManager.SetObjective("Seek Help from the House");
             Debug.Log("<color=green>[HouseFlyover]</color> Cinematic Cutscene completed! Player control restored.");
 
             // Disable trigger collider if play once

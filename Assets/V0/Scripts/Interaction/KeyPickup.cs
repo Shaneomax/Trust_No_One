@@ -184,6 +184,21 @@ namespace V0.Interaction
                     ActivateGhostTrigger();
                 }
 
+                // Update Game Objective based on item collected
+                string lowerKey = capturedKeyId != null ? capturedKeyId.ToLower() : "";
+                if (lowerKey.Contains("bed") || lowerKey.Contains("crowbar") || lowerKey.Contains("haligan"))
+                {
+                    V0.UI.ObjectiveManager.SetObjective("Retrieve Master key from the bedroom");
+                }
+                else if (lowerKey.Contains("drawing") || lowerKey.Contains("master"))
+                {
+                    V0.UI.ObjectiveManager.SetObjective("Get the Chainsaw");
+                }
+                else if (lowerKey.Contains("chain"))
+                {
+                    V0.UI.ObjectiveManager.SetObjective("Free the man");
+                }
+
                 // Spawn / Activate Ghost immediately (if enabled)
                 if (capturedSpawnGhost && capturedGhost != null)
                 {

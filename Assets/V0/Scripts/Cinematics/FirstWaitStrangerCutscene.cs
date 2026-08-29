@@ -201,6 +201,7 @@ namespace V0.Cinematics
             LockPlayerControls(false);
             _isPlaying = false;
 
+            V0.UI.ObjectiveManager.SetObjective("Check for the man");
             Debug.Log("<color=green><b>[FirstWaitCutscene]</b> Cutscene Complete! Player restored.</color>");
 
             if (_playOnce)

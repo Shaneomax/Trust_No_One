@@ -147,6 +147,7 @@ namespace V0.Cinematics
 
         private IEnumerator CutsceneRoutine()
         {
+            ObjectiveManager.SetObjective("Investigate the noise");
             // Activate Chained Room camera with high priority (100) so Cinemachine smoothly transitions
             if (_chainedRoomCamera != null)
             {
