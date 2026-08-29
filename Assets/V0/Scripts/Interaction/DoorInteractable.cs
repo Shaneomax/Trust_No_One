@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using V0.Cinematics;
 
 namespace V0.Interaction
 {
@@ -45,6 +46,9 @@ namespace V0.Interaction
         [Header("Locked Clue Dialogue (Optional)")]
         [Tooltip("Trigger dialogue when player first tries to open this locked door without key")]
         [SerializeField] private bool _enableLockedDialogue = true;
+
+        [Tooltip("Only show locked dialogue AFTER the stranger has been met (SecondTrigger cutscene has played)")]
+        [SerializeField] private bool _requireStrangerMetFirst = true;
 
         [Tooltip("Only trigger this dialogue after the main front entrance door has been slammed and locked")]
         [SerializeField] private bool _requireMainDoorLockedFirst = true;
@@ -182,8 +186,10 @@ namespace V0.Interaction
                     string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
                     Debug.Log($"<color=yellow>[DoorInteractable]</color> '{gameObject.name}' is locked. Requires key: '{keyName}'");
 
-                    // Trigger locked clue dialogue on first attempt (only after main door is locked)
-                    if (_enableLockedDialogue && !_hasTriggeredLockedDialogue && IsMainDoorLocked() && _lockedDialogueLines != null && _lockedDialogueLines.Count > 0)
+                    // Trigger locked clue dialogue on first attempt
+                    // Gate: only after main door is locked AND stranger has been met (SecondTrigger fired)
+                    bool strangerConditionMet = !_requireStrangerMetFirst || StrangerDialogueCutscene.HasMet;
+                    if (_enableLockedDialogue && !_hasTriggeredLockedDialogue && IsMainDoorLocked() && strangerConditionMet && _lockedDialogueLines != null && _lockedDialogueLines.Count > 0)
                     {
                         _hasTriggeredLockedDialogue = true;
                         if (_dialogueCoroutine != null) StopCoroutine(_dialogueCoroutine);

@@ -256,7 +256,7 @@ namespace V0.Cinematics
             }
 
             // Subtitle Line 1: First waking thought
-            ShowSubtitle(_line1FirstBlink, 2.5f);
+            yield return ShowSubtitleAndWait(_line1FirstBlink, 2.5f);
 
             yield return new WaitForSeconds(_blinkPauseDuration);
 
@@ -327,7 +327,7 @@ namespace V0.Cinematics
                 camT.DOShakeRotation(1.35f, strength: new Vector3(2.5f, 3f, 4f), vibrato: 9, randomness: 60);
 
                 // Subtitle Line 3: Realizing what happened
-                ShowSubtitle(_line3Kneeling, 3.5f);
+                yield return ShowSubtitleAndWait(_line3Kneeling, 3.5f);
 
                 yield return new WaitForSeconds(1.35f);
 
@@ -369,9 +369,9 @@ namespace V0.Cinematics
                 camT.DOShakeRotation(0.4f, strength: new Vector3(1f, 1.8f, 1.2f), vibrato: 6);
                 yield return new WaitForSeconds(0.4f);
 
-                // Subtitle Line 4: Spotted the house in the distance
-                ShowSubtitle(_line4Standing, 4.0f);
-                yield return new WaitForSeconds(3.8f); // Ample time to read Line 4 and look ahead
+                // Subtitle Line 4: Spotted the house
+                yield return ShowSubtitleAndWait(_line4Standing, 0.5f);
+                // No extra dead-wait — player gets control as soon as Line 4 finishes
             }
 
             // 7. Sequence complete: Seamless handoff to gameplay!
@@ -419,6 +419,35 @@ namespace V0.Cinematics
 
             OnSequenceCompleted?.Invoke();
             Debug.Log("<color=green>[WakeUpSequence]</color> Player is awake and in control!");
+        }
+
+        /// <summary>
+        /// Shows a subtitle, waits for it to fully appear, display and fade out, then returns.
+        /// Guarantees previous subtitle is completely finished before starting the next.
+        /// </summary>
+        private IEnumerator ShowSubtitleAndWait(string text, float displayDuration)
+        {
+            if (_subtitleText == null || string.IsNullOrEmpty(text)) yield break;
+
+            _subtitleText.DOKill(true);
+            _subtitleText.text = text;
+            _subtitleText.color = new Color(_subtitleText.color.r, _subtitleText.color.g, _subtitleText.color.b, 0f);
+
+            const float fadeInDur  = 0.5f;
+            const float fadeOutDur = 0.6f;
+
+            // Fade in
+            bool fadeInDone = false;
+            _subtitleText.DOFade(1f, fadeInDur).SetEase(Ease.OutQuad).OnComplete(() => fadeInDone = true);
+            yield return new WaitUntil(() => fadeInDone);
+
+            // Hold
+            yield return new WaitForSeconds(displayDuration);
+
+            // Fade out
+            bool fadeOutDone = false;
+            _subtitleText.DOFade(0f, fadeOutDur).SetEase(Ease.InQuad).OnComplete(() => fadeOutDone = true);
+            yield return new WaitUntil(() => fadeOutDone);
         }
 
         private void ShowSubtitle(string text, float duration)

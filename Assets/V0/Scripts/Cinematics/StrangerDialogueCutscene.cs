@@ -91,6 +91,12 @@ namespace V0.Cinematics
         private CinemachineBlendDefinition _originalBlend;
         private CinemachineBrain _cachedBrain;
 
+        /// <summary>
+        /// True once the SecondTrigger cutscene (stranger introduction) has fired.
+        /// Used by other scripts (e.g. DoorInteractable) to gate dialogue.
+        /// </summary>
+        public static bool HasMet { get; private set; } = false;
+
         public event Action OnCutsceneStarted;
         public event Action OnCutsceneCompleted;
 
@@ -140,6 +146,7 @@ namespace V0.Cinematics
             if (_isPlaying) return;
             _hasTriggered = true;
             _isPlaying = true;
+            HasMet = true;  // signal to the rest of the game that player has met the stranger
 
             OnCutsceneStarted?.Invoke();
             Debug.Log("<color=cyan>[StrangerDialogueCutscene]</color> Starting Stranger Dialogue Cutscene!");

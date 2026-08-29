@@ -2295,6 +2295,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -3014,6 +3015,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 1988524792}
   _requiredKeyId: BedRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -4406,6 +4408,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -5800,6 +5803,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -31135,6 +31139,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -31180,6 +31185,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -32772,6 +32778,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines: []
@@ -33237,6 +33244,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -35959,6 +35967,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -216094,6 +216103,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -216499,6 +216509,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -216821,7 +216832,7 @@ Transform:
   m_GameObject: {fileID: 1237648019}
   serializedVersion: 2
   m_LocalRotation: {x: -0.15643448, y: -0, z: -0, w: 0.98768836}
-  m_LocalPosition: {x: 1.38, y: 3.72, z: -7.34}
+  m_LocalPosition: {x: 1.38, y: 2.6, z: -10.79}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -217415,6 +217426,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -218354,6 +218366,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -223167,7 +223180,7 @@ Transform:
   m_GameObject: {fileID: 1871871559}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 11.24, y: 1.77, z: 10.027}
+  m_LocalPosition: {x: 11.532, y: 1.743, z: 10.027}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -224842,6 +224855,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 0}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 0}
   _lockedDialogueLines:
@@ -224962,6 +224976,7 @@ MonoBehaviour:
   _requiredKey: {fileID: 1362222789}
   _requiredKeyId: DrawingRoomKey
   _enableLockedDialogue: 1
+  _requireStrangerMetFirst: 1
   _requireMainDoorLockedFirst: 1
   _mainFrontDoorReference: {fileID: 533957764}
   _lockedDialogueLines:
