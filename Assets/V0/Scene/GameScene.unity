@@ -30322,7 +30322,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 10
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -35389,7 +35389,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 10
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -216829,7 +216829,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 10
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -217657,6 +217657,7 @@ MonoBehaviour:
   _moveEase: 5
   _playerHeightOffset: 1
   _triggerToActivateOnPickup: {fileID: 1851727997}
+  _activateTriggerOnlyForThisKeyId: 
   _ghostToActivate: {fileID: 1500852710}
   _spawnGhostOnPickup: 0
   _pickupSound: {fileID: 0}
@@ -220852,7 +220853,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 10
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -223171,7 +223172,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
   Priority:
     Enabled: 1
-    m_Value: 10
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -225373,6 +225374,7 @@ MonoBehaviour:
   _moveEase: 5
   _playerHeightOffset: 1
   _triggerToActivateOnPickup: {fileID: 1851727997}
+  _activateTriggerOnlyForThisKeyId: 
   _ghostToActivate: {fileID: 0}
   _spawnGhostOnPickup: 0
   _pickupSound: {fileID: 0}

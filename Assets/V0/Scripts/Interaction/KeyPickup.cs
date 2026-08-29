@@ -33,6 +33,9 @@ namespace V0.Interaction
         [Tooltip("Trigger to activate (e.g. GhostTrigger) when this key is picked up. If null, auto-finds 'GhostTrigger'.")]
         [SerializeField] private GameObject _triggerToActivateOnPickup;
 
+        [Tooltip("Optional Key ID filter to activate trigger. If left empty or matches (e.g. 'DrawingRoomKey', 'BedRoomKey', 'BedroomKey'), activates GhostTrigger.")]
+        [SerializeField] private string _activateTriggerOnlyForThisKeyId = "";
+
         [Tooltip("Optional reference to the Ghost GameObject. If null, auto-finds 'Ghost' in the scene.")]
         [SerializeField] private GameObject _ghostToActivate;
 
@@ -144,48 +147,74 @@ namespace V0.Interaction
                 AudioSource.PlayClipAtPoint(_pickupSound, transform.position, 1.0f);
             }
 
-            // Smoothly move towards player & scale down slightly (same animation as Flashlight)
+            // Capture locals for lambda closure
+            string capturedKeyId = _keyId;
+            GameObject capturedTrigger = _triggerToActivateOnPickup;
+            GameObject capturedGhost = _ghostToActivate;
+            bool capturedSpawnGhost = _spawnGhostOnPickup;
+
             Sequence pickupSeq = DOTween.Sequence();
             pickupSeq.Append(transform.DOMove(targetPosition, _pickupDuration).SetEase(_moveEase));
             pickupSeq.Join(transform.DOScale(transform.localScale * 0.8f, _pickupDuration).SetEase(_moveEase));
             pickupSeq.OnComplete(() =>
             {
                 // Register this specific key as collected
-                if (!string.IsNullOrEmpty(_keyId))
+                if (!string.IsNullOrEmpty(capturedKeyId))
                 {
-                    _collectedKeyIds.Add(_keyId);
+                    _collectedKeyIds.Add(capturedKeyId);
                 }
                 _collectedKeyInstances.Add(this);
 
-                OnKeyCollected?.Invoke(_keyId);
-                Debug.Log($"<color=yellow>[KeyPickup]</color> Collected key: '{_keyId}' ({gameObject.name})");
+                OnKeyCollected?.Invoke(capturedKeyId);
+                Debug.Log($"<color=yellow>[KeyPickup]</color> Collected key: '{capturedKeyId}'");
 
-                // Activate trigger (e.g. GhostTrigger)
-                if (_triggerToActivateOnPickup != null)
+                // ONLY when DrawingRoomKey is picked up → activate GhostTrigger
+                if (string.Equals(capturedKeyId, "DrawingRoomKey", StringComparison.OrdinalIgnoreCase))
                 {
-                    _triggerToActivateOnPickup.SetActive(true);
-                    Debug.Log($"<color=cyan>[KeyPickup]</color> Activated trigger '{_triggerToActivateOnPickup.name}' on key pickup!");
-                }
-                else
-                {
-                    GameObject ghostTrigger = GameObject.Find("GhostTrigger");
-                    if (ghostTrigger == null) ghostTrigger = GameObject.Find("TriggerPoint/GhostTrigger");
-                    if (ghostTrigger != null)
+                    if (capturedTrigger != null)
                     {
-                        ghostTrigger.SetActive(true);
-                        Debug.Log("<color=cyan>[KeyPickup]</color> Auto-activated 'GhostTrigger' on key pickup!");
+                        capturedTrigger.SetActive(true);
+                        Debug.Log($"<color=green>[KeyPickup]</color> DrawingRoomKey collected! Activated GhostTrigger '{capturedTrigger.name}'!");
+                    }
+                    else
+                    {
+                        ActivateGhostTrigger();
                     }
                 }
 
-                // Spawn / Activate Ghost (if immediate mode enabled)
-                if (_spawnGhostOnPickup && _ghostToActivate != null)
+                // Spawn / Activate Ghost immediately (if enabled)
+                if (capturedSpawnGhost && capturedGhost != null)
                 {
-                    _ghostToActivate.SetActive(true);
+                    capturedGhost.SetActive(true);
                     Debug.Log("<color=red>[KeyPickup]</color> Ghost has awakened and is now hunting!");
                 }
 
                 Destroy(gameObject);
             });
+        }
+
+        /// <summary>
+        /// Reliably searches the scene for 'GhostTrigger' (including inactive objects) and sets it active.
+        /// </summary>
+        public static void ActivateGhostTrigger()
+        {
+            UnityEngine.SceneManagement.Scene activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            GameObject[] rootObjects = activeScene.GetRootGameObjects();
+            foreach (GameObject root in rootObjects)
+            {
+                Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+                foreach (Transform t in transforms)
+                {
+                    if (t.name == "GhostTrigger")
+                    {
+                        t.gameObject.SetActive(true);
+                        Debug.Log("<color=green>[KeyPickup]</color> DrawingRoomKey picked up -> Successfully activated inactive 'GhostTrigger'!");
+                        return;
+                    }
+                }
+            }
+
+            Debug.LogWarning("[KeyPickup] DrawingRoomKey picked up, but could not find 'GhostTrigger' in scene!");
         }
 
         private void OnDestroy()
