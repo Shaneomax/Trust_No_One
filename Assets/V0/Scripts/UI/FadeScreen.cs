@@ -18,9 +18,7 @@ namespace V0.UI
             {
                 if (_instance == null)
                 {
-                    GameObject go = new GameObject("FadeScreen");
-                    _instance = go.AddComponent<FadeScreen>();
-                    DontDestroyOnLoad(go);
+                    _instance = Object.FindFirstObjectByType<FadeScreen>();
                 }
                 return _instance;
             }
@@ -33,8 +31,8 @@ namespace V0.UI
         [Tooltip("Default fade duration in seconds")]
         [SerializeField] public float defaultDuration = 1.0f;
 
-        private CanvasGroup _canvasGroup;
-        private bool _initialized = false;
+        [Header("Serialized References (Pre-baked in Scene)")]
+        [SerializeField] private CanvasGroup _canvasGroup;
 
         private void Awake()
         {
@@ -44,46 +42,18 @@ namespace V0.UI
                 return;
             }
             _instance = this;
-            DontDestroyOnLoad(gameObject);
-            Initialize();
-        }
 
-        private void Initialize()
-        {
-            if (_initialized) return;
-            _initialized = true;
+            if (_canvasGroup == null)
+            {
+                _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            }
 
-            // Create Canvas
-            Canvas canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 9999; // Always on top
-
-            // Canvas Scaler
-            CanvasScaler scaler = gameObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-
-            gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-
-            // Create full-screen Image
-            GameObject imgObj = new GameObject("FadeImage");
-            imgObj.transform.SetParent(transform, false);
-
-            Image img = imgObj.AddComponent<Image>();
-            img.color = fadeColor;
-            img.raycastTarget = false;
-
-            RectTransform rt = imgObj.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-
-            // Canvas Group for alpha control
-            _canvasGroup = imgObj.AddComponent<CanvasGroup>();
-            _canvasGroup.alpha = 0f;
-            _canvasGroup.blocksRaycasts = false;
-            _canvasGroup.interactable = false;
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.alpha = 0f;
+                _canvasGroup.blocksRaycasts = false;
+                _canvasGroup.interactable = false;
+            }
         }
 
         /// <summary>
@@ -91,7 +61,9 @@ namespace V0.UI
         /// </summary>
         public void FadeToBlack(float duration = -1f, System.Action onComplete = null)
         {
-            if (_canvasGroup == null) Initialize();
+            if (_canvasGroup == null) _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            if (_canvasGroup == null) return;
+
             float dur = duration < 0 ? defaultDuration : duration;
             _canvasGroup.DOKill();
             _canvasGroup.DOFade(1f, dur).SetEase(Ease.InQuad).SetUpdate(true).OnComplete(() =>
@@ -105,7 +77,9 @@ namespace V0.UI
         /// </summary>
         public void FadeFromBlack(float duration = -1f, System.Action onComplete = null)
         {
-            if (_canvasGroup == null) Initialize();
+            if (_canvasGroup == null) _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            if (_canvasGroup == null) return;
+
             float dur = duration < 0 ? defaultDuration : duration;
             _canvasGroup.alpha = 1f;
             _canvasGroup.DOKill();
@@ -120,7 +94,9 @@ namespace V0.UI
         /// </summary>
         public void SetBlack()
         {
-            if (_canvasGroup == null) Initialize();
+            if (_canvasGroup == null) _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            if (_canvasGroup == null) return;
+
             _canvasGroup.DOKill();
             _canvasGroup.alpha = 1f;
         }
@@ -130,7 +106,9 @@ namespace V0.UI
         /// </summary>
         public void SetClear()
         {
-            if (_canvasGroup == null) Initialize();
+            if (_canvasGroup == null) _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            if (_canvasGroup == null) return;
+
             _canvasGroup.DOKill();
             _canvasGroup.alpha = 0f;
         }
@@ -141,14 +119,19 @@ namespace V0.UI
         /// </summary>
         public void FadeOutAndIn(float fadeOutDur, float holdDur, float fadeInDur, System.Action onBlack = null)
         {
-            if (_canvasGroup == null) Initialize();
+            if (_canvasGroup == null) _canvasGroup = GetComponentInChildren<CanvasGroup>();
+            if (_canvasGroup == null) return;
+
             _canvasGroup.DOKill();
             _canvasGroup.DOFade(1f, fadeOutDur).SetEase(Ease.InQuad).SetUpdate(true).OnComplete(() =>
             {
                 onBlack?.Invoke();
                 DOVirtual.DelayedCall(holdDur, () =>
                 {
-                    _canvasGroup.DOFade(0f, fadeInDur).SetEase(Ease.OutQuad).SetUpdate(true);
+                    if (_canvasGroup != null)
+                    {
+                        _canvasGroup.DOFade(0f, fadeInDur).SetEase(Ease.OutQuad).SetUpdate(true);
+                    }
                 });
             });
         }

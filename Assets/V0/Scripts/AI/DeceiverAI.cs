@@ -58,10 +58,8 @@ namespace TrustNoOne.AI
 
         // Animator parameter hashes
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
-        private static readonly int OpenDoorHash = Animator.StringToHash("OpenDoor");
 
         private bool _hasSpeedParam;
-        private bool _hasOpenDoorParam;
 
         // Zero-GC raycast buffer
         private readonly RaycastHit[] _groundHitBuffer = new RaycastHit[8];
@@ -144,7 +142,6 @@ namespace TrustNoOne.AI
             foreach (AnimatorControllerParameter param in _animator.parameters)
             {
                 if (param.nameHash == SpeedHash) _hasSpeedParam = true;
-                if (param.nameHash == OpenDoorHash) _hasOpenDoorParam = true;
             }
         }
 
@@ -261,7 +258,7 @@ namespace TrustNoOne.AI
             Vector3 forward = transform.forward;
 
             // Tight sphere check directly in front
-            Collider[] hits = Physics.OverlapSphere(origin + forward * 0.7f, 1.2f, ~0, QueryTriggerInteraction.Collide);
+            Collider[] hits = Physics.OverlapSphere(origin + forward * (_doorDetectDistance * 0.45f), _doorDetectDistance * 0.55f, ~0, QueryTriggerInteraction.Collide);
             foreach (Collider col in hits)
             {
                 DoorInteractable d = col.GetComponentInParent<DoorInteractable>();
@@ -351,7 +348,6 @@ namespace TrustNoOne.AI
             // 4. Play DoorOpening animation cleanly via CrossFade
             if (_animator != null)
             {
-                _animator.ResetTrigger(OpenDoorHash);
                 _animator.CrossFadeInFixedTime("DoorOpening", 0.12f);
             }
 
