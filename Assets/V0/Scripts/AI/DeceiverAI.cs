@@ -33,11 +33,8 @@ namespace TrustNoOne.AI
         [Tooltip("Distance to closed door to initiate opening interaction")]
         [SerializeField] private float _doorDetectDistance = 2.4f;
 
-        [Tooltip("Delay into the DoorOpening animation when the door actually swings open (seconds)")]
-        [SerializeField] private float _doorOpenTriggerDelay = 0.7f;
-
-        [Tooltip("Total duration of the DoorOpening animation sequence (seconds)")]
-        [SerializeField] private float _doorOpenTotalDuration = 1.6f;
+        [Tooltip("Full duration of the DoorOpening animation before opening the door (seconds)")]
+        [SerializeField] private float _doorOpenAnimationDuration = 1.8f;
 
         [Tooltip("Can Enemy2 also force open locked doors? (false = only normal/unlocked closed doors)")]
         [SerializeField] private bool _canOpenLockedDoors = false;
@@ -193,10 +190,14 @@ namespace TrustNoOne.AI
                 _doorCooldownTimer -= Time.deltaTime;
             }
 
-            // If currently performing the door opening animation, wait until finished
+            // If currently performing the door opening animation, stand 100% still and wait until finished
             if (_isOpeningDoor)
             {
-                UpdateAnimator(0f);
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                    _agent.velocity = Vector3.zero;
+                }
                 return;
             }
 
@@ -249,6 +250,7 @@ namespace TrustNoOne.AI
 
         /// <summary>
         /// Detects if there is a closed door in front of Enemy2 that needs to be opened.
+        /// Strictly ignores already-open doors.
         /// </summary>
         private bool CheckForDoorAhead(out DoorInteractable door)
         {
@@ -258,17 +260,35 @@ namespace TrustNoOne.AI
             Vector3 origin = transform.position + Vector3.up * 1.0f;
             Vector3 forward = transform.forward;
 
-            // 1. Check colliders in front of Enemy2
-            Collider[] hits = Physics.OverlapSphere(origin + forward * 0.9f, _doorDetectDistance, ~0, QueryTriggerInteraction.Collide);
+            // Tight sphere check directly in front
+            Collider[] hits = Physics.OverlapSphere(origin + forward * 0.7f, 1.2f, ~0, QueryTriggerInteraction.Collide);
             foreach (Collider col in hits)
             {
                 DoorInteractable d = col.GetComponentInParent<DoorInteractable>();
-                if (d != null && !d.IsOpen && !_openedDoors.Contains(d))
+                if (d != null)
                 {
-                    if (!d.IsLocked || _canOpenLockedDoors)
+                    // If door is ALREADY OPEN, never play animation
+                    if (d.IsOpen)
                     {
-                        door = d;
-                        return true;
+                        _openedDoors.Add(d);
+                        continue;
+                    }
+
+                    // Must be facing the door
+                    Vector3 toDoor = (d.transform.position - transform.position);
+                    toDoor.y = 0f;
+                    if (toDoor.sqrMagnitude > 0.01f && Vector3.Dot(forward, toDoor.normalized) < 0.3f)
+                    {
+                        continue;
+                    }
+
+                    if (!_openedDoors.Contains(d))
+                    {
+                        if (!d.IsLocked || _canOpenLockedDoors)
+                        {
+                            door = d;
+                            return true;
+                        }
                     }
                 }
             }
@@ -277,69 +297,110 @@ namespace TrustNoOne.AI
         }
 
         /// <summary>
-        /// Sequences the DoorOpening animation, faces the door, and opens it smoothly.
+        /// Sequences the DoorOpening animation:
+        /// 1. Freezes Enemy2 in place with 0 position drift.
+        /// 2. Plays DoorOpening animation cleanly.
+        /// 3. AFTER animation completes, door opens.
+        /// 4. CrossFades back to Idle before moving to prevent half-open animation glitches.
+        /// 5. Resumes following the player!
         /// </summary>
         private IEnumerator OpenDoorSequence(DoorInteractable door)
         {
+            if (door == null || door.IsOpen || _openedDoors.Contains(door))
+            {
+                yield break;
+            }
+
             _isOpeningDoor = true;
             _currentDoorTarget = door;
             _openedDoors.Add(door);
             _doorCooldownTimer = 4.0f;
 
-            // 1. Stop NavMeshAgent
+            // 1. Force Speed to 0 so walk cycle does not blend in
+            if (_animator != null && _hasSpeedParam)
+            {
+                _animator.SetFloat(SpeedHash, 0f);
+            }
+
+            // 2. Completely halt NavMeshAgent and capture position
+            Vector3 lockedPos = transform.position;
             if (_agent != null && _agent.isOnNavMesh)
             {
                 _agent.isStopped = true;
+                _agent.ResetPath();
                 _agent.velocity = Vector3.zero;
             }
 
-            // 2. Turn smoothly to face the door
+            // 3. Turn smoothly to face the door
             Vector3 doorDir = (door.transform.position - transform.position);
             doorDir.y = 0f;
             if (doorDir.sqrMagnitude > 0.01f)
             {
                 Quaternion faceDoorRot = Quaternion.LookRotation(doorDir);
                 float turnTimer = 0f;
-                while (turnTimer < 0.35f)
+                while (turnTimer < 0.25f)
                 {
                     turnTimer += Time.deltaTime;
-                    transform.rotation = Quaternion.Slerp(transform.rotation, faceDoorRot, turnTimer / 0.35f);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, faceDoorRot, turnTimer / 0.25f);
+                    transform.position = lockedPos;
+                    if (_agent != null && _agent.isOnNavMesh) _agent.velocity = Vector3.zero;
                     yield return null;
                 }
             }
 
-            // 3. Trigger DoorOpening animation ONCE
+            // 4. Play DoorOpening animation cleanly via CrossFade
             if (_animator != null)
             {
-                if (_hasOpenDoorParam)
-                {
-                    _animator.ResetTrigger(OpenDoorHash);
-                    _animator.SetTrigger(OpenDoorHash);
-                }
-                else
-                {
-                    _animator.Play("DoorOpening", 0, 0f);
-                }
+                _animator.ResetTrigger(OpenDoorHash);
+                _animator.CrossFadeInFixedTime("DoorOpening", 0.12f);
             }
 
-            Debug.Log($"<color=cyan>[DeceiverAI]</color> Enemy 2 is opening door: <b>{door.gameObject.name}</b>");
+            Debug.Log($"<color=cyan>[DeceiverAI]</color> Playing DoorOpening animation for: <b>{door.gameObject.name}</b>");
 
-            // 4. Wait for hand reach moment in animation
-            yield return new WaitForSeconds(_doorOpenTriggerDelay);
+            // 5. Wait for the DoorOpening animation to play to completion while standing 100% still
+            float animElapsed = 0f;
+            while (animElapsed < _doorOpenAnimationDuration)
+            {
+                animElapsed += Time.deltaTime;
+                transform.position = lockedPos; // Absolute position lock (0 drift!)
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                    _agent.velocity = Vector3.zero;
+                }
+                yield return null;
+            }
 
-            // 5. Open the door!
+            // 6. AFTER animation finishes: Open the door!
             if (door != null && !door.IsOpen)
             {
                 door.Interact();
+                Debug.Log($"<color=green>[DeceiverAI]</color> Door opened: <b>{door.gameObject.name}</b>");
             }
 
-            // 6. Wait for animation to finish cleanly
-            float remainingDuration = Mathf.Max(0.2f, _doorOpenTotalDuration - _doorOpenTriggerDelay);
-            yield return new WaitForSeconds(remainingDuration);
+            // 7. CrossFade back to Idle pose BEFORE enabling movement (eliminates half-open drifting pose!)
+            if (_animator != null)
+            {
+                _animator.CrossFadeInFixedTime("Idle", 0.2f);
+            }
 
-            // 7. Resume following
+            // Stand still for a brief moment while the door swings open
+            float settleTimer = 0f;
+            while (settleTimer < 0.35f)
+            {
+                settleTimer += Time.deltaTime;
+                transform.position = lockedPos;
+                if (_agent != null && _agent.isOnNavMesh)
+                {
+                    _agent.isStopped = true;
+                    _agent.velocity = Vector3.zero;
+                }
+                yield return null;
+            }
+
+            // 8. Resume following the player smoothly
             _isOpeningDoor = false;
-            _doorCooldownTimer = 3.0f;
+            _doorCooldownTimer = 3.5f;
 
             if (_agent != null && _agent.isOnNavMesh && _player != null)
             {

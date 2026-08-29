@@ -181,16 +181,16 @@ namespace V0.Editor
                 walkToDoor.duration = 0.1f;
                 walkToDoor.AddCondition(AnimatorConditionMode.If, 0, "OpenDoor");
 
-                // DoorOpening -> Idle (Exit Time = 0.9)
+                // DoorOpening -> Idle (Exit Time = 0.85)
                 AnimatorStateTransition doorToIdle = doorOpeningState.AddTransition(idleState);
                 doorToIdle.hasExitTime = true;
-                doorToIdle.exitTime = 0.92f;
+                doorToIdle.exitTime = 0.85f;
                 doorToIdle.duration = 0.2f;
 
-                // DoorOpening -> Walking (Exit Time = 0.9, Speed > 0.1)
+                // DoorOpening -> Walking (Exit Time = 0.85, Speed > 0.1)
                 AnimatorStateTransition doorToWalk = doorOpeningState.AddTransition(walkingState);
                 doorToWalk.hasExitTime = true;
-                doorToWalk.exitTime = 0.92f;
+                doorToWalk.exitTime = 0.85f;
                 doorToWalk.duration = 0.2f;
                 doorToWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, "Speed");
             }
