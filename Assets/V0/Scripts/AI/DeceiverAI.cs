@@ -39,12 +39,6 @@ namespace TrustNoOne.AI
         [Tooltip("Can Enemy2 also force open locked doors? (false = only normal/unlocked closed doors)")]
         [SerializeField] private bool _canOpenLockedDoors = false;
 
-        [Header("Stairs & Ground Snapping")]
-        [Tooltip("Smoothly aligns feet with stairs and floor geometry (Default false to prevent props like tables lifting feet)")]
-        [SerializeField] private bool _enableGroundSnapping = false;
-        [SerializeField] private float _feetOffset = 0f;
-        [SerializeField] private LayerMask _groundLayers = ~0;
-
         [Header("Cutscene & Target Destinations")]
         [Tooltip("Drag & Drop the Knife or destination spot where Enemy 2 should go during the cutscene.")]
         [SerializeField] private Transform _knifeDestination;

@@ -96,6 +96,17 @@ namespace V0.Interaction
         [Tooltip("List of multiple GameObjects to SetActive(true) on unlock.")]
         [SerializeField] private List<GameObject> _objectsToActivateOnUnlock = new List<GameObject>();
 
+        [Header("On Unlock Dialogue (Optional)")]
+        [Tooltip("Play a dialogue subtitle when this door is unlocked by the player? (Only active for chainsaw/locked stranger room)")]
+        [SerializeField] private bool _enableUnlockDialogue = false;
+
+        [TextArea(1, 3)]
+        [SerializeField] private string _unlockDialogueText = "[Stranger]: \"I am ok... don't worry, let's get out from here.\"";
+
+        [SerializeField] private Color _unlockDialogueColor = new Color(1f, 0.88f, 0.6f);
+        [SerializeField] private float _unlockDialogueDuration = 4.5f;
+        [SerializeField] private AudioClip _unlockDialogueAudio;
+
         [Header("Audio (Optional)")]
         [SerializeField] private AudioClip _unlockSound;
         [SerializeField] private AudioClip _lockedJiggleSound;
@@ -120,9 +131,18 @@ namespace V0.Interaction
         [SerializeField] private Ease _closeEase = Ease.InQuad;
 
         private bool _hasTriggeredLockedDialogue = false;
+        private static bool _globalHasPlayedUnlockDialogue = false;
         private Coroutine _dialogueCoroutine;
         private static Text _cachedSubtitleText;
         private static CanvasGroup _cachedLetterboxGroup;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _globalHasPlayedUnlockDialogue = false;
+            _cachedSubtitleText = null;
+            _cachedLetterboxGroup = null;
+        }
 
         /// <summary>
         /// Checks if the player holds the exact key needed for this specific door.
@@ -141,8 +161,7 @@ namespace V0.Interaction
                 return KeyPickup.HasKey(_requiredKeyId);
             }
 
-            // 3. Fallback: if locked with no specific key assigned, any key works
-            return KeyPickup.HasAnyKey;
+            return false;
         }
 
         public string InteractionPrompt
@@ -213,6 +232,15 @@ namespace V0.Interaction
                     }
 
                     Debug.Log($"<color=green>[DoorInteractable]</color> Unlocked '{gameObject.name}' with required key!");
+
+                    // Trigger Unlock Dialogue strictly for the Chainsaw / Chained room door and ONLY ONCE!
+                    bool isChainsawDoor = !string.IsNullOrEmpty(_requiredKeyId) && _requiredKeyId.Equals("ChainSaw", System.StringComparison.OrdinalIgnoreCase);
+                    if (isChainsawDoor && !_globalHasPlayedUnlockDialogue && !string.IsNullOrEmpty(_unlockDialogueText))
+                    {
+                        _globalHasPlayedUnlockDialogue = true;
+                        if (_dialogueCoroutine != null) StopCoroutine(_dialogueCoroutine);
+                        _dialogueCoroutine = StartCoroutine(PlayUnlockDialogueRoutine());
+                    }
                 }
                 else
                 {
@@ -289,6 +317,7 @@ namespace V0.Interaction
 
             if (_cachedLetterboxGroup != null)
             {
+                _cachedLetterboxGroup.gameObject.SetActive(true);
                 _cachedLetterboxGroup.DOKill();
                 _cachedLetterboxGroup.DOFade(1f, 0.5f);
             }
@@ -300,6 +329,7 @@ namespace V0.Interaction
 
                 if (_cachedSubtitleText != null)
                 {
+                    _cachedSubtitleText.gameObject.SetActive(true);
                     _cachedSubtitleText.DOKill();
                     _cachedSubtitleText.text = line.text;
                     _cachedSubtitleText.color = new Color(line.color.r, line.color.g, line.color.b, 0f);
@@ -323,14 +353,69 @@ namespace V0.Interaction
             _dialogueCoroutine = null;
         }
 
+        private IEnumerator PlayUnlockDialogueRoutine()
+        {
+            FindSubtitleReferences();
+
+            if (_unlockDialogueAudio != null)
+            {
+                AudioSource audio = GetComponent<AudioSource>();
+                if (audio == null) audio = gameObject.AddComponent<AudioSource>();
+                audio.PlayOneShot(_unlockDialogueAudio);
+            }
+
+            // CRITICAL: Ensure Letterbox Canvas and Group are active and visible
+            if (_cachedLetterboxGroup != null)
+            {
+                _cachedLetterboxGroup.gameObject.SetActive(true);
+                _cachedLetterboxGroup.DOKill();
+                _cachedLetterboxGroup.alpha = 1f;
+            }
+
+            if (_cachedSubtitleText != null)
+            {
+                _cachedSubtitleText.gameObject.SetActive(true);
+                _cachedSubtitleText.DOKill();
+                _cachedSubtitleText.text = _unlockDialogueText;
+                _cachedSubtitleText.color = _unlockDialogueColor;
+                _cachedSubtitleText.DOFade(1f, 0.3f);
+
+                yield return new WaitForSeconds(_unlockDialogueDuration);
+
+                _cachedSubtitleText.DOFade(0f, 0.6f);
+            }
+
+            if (_cachedLetterboxGroup != null)
+            {
+                _cachedLetterboxGroup.DOKill();
+                _cachedLetterboxGroup.DOFade(0f, 0.6f);
+            }
+
+            Debug.Log("<color=green>[DoorInteractable]</color> Played unlock dialogue: " + _unlockDialogueText);
+            _dialogueCoroutine = null;
+        }
+
         private void FindSubtitleReferences()
         {
-            if (_cachedSubtitleText == null)
+            if (_cachedSubtitleText == null || _cachedLetterboxGroup == null)
             {
                 GameObject canvasObj = GameObject.Find("CinematicLetterboxCanvas");
+                if (canvasObj == null)
+                {
+                    CanvasGroup[] allGroups = Resources.FindObjectsOfTypeAll<CanvasGroup>();
+                    foreach (var g in allGroups)
+                    {
+                        if (g.gameObject.name == "CinematicLetterboxCanvas")
+                        {
+                            canvasObj = g.gameObject;
+                            break;
+                        }
+                    }
+                }
+
                 if (canvasObj != null)
                 {
-                    _cachedSubtitleText = canvasObj.GetComponentInChildren<Text>();
+                    _cachedSubtitleText = canvasObj.GetComponentInChildren<Text>(true);
                     _cachedLetterboxGroup = canvasObj.GetComponent<CanvasGroup>();
                 }
             }

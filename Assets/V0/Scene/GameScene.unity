@@ -3603,6 +3603,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -4327,6 +4333,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -5725,6 +5737,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -7124,6 +7142,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32661,6 +32685,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -32711,6 +32741,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -34331,11 +34367,6 @@ MonoBehaviour:
   _doorDetectDistance: 2.2
   _doorOpenAnimationDuration: 1.8
   _canOpenLockedDoors: 0
-  _enableGroundSnapping: 1
-  _feetOffset: 0
-  _groundLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
   _knifeDestination: {fileID: 1031811996}
   _handKnife: {fileID: 218706324}
   _player: {fileID: 1132628782}
@@ -34899,6 +34930,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -35393,6 +35430,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -38448,6 +38491,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -240755,6 +240804,12 @@ MonoBehaviour:
   - {fileID: 471141105}
   - {fileID: 418162876}
   - {fileID: 1383194548}
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -241717,6 +241772,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -242131,6 +242192,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -243379,6 +243446,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -244472,6 +244545,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -252109,6 +252188,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
@@ -252490,6 +252575,12 @@ MonoBehaviour:
   _objectsToDeactivateOnUnlock: []
   _objectToActivateOnUnlock: {fileID: 0}
   _objectsToActivateOnUnlock: []
+  _enableUnlockDialogue: 1
+  _unlockDialogueText: '[Stranger]: "I am ok... don''t worry, let''s get out from
+    here."'
+  _unlockDialogueColor: {r: 1, g: 0.88, b: 0.6, a: 1}
+  _unlockDialogueDuration: 4.5
+  _unlockDialogueAudio: {fileID: 0}
   _unlockSound: {fileID: 0}
   _lockedJiggleSound: {fileID: 0}
   _doorTransform: {fileID: 0}
