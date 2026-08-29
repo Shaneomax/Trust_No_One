@@ -101,6 +101,11 @@ namespace TrustNoOne.AI
         [SerializeField] private float _patrolWanderRadius = 15f;
         [SerializeField] private float _patrolWaitDuration = 2.5f;
 
+        [Header("Spawn Grace Period (Player Headstart)")]
+        [Tooltip("Headstart time in seconds after spawning where the ghost ignores the player, giving the player time to run and hide")]
+        [SerializeField] private float _spawnGracePeriod = 6.0f;
+        private float _spawnGraceTimer = 0f;
+
         [Header("Audio & Scream upon Detection")]
         [Tooltip("AudioSource component for playing scream and horror sounds")]
         [SerializeField] private AudioSource _audioSource;
@@ -348,11 +353,24 @@ namespace TrustNoOne.AI
             else
             {
                 enabled = true;
+                _spawnGraceTimer = _spawnGracePeriod;
+                _currentState = State.Patrol;
                 if (_agent != null && _agent.isOnNavMesh)
                 {
                     _agent.isStopped = false;
+                    if (!_isPhasing) _agent.speed = _patrolSpeed;
+                    SetNextPatrolDestination();
                 }
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
+                Debug.Log($"<color=green>[EnemyAI]</color> Ghost spawned/resumed with {_spawnGracePeriod:F1}s headstart for player!");
             }
+        }
+
+        private void OnEnable()
+        {
+            _spawnGraceTimer = _spawnGracePeriod;
+            _currentState = State.Patrol;
+            DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
         }
 
         private void OnDisable()
@@ -395,6 +413,7 @@ namespace TrustNoOne.AI
         private void Start()
         {
             _currentState = State.Patrol;
+            _spawnGraceTimer = _spawnGracePeriod;
             _agent.speed = _patrolSpeed;
             _agent.stoppingDistance = _attackRadius * 0.8f;
             SetNextPatrolDestination();
@@ -406,6 +425,22 @@ namespace TrustNoOne.AI
             if (_player == null)
             {
                 CachePlayerReferences();
+                return;
+            }
+
+            // Spawn Grace Period (Give player guaranteed 5-6s headstart to run and hide!)
+            if (_spawnGraceTimer > 0f)
+            {
+                _spawnGraceTimer -= Time.deltaTime;
+                _canSeePlayer = false;
+
+                // Lock in quiet Patrol mode and keep UI indicator hidden
+                _currentState = State.Patrol;
+                DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
+
+                UpdateDoorPhasing();
+                HandlePatrol(Vector3.Distance(transform.position, _player.position));
+                UpdateAnimator();
                 return;
             }
 

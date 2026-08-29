@@ -83,6 +83,19 @@ namespace V0.Interaction
         [Tooltip("Drag any GameObject here. It will be SetActive(true) when this door is slammed and locked (e.g. a SecondTrigger, UI hint, etc.)")]
         [SerializeField] private GameObject _objectToActivateOnLock;
 
+        [Header("On Unlock - GameObjects to Deactivate / Activate")]
+        [Tooltip("Drag any GameObject here (e.g. chains, padlock, barricade). It will be SetActive(false) as soon as this door is unlocked.")]
+        [SerializeField] private GameObject _objectToDeactivateOnUnlock;
+
+        [Tooltip("List of multiple GameObjects to SetActive(false) on unlock (e.g. multiple chain meshes).")]
+        [SerializeField] private List<GameObject> _objectsToDeactivateOnUnlock = new List<GameObject>();
+
+        [Tooltip("Optional GameObject to SetActive(true) when this door is unlocked.")]
+        [SerializeField] private GameObject _objectToActivateOnUnlock;
+
+        [Tooltip("List of multiple GameObjects to SetActive(true) on unlock.")]
+        [SerializeField] private List<GameObject> _objectsToActivateOnUnlock = new List<GameObject>();
+
         [Header("Audio (Optional)")]
         [SerializeField] private AudioClip _unlockSound;
         [SerializeField] private AudioClip _lockedJiggleSound;
@@ -172,6 +185,33 @@ namespace V0.Interaction
                     {
                         AudioSource.PlayClipAtPoint(_unlockSound, transform.position, 1.0f);
                     }
+
+                    // Deactivate assigned GameObjects (e.g. chains, padlock, barricades)
+                    if (_objectToDeactivateOnUnlock != null)
+                    {
+                        _objectToDeactivateOnUnlock.SetActive(false);
+                    }
+                    if (_objectsToDeactivateOnUnlock != null)
+                    {
+                        foreach (GameObject go in _objectsToDeactivateOnUnlock)
+                        {
+                            if (go != null) go.SetActive(false);
+                        }
+                    }
+
+                    // Activate assigned GameObjects (if any)
+                    if (_objectToActivateOnUnlock != null)
+                    {
+                        _objectToActivateOnUnlock.SetActive(true);
+                    }
+                    if (_objectsToActivateOnUnlock != null)
+                    {
+                        foreach (GameObject go in _objectsToActivateOnUnlock)
+                        {
+                            if (go != null) go.SetActive(true);
+                        }
+                    }
+
                     Debug.Log($"<color=green>[DoorInteractable]</color> Unlocked '{gameObject.name}' with required key!");
                 }
                 else
