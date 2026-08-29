@@ -6,6 +6,7 @@ using Unity.Cinemachine;
 using DG.Tweening;
 using StarterAssets;
 using V0.Interaction;
+using V0.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -201,33 +202,37 @@ namespace V0.Cinematics
                 _cutsceneCoroutine = null;
             }
 
-            // Reset Cinemachine Brain blend to Cut so camera doesn't slowly rotate/pan on its own
-            if (_cachedBrain != null)
-            {
-                _cachedBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
-            }
-
-            // Reset camera priorities so player camera immediately takes back control
-            if (_chainedRoomCamera != null)
-            {
-                _chainedRoomCamera.Priority.Value = 0;
-            }
-
-            if (_playerFollowCamera != null)
-            {
-                _playerFollowCamera.Priority.Value = 10;
-            }
-
-            // Fade out subtitles and letterbox
+            // Fade out subtitles and letterbox immediately
             if (_subtitleText != null)
             {
                 _subtitleText.DOKill();
-                _subtitleText.DOFade(0f, 0.6f);
+                _subtitleText.DOFade(0f, 0.3f);
             }
             ShowLetterbox(false);
 
-            // Restore player controls
-            SetPlayerControlsActive(true);
+            // Subtle cinematic DOTween fade transition back to player view
+            FadeScreen.Instance.FadeOutAndIn(0.35f, 0.08f, 0.45f, () =>
+            {
+                // Reset Cinemachine Brain blend to Cut
+                if (_cachedBrain != null)
+                {
+                    _cachedBrain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
+                }
+
+                // Reset camera priorities so player camera immediately takes back control
+                if (_chainedRoomCamera != null)
+                {
+                    _chainedRoomCamera.Priority.Value = 0;
+                }
+
+                if (_playerFollowCamera != null)
+                {
+                    _playerFollowCamera.Priority.Value = 10;
+                }
+
+                // Restore player controls cleanly
+                SetPlayerControlsActive(true);
+            });
 
             OnCutsceneCompleted?.Invoke();
             Debug.Log("<color=green>[ChainedRoomCutscene]</color> Cutscene finished! Player in control.");

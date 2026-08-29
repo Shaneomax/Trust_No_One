@@ -39,11 +39,14 @@ namespace TrustNoOne.AI
         [Tooltip("Layers that block line of sight (walls, furniture, closed doors, tables)")]
         [SerializeField] private LayerMask _obstructionLayers = ~0;
 
-        [Header("Hearing & Sprint Sound Detection")]
-        [Tooltip("Maximum distance the ghost can hear the player sprinting")]
-        [SerializeField] private float _hearingRadius = 16f;
+        [Header("Hearing & Footstep Detection")]
+        [Tooltip("Maximum distance the ghost can hear the player sprinting (loud footsteps)")]
+        [SerializeField] private float _sprintHearingRadius = 18f;
 
-        [Tooltip("Can the ghost hear sprint footsteps through walls? (true = 360 sound sphere, false = muffled by walls)")]
+        [Tooltip("Maximum distance the ghost can hear the player normal walking (standard footsteps)")]
+        [SerializeField] private float _walkHearingRadius = 10f;
+
+        [Tooltip("Can the ghost hear footsteps through walls? (true = 360 sound sphere, false = muffled by walls)")]
         [SerializeField] private bool _hearThroughWalls = true;
 
         [Header("Search / Lost Sight Settings")]
@@ -392,23 +395,30 @@ namespace TrustNoOne.AI
             SnapModelToGround();
         }
 
-        #region Hearing & Sprint Sound Detection
+        #region Hearing & Footstep Detection
 
         /// <summary>
-        /// Checks if player is sprinting nearby. If heard, ghost moves to investigate the sound location!
+        /// Evaluates whether the ghost hears the player's footsteps.
+        /// - Sprinting: Loud footsteps heard from up to _sprintHearingRadius (18m).
+        /// - Normal Walking: Standard footsteps heard from up to _walkHearingRadius (10m).
+        /// - Crouch Walking / Standing: Completely silent — ghost cannot hear!
         /// </summary>
         private void EvaluateHearing(float distanceToPlayer)
         {
             // If already chasing or attacking, no need to listen for footsteps
             if (_currentState == State.Chase || _currentState == State.Attack) return;
 
-            // Outside hearing range
-            if (distanceToPlayer > _hearingRadius) return;
+            // 1. CROUCH CHECK: Crouch walking is completely silent!
+            if (IsPlayerCrouching()) return;
 
-            // Is the player actually sprinting?
-            if (!IsPlayerSprinting()) return;
+            // 2. MOVEMENT CHECK: Is the player actively moving? (Standing still is silent)
+            if (!IsPlayerMoving(out bool isSprinting)) return;
 
-            // If wall occlusion is enabled, check if sound is blocked by solid walls
+            // 3. RANGE CHECK: Determine effective hearing radius based on sprint vs normal walk
+            float effectiveHearingRadius = isSprinting ? _sprintHearingRadius : _walkHearingRadius;
+            if (distanceToPlayer > effectiveHearingRadius) return;
+
+            // 4. WALL OCCLUSION CHECK (if enabled)
             if (!_hearThroughWalls)
             {
                 Vector3 eyePos = transform.position + Vector3.up * _eyeHeight;
@@ -419,8 +429,7 @@ namespace TrustNoOne.AI
                 }
             }
 
-            // Ghost hears the sprint sound!
-            // Head directly to investigate where the player made the noise
+            // Ghost hears the footsteps! Head directly to investigate where the noise came from
             _lastKnownPlayerPosition = _player.position;
             _currentState = State.Search;
             _searchTimer = _searchDuration;
@@ -429,50 +438,73 @@ namespace TrustNoOne.AI
             if (!_isPhasing) _agent.speed = _searchSpeed;
             _agent.SetDestination(_lastKnownPlayerPosition);
 
-            Debug.Log($"<color=orange>[EnemyAI]</color> Ghost heard sprinting footsteps {distanceToPlayer:F1}m away! Investigating sound location.");
+            string moveType = isSprinting ? "sprinting" : "normal walking";
+            Debug.Log($"<color=orange>[EnemyAI]</color> Ghost heard {moveType} footsteps {distanceToPlayer:F1}m away (radius: {effectiveHearingRadius:F0}m)! Investigating sound location.");
         }
 
-        private bool IsPlayerSprinting()
+        private bool IsPlayerCrouching()
         {
+            if (_player == null) return false;
+
+            if (_playerFPC == null)
+            {
+                _playerFPC = _player.GetComponent<FirstPersonController>();
+            }
+            if (_playerFPC != null && _playerFPC.IsCrouching)
+            {
+                return true;
+            }
+
+            if (_playerInputs == null)
+            {
+                _playerInputs = _player.GetComponent<StarterAssetsInputs>();
+            }
+            if (_playerInputs != null && _playerInputs.crouch)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsPlayerMoving(out bool isSprinting)
+        {
+            isSprinting = false;
             if (_player == null) return false;
 
             if (_playerInputs == null)
             {
                 _playerInputs = _player.GetComponent<StarterAssetsInputs>();
             }
-
             if (_playerCharController == null)
             {
                 _playerCharController = _player.GetComponent<CharacterController>();
             }
 
-            // Check input system (holding sprint + moving)
-            if (_playerInputs != null && _playerInputs.sprint && _playerInputs.move != Vector2.zero)
-            {
-                return true;
-            }
+            // Input movement check
+            bool hasMoveInput = _playerInputs != null && _playerInputs.move.sqrMagnitude > 0.01f;
 
-            // If player is crouching, movement is completely silent (stealth mode)
-            if (_playerFPC != null && _playerFPC.IsCrouching)
-            {
-                return false;
-            }
-            if (_playerInputs != null && _playerInputs.crouch)
-            {
-                return false;
-            }
-
-            // Check CharacterController physical movement speed (sprint is ~6m/s, walk is ~4m/s)
+            // Physical speed check
+            float physicalSpeed = 0f;
             if (_playerCharController != null)
             {
                 Vector3 horizontalVel = new Vector3(_playerCharController.velocity.x, 0, _playerCharController.velocity.z);
-                if (horizontalVel.magnitude > 4.5f)
-                {
-                    return true;
-                }
+                physicalSpeed = horizontalVel.magnitude;
             }
 
-            return false;
+            bool isPhysicallyMoving = physicalSpeed > 0.15f;
+
+            // If neither moving input nor physical motion, player is standing still (silent)
+            if (!hasMoveInput && !isPhysicallyMoving)
+            {
+                return false;
+            }
+
+            // Check if sprinting (Sprint input held OR high physical speed > 4.5m/s)
+            bool sprintInput = _playerInputs != null && _playerInputs.sprint;
+            isSprinting = sprintInput || physicalSpeed > 4.5f;
+
+            return true;
         }
 
         #endregion
@@ -949,9 +981,13 @@ namespace TrustNoOne.AI
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
 
-            // Blue = Hearing range (sprinting footsteps)
+            // Blue = Sprint hearing range (loud footsteps)
             Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.6f);
-            Gizmos.DrawWireSphere(transform.position, _hearingRadius);
+            Gizmos.DrawWireSphere(transform.position, _sprintHearingRadius);
+
+            // Cyan = Walk hearing range (normal footsteps)
+            Gizmos.color = new Color(0f, 1f, 1f, 0.35f);
+            Gizmos.DrawWireSphere(transform.position, _walkHearingRadius);
 
             // Red = Attack range
             Gizmos.color = Color.red;
