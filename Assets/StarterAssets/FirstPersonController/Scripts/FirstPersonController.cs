@@ -74,6 +74,14 @@ namespace StarterAssets
 		private AudioSource _footstepSource;
 		private float _footstepTimer = 0f;
 
+		[Header("Heartbeat Audio (Panic on Search/Hunt)")]
+		[Tooltip("Heartbeat audio clip played from the player's position when the ghost is searching or hunting")]
+		public AudioClip HeartbeatAudioClip;
+		[Range(0f, 1f)] public float ChaseHeartbeatVolume = 0.95f;
+		[Range(0f, 1f)] public float SearchHeartbeatVolume = 0.70f;
+
+		private AudioSource _heartbeatSource;
+
 		[Header("Cinemachine")]
 		[Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
 		public GameObject CinemachineCameraTarget;
@@ -164,6 +172,12 @@ namespace StarterAssets
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
 
+			// Ensure PlayerHealth component is attached
+			if (GetComponent<V0.Player.PlayerHealth>() == null)
+			{
+				gameObject.AddComponent<V0.Player.PlayerHealth>();
+			}
+
 			// Initialize target pitch
 			SyncTargetPitchFromTransform();
 		}
@@ -188,6 +202,10 @@ namespace StarterAssets
 			if (_footstepSource != null && _footstepSource.isPlaying)
 			{
 				_footstepSource.Stop();
+			}
+			if (_heartbeatSource != null && _heartbeatSource.isPlaying)
+			{
+				_heartbeatSource.Stop();
 			}
 		}
 
@@ -243,6 +261,10 @@ namespace StarterAssets
 				_input.ResetInputs();
 			}
 			StopFootsteps();
+			if (_heartbeatSource != null && _heartbeatSource.isPlaying)
+			{
+				_heartbeatSource.Stop();
+			}
 		}
 
 		private void SyncTargetPitchFromTransform()
@@ -262,13 +284,18 @@ namespace StarterAssets
 			GroundedCheck();
 			Move();
 			UpdateFootsteps();
+			UpdateHeartbeat();
 		}
 
 		private void UpdateFootsteps()
 		{
 			if (_footstepSource == null)
 			{
-				_footstepSource = gameObject.AddComponent<AudioSource>();
+				_footstepSource = GetComponent<AudioSource>();
+				if (_footstepSource == null)
+				{
+					_footstepSource = gameObject.AddComponent<AudioSource>();
+				}
 				_footstepSource.playOnAwake = false;
 				_footstepSource.spatialBlend = 0f;
 				_footstepSource.loop = true;
@@ -276,16 +303,22 @@ namespace StarterAssets
 
 			if (FootstepAudioClip == null)
 			{
-				FootstepAudioClip = Resources.Load<AudioClip>("FootStep");
+				#if UNITY_EDITOR
+				FootstepAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/FootStep.mp3");
+				#endif
 				if (FootstepAudioClip == null)
 				{
-					AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-					foreach (var c in allClips)
+					FootstepAudioClip = Resources.Load<AudioClip>("FootStep");
+					if (FootstepAudioClip == null)
 					{
-						if (c.name.ToLower().Contains("footstep"))
+						AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+						foreach (var c in allClips)
 						{
-							FootstepAudioClip = c;
-							break;
+							if (c.name.ToLower().Contains("footstep"))
+							{
+								FootstepAudioClip = c;
+								break;
+							}
 						}
 					}
 				}
@@ -304,7 +337,7 @@ namespace StarterAssets
 			}
 
 			float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-			bool isMoving = currentHorizontalSpeed > 0.2f && _input != null && _input.move != Vector2.zero;
+			bool isMoving = (_speed > 0.15f || currentHorizontalSpeed > 0.15f) && _input != null && _input.move != Vector2.zero;
 
 			if (isMoving && _footstepSource.clip != null)
 			{
@@ -335,6 +368,86 @@ namespace StarterAssets
 				if (_footstepSource.isPlaying)
 				{
 					_footstepSource.Stop();
+				}
+			}
+		}
+
+		private void UpdateHeartbeat()
+		{
+			if (_heartbeatSource == null)
+			{
+				_heartbeatSource = gameObject.AddComponent<AudioSource>();
+				_heartbeatSource.playOnAwake = false;
+				_heartbeatSource.spatialBlend = 0f; // 2D Stereo inside player's head
+				_heartbeatSource.loop = true;
+			}
+
+			if (HeartbeatAudioClip == null)
+			{
+				#if UNITY_EDITOR
+				HeartbeatAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Heart_Beat.mp3");
+				#endif
+				if (HeartbeatAudioClip == null)
+				{
+					HeartbeatAudioClip = Resources.Load<AudioClip>("Heart_Beat");
+					if (HeartbeatAudioClip == null)
+					{
+						AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+						foreach (var c in allClips)
+						{
+							if (c.name.ToLower().Contains("heart"))
+							{
+								HeartbeatAudioClip = c;
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			if (HeartbeatAudioClip != null && _heartbeatSource.clip != HeartbeatAudioClip)
+			{
+				_heartbeatSource.clip = HeartbeatAudioClip;
+			}
+
+			// If disabled or in a global cutscene, immediately stop heartbeat audio
+			if (!enabled || V0.Interaction.FlashlightController.IsGlobalCutscene)
+			{
+				if (_heartbeatSource.isPlaying) _heartbeatSource.Stop();
+				return;
+			}
+
+			// Read detection state from DetectionIndicatorUI
+			V0.UI.DetectionIndicatorUI.DetectionState state = V0.UI.DetectionIndicatorUI.Instance != null 
+				? V0.UI.DetectionIndicatorUI.Instance.CurrentState 
+				: V0.UI.DetectionIndicatorUI.DetectionState.None;
+
+			if (state == V0.UI.DetectionIndicatorUI.DetectionState.Detected)
+			{
+				// Ghost hunting / chasing: Loud, fast pounding heartbeat from player position
+				_heartbeatSource.pitch = 1.25f;
+				_heartbeatSource.volume = ChaseHeartbeatVolume;
+				if (!_heartbeatSource.isPlaying && _heartbeatSource.clip != null)
+				{
+					_heartbeatSource.Play();
+				}
+			}
+			else if (state == V0.UI.DetectionIndicatorUI.DetectionState.Searching)
+			{
+				// Ghost searching / suspicious: Clear tense heartbeat
+				_heartbeatSource.pitch = 1.0f;
+				_heartbeatSource.volume = SearchHeartbeatVolume;
+				if (!_heartbeatSource.isPlaying && _heartbeatSource.clip != null)
+				{
+					_heartbeatSource.Play();
+				}
+			}
+			else
+			{
+				// Calm / safe / patrol: Stop heartbeat immediately
+				if (_heartbeatSource.isPlaying)
+				{
+					_heartbeatSource.Stop();
 				}
 			}
 		}
@@ -487,7 +600,13 @@ namespace StarterAssets
 			}
 			else if (_input.sprint)
 			{
-				targetSpeed = SprintSpeed;
+				float effectiveSprintSpeed = SprintSpeed;
+				if (V0.Player.PlayerHealth.Instance != null && V0.Player.PlayerHealth.Instance.IsLowHealth)
+				{
+					// Health < 30%: player is injured and sprints slower!
+					effectiveSprintSpeed = SprintSpeed * 0.55f;
+				}
+				targetSpeed = effectiveSprintSpeed;
 			}
 
 			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon

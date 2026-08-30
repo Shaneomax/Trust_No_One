@@ -244669,7 +244669,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ff0af67b8adb3146a510fcfe7eaeeec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V0.Cinematics.OkayEndingTrigger
-  _stranger: {fileID: 0}
+  _stranger: {fileID: 418162879}
   _endingSceneName: GoodEnding
   _fadeDuration: 1.8
   _shoutText: '[Stranger]: "STOP!"'
@@ -245885,6 +245885,9 @@ MonoBehaviour:
   _audioSource: {fileID: 0}
   _screamSound: {fileID: 8300000, guid: b50c0cbd9bdb4ad46b2be820871b51fe, type: 3}
   _screamDuration: 1.2
+  _heartbeatAudioClip: {fileID: 8300000, guid: f7de6b2fec744eb40a891a2ee8c8f536, type: 3}
+  _chaseHeartbeatVolume: 0.85
+  _searchHeartbeatVolume: 0.5
   _player: {fileID: 1132628782}
   _animator: {fileID: 428100276}
   _modelTransform: {fileID: 428100275}

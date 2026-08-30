@@ -53,6 +53,7 @@ namespace V0.UI
         [SerializeField] private RectTransform _badgeContainer;
 
         private DetectionState _currentState = DetectionState.None;
+        public DetectionState CurrentState => _currentState;
         private Tweener _vignettePulseTween;
         private Tweener _badgePulseTween;
 

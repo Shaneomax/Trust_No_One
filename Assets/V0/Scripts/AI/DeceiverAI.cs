@@ -881,6 +881,42 @@ namespace TrustNoOne.AI
             Debug.Log("<color=green>[DeceiverAI]</color> Resumed following player!");
         }
 
+        /// <summary>
+        /// Commands Enemy 2 to stand 100% still in Idle stance (e.g. after coming outside the house in Okay Ending).
+        /// </summary>
+        public void StandStill(Vector3? lookAtTarget = null)
+        {
+            StopAllCoroutines();
+            _isStationary = true;
+            _isNavigatingToDestination = false;
+            _isOpeningDoor = false;
+
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.velocity = Vector3.zero;
+                _agent.ResetPath();
+            }
+
+            if (_animator != null)
+            {
+                if (_hasSpeedParam) _animator.SetFloat(SpeedHash, 0f);
+                _animator.CrossFadeInFixedTime("Idle", 0.15f);
+            }
+
+            if (lookAtTarget.HasValue)
+            {
+                Vector3 dir = (lookAtTarget.Value - transform.position);
+                dir.y = 0f;
+                if (dir.sqrMagnitude > 0.01f)
+                {
+                    transform.rotation = Quaternion.LookRotation(dir);
+                }
+            }
+
+            Debug.Log("<color=yellow>[DeceiverAI]</color> Enemy 2 is now standing still in Idle stance outside.");
+        }
+
         private void UpdateFootsteps()
         {
             if (_footstepAudioSource == null)
@@ -896,16 +932,22 @@ namespace TrustNoOne.AI
 
             if (_footstepAudioClip == null)
             {
-                _footstepAudioClip = Resources.Load<AudioClip>("FootStep");
+                #if UNITY_EDITOR
+                _footstepAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/FootStep.mp3");
+                #endif
                 if (_footstepAudioClip == null)
                 {
-                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                    foreach (var c in allClips)
+                    _footstepAudioClip = Resources.Load<AudioClip>("FootStep");
+                    if (_footstepAudioClip == null)
                     {
-                        if (c.name.ToLower().Contains("footstep"))
+                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                        foreach (var c in allClips)
                         {
-                            _footstepAudioClip = c;
-                            break;
+                            if (c.name.ToLower().Contains("footstep"))
+                            {
+                                _footstepAudioClip = c;
+                                break;
+                            }
                         }
                     }
                 }

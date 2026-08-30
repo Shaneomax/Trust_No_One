@@ -118,7 +118,28 @@ namespace V0.Cinematics
 
             yield return new WaitForSeconds(0.4f);
 
-            // 3. Stranger Shouts "STOP!"
+            // 3. Position Stranger outside the house if needed and command him to STAND STILL
+            if (_stranger != null && _playerController != null)
+            {
+                float dist = Vector3.Distance(_stranger.transform.position, _playerController.transform.position);
+                if (_spawnCloseIfFar && dist > 20.0f)
+                {
+                    Vector3 toPlayer = (_playerController.transform.position - _stranger.transform.position).normalized;
+                    Vector3 candidatePos = _playerController.transform.position - toPlayer * _spawnDistance;
+
+                    if (NavMesh.SamplePosition(candidatePos, out NavMeshHit hit, 8.0f, NavMesh.AllAreas))
+                    {
+                        NavMeshAgent agent = _stranger.GetComponent<NavMeshAgent>();
+                        if (agent != null) agent.Warp(hit.position);
+                        else _stranger.transform.position = hit.position;
+                    }
+                }
+
+                // Command Enemy 2 to stand 100% still in Idle stance facing the player
+                _stranger.StandStill(_playerController.transform.position);
+            }
+
+            // 4. Stranger Shouts "STOP!"
             if (_subtitleText != null)
             {
                 _subtitleText.DOKill();
@@ -132,52 +153,11 @@ namespace V0.Cinematics
                 _audioSource.PlayOneShot(_shoutAudio);
             }
 
-            // 4. Position Stranger closer if far inside the house
-            if (_stranger != null && _playerController != null)
+            // 5. Camera tracks and focuses on Stranger standing still outside
+            float shoutElapsed = 0f;
+            while (shoutElapsed < _shoutDuration)
             {
-                float dist = Vector3.Distance(_stranger.transform.position, _playerController.transform.position);
-                if (_spawnCloseIfFar && dist > 18.0f)
-                {
-                    Vector3 toPlayer = (_playerController.transform.position - _stranger.transform.position).normalized;
-                    Vector3 candidatePos = _playerController.transform.position - toPlayer * _spawnDistance;
-
-                    if (NavMesh.SamplePosition(candidatePos, out NavMeshHit hit, 8.0f, NavMesh.AllAreas))
-                    {
-                        NavMeshAgent agent = _stranger.GetComponent<NavMeshAgent>();
-                        if (agent != null) agent.Warp(hit.position);
-                        else _stranger.transform.position = hit.position;
-                    }
-                }
-            }
-
-            // 5. Command Stranger to aggressively approach player
-            bool strangerArrived = false;
-            if (_stranger != null && _playerController != null)
-            {
-                _stranger.ApproachPlayer(_playerController.transform, _strangerRunSpeed, onArrived: () =>
-                {
-                    strangerArrived = true;
-                });
-            }
-            else
-            {
-                strangerArrived = true;
-            }
-
-            yield return new WaitForSeconds(_shoutDuration);
-
-            // Hide shout text
-            if (_subtitleText != null)
-            {
-                _subtitleText.DOFade(0f, 0.3f);
-            }
-
-            // 6. Camera follows approaching Stranger until he reaches player
-            float maxChaseWait = 10.0f;
-            float chaseElapsed = 0f;
-            while (!strangerArrived && chaseElapsed < maxChaseWait)
-            {
-                chaseElapsed += Time.deltaTime;
+                shoutElapsed += Time.deltaTime;
                 if (_stranger != null)
                 {
                     TrackStrangerWithCamera(_stranger.transform, Time.deltaTime * 6f);
@@ -185,7 +165,13 @@ namespace V0.Cinematics
                 yield return null;
             }
 
-            // 7. Evil Laugh dialogue & audio
+            // Hide shout text
+            if (_subtitleText != null)
+            {
+                _subtitleText.DOFade(0f, 0.3f);
+            }
+
+            // 6. Evil Laugh dialogue & audio
             if (_evilLaughAudio != null && _audioSource != null)
             {
                 _audioSource.PlayOneShot(_evilLaughAudio);
@@ -199,7 +185,7 @@ namespace V0.Cinematics
                 _subtitleText.DOFade(1f, 0.4f);
             }
 
-            // Lock camera firmly on Stranger during Evil Laugh
+            // Lock camera firmly on Stranger standing still outside during Evil Laugh
             float laughTimer = 0f;
             while (laughTimer < _laughDuration)
             {

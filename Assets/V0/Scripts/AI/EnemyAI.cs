@@ -116,6 +116,16 @@ namespace TrustNoOne.AI
         [Tooltip("Duration the ghost stands still screaming before sprinting to chase (seconds)")]
         [SerializeField] private float _screamDuration = 1.2f;
 
+        [Header("Heartbeat Audio (Hunting & Searching)")]
+        [Tooltip("Heartbeat audio clip played when ghost is hunting or searching (Auto-finds Heart_Beat.mp3)")]
+        [SerializeField] private AudioClip _heartbeatAudioClip;
+        [Range(0f, 1f)]
+        [SerializeField] private float _chaseHeartbeatVolume = 0.85f;
+        [Range(0f, 1f)]
+        [SerializeField] private float _searchHeartbeatVolume = 0.50f;
+
+        private AudioSource _heartbeatAudioSource;
+
         [Header("References (Auto-detected if unassigned)")]
         [SerializeField] private Transform _player;
         [SerializeField] private Animator _animator;
@@ -186,6 +196,12 @@ namespace TrustNoOne.AI
             _agent = GetComponent<NavMeshAgent>();
             _ownCollider = GetComponent<Collider>();
             _spawnPosition = transform.position;
+
+            // Ensure EnemyHealth is attached (100 HP)
+            if (GetComponent<EnemyHealth>() == null)
+            {
+                gameObject.AddComponent<EnemyHealth>();
+            }
 
             // Make all ghost colliders triggers so the player's CharacterController passes straight through
             Collider[] ghostColliders = GetComponentsInChildren<Collider>(true);
@@ -381,6 +397,10 @@ namespace TrustNoOne.AI
                 _screamCoroutine = null;
             }
             _isScreaming = false;
+            if (_heartbeatAudioSource != null && _heartbeatAudioSource.isPlaying)
+            {
+                _heartbeatAudioSource.Stop();
+            }
             DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
         }
 
@@ -463,6 +483,9 @@ namespace TrustNoOne.AI
 
             // 4. Update UI Detection Indicator (Yellow for Search, Red for Detected/Chase, None for Patrol)
             UpdateDetectionUI();
+
+            // 5. Update Player Panic Heartbeat Audio (Pounding in Chase/Attack, Tense in Search, Silent in Patrol)
+            UpdateHeartbeatAudio();
 
             // If standing still screaming upon spotting player, face player and wait
             if (_isScreaming)
@@ -875,6 +898,20 @@ namespace TrustNoOne.AI
             {
                 _animator.SetTrigger(AttackHash);
             }
+
+            // Deal 25 damage to player
+            if (V0.Player.PlayerHealth.Instance != null)
+            {
+                V0.Player.PlayerHealth.Instance.TakeDamage(_attackDamage);
+            }
+            else if (_player != null)
+            {
+                var ph = _player.GetComponent<V0.Player.PlayerHealth>() ?? _player.GetComponentInChildren<V0.Player.PlayerHealth>();
+                if (ph != null)
+                {
+                    ph.TakeDamage(_attackDamage);
+                }
+            }
         }
 
         private void SetNextPatrolDestination()
@@ -1044,6 +1081,99 @@ namespace TrustNoOne.AI
             else
             {
                 DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
+            }
+        }
+
+        private void UpdateHeartbeatAudio()
+        {
+            if (_heartbeatAudioSource == null)
+            {
+                // Create dedicated 2D stereo AudioSource for the player's heartbeat
+                GameObject playerObj = _player != null ? _player.gameObject : GameObject.FindWithTag("Player");
+                if (playerObj != null)
+                {
+                    _heartbeatAudioSource = playerObj.GetComponent<AudioSource>();
+                    if (_heartbeatAudioSource == null)
+                    {
+                        _heartbeatAudioSource = playerObj.AddComponent<AudioSource>();
+                    }
+                }
+                else
+                {
+                    _heartbeatAudioSource = GetComponent<AudioSource>();
+                    if (_heartbeatAudioSource == null)
+                    {
+                        _heartbeatAudioSource = gameObject.AddComponent<AudioSource>();
+                    }
+                }
+
+                _heartbeatAudioSource.playOnAwake = false;
+                _heartbeatAudioSource.spatialBlend = 0f; // 2D Stereo inside player's head
+                _heartbeatAudioSource.loop = true;
+            }
+
+            if (_heartbeatAudioClip == null)
+            {
+                #if UNITY_EDITOR
+                _heartbeatAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Heart_Beat.mp3");
+                #endif
+                if (_heartbeatAudioClip == null)
+                {
+                    _heartbeatAudioClip = Resources.Load<AudioClip>("Heart_Beat");
+                    if (_heartbeatAudioClip == null)
+                    {
+                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                        foreach (var c in allClips)
+                        {
+                            if (c.name.ToLower().Contains("heart"))
+                            {
+                                _heartbeatAudioClip = c;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (_heartbeatAudioClip != null && _heartbeatAudioSource.clip != _heartbeatAudioClip)
+            {
+                _heartbeatAudioSource.clip = _heartbeatAudioClip;
+            }
+
+            // Stop heartbeat immediately if ghost is disabled, inactive, in cutscene, or in spawn grace
+            if (!enabled || !gameObject.activeInHierarchy || V0.Interaction.FlashlightController.IsGlobalCutscene || _spawnGraceTimer > 0f)
+            {
+                if (_heartbeatAudioSource.isPlaying) _heartbeatAudioSource.Stop();
+                return;
+            }
+
+            if (_currentState == State.Chase || _currentState == State.Attack || _isScreaming)
+            {
+                // Hunting / Chasing: Fast, loud pounding heartbeat
+                _heartbeatAudioSource.pitch = 1.20f;
+                _heartbeatAudioSource.volume = _chaseHeartbeatVolume;
+                if (!_heartbeatAudioSource.isPlaying && _heartbeatAudioSource.clip != null)
+                {
+                    _heartbeatAudioSource.Play();
+                }
+            }
+            else if (_currentState == State.Search)
+            {
+                // Searching / Suspicious: Moderate tense heartbeat
+                _heartbeatAudioSource.pitch = 1.0f;
+                _heartbeatAudioSource.volume = _searchHeartbeatVolume;
+                if (!_heartbeatAudioSource.isPlaying && _heartbeatAudioSource.clip != null)
+                {
+                    _heartbeatAudioSource.Play();
+                }
+            }
+            else
+            {
+                // Patrol / Peaceful: Stop heartbeat
+                if (_heartbeatAudioSource.isPlaying)
+                {
+                    _heartbeatAudioSource.Stop();
+                }
             }
         }
 

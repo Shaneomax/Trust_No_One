@@ -211,6 +211,14 @@ MonoBehaviour:
   CinemachineCameraTarget: {fileID: 4135013735270702863}
   TopClamp: 89
   BottomClamp: -89
+  FootstepAudioClip: {fileID: 8300000, guid: 27ff90a525aae1e48a2fa0eecde5c6ef, type: 3}
+  FootstepVolume: 0.5
+  WalkStepInterval: 0.52
+  SprintStepInterval: 0.35
+  CrouchStepInterval: 0.7
+  HeartbeatAudioClip: {fileID: 8300000, guid: f7de6b2fec744eb40a891a2ee8c8f536, type: 3}
+  ChaseHeartbeatVolume: 0.95
+  SearchHeartbeatVolume: 0.7
 --- !u!114 &1978471637655604388
 MonoBehaviour:
   m_ObjectHideFlags: 0
