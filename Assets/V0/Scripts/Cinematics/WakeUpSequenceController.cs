@@ -189,6 +189,9 @@ namespace V0.Cinematics
         {
             _isSequenceRunning = true;
 
+            // Hide Objective UI during the wake-up cinematic cutscene
+            V0.UI.ObjectiveManager.SetVisible(false);
+
             // 1. Lock down player movement and interaction
             SetPlayerControlsActive(false);
 

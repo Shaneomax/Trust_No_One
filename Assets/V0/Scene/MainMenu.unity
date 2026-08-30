@@ -1448,7 +1448,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1669729448
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1811,11 +1811,23 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1.35
-  m_Text: "<b>W, A, S, D</b>  \u2014  Move\n<b>Mouse</b>  \u2014  Look Around\n<b>Left
-    Shift</b>  \u2014  Sprint  <i><color=#FF7070>(Warning: Ghost hears running!)</color></i>\n<b>Left
-    Ctrl</b>  \u2014  Crouch  <i><color=#70FF90>(Silent Stealth)</color></i>\n<b>E
-    </b>  \u2014  Interact & Pick Up Keys\n<b>T</b>  \u2014  Toggle Flashlight\n<b>Escape</b> 
-    \u2014  Back / Pause"
+  m_Text: '<b>W, A, S, D</b> : Move
+
+    <b>Mouse</b>  : Look Around
+
+    <b>Left
+    Shift</b>  :  Sprint  <i><color=#FF7070>(Warning: Ghost hears running!)</color></i>
+
+    <b>Left
+    Ctrl</b>  :  Crouch  <i><color=#70FF90>(Silent Stealth)</color></i>
+
+    <b>E
+    </b>  : Interact & Pick Up Keys
+
+    <b>T</b>  :  Toggle Flashlight
+
+    <b>Escape</b> 
+    :  Back / Pause'
 --- !u!222 &1843098932
 CanvasRenderer:
   m_ObjectHideFlags: 0

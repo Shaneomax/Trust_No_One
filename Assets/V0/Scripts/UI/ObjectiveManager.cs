@@ -6,7 +6,8 @@ namespace V0.UI
     /// <summary>
     /// Manages the top-left horror game objective display.
     /// Pure OnGUI rendering eliminates all Canvas layer conflicts, font missing errors, and text overlapping bugs.
-    /// Automatically hides in MainMenu, GoodEnding, OkayEnding, and any ending/credits scenes.
+    /// Automatically hides in MainMenu, GoodEnding, OkayEnding, and any ending/credits scenes,
+    /// as well as during intro cutscenes until completed.
     /// </summary>
     public class ObjectiveManager : MonoBehaviour
     {
@@ -14,7 +15,7 @@ namespace V0.UI
 
         [Header("Current Objective")]
         [SerializeField] private string _currentObjective = "Seek Help from the House";
-        [SerializeField] private bool _showObjective = true;
+        [SerializeField] private bool _showObjective = false;
 
         [Header("Styling")]
         [SerializeField] private Color _headerColor = new Color(1f, 0.82f, 0.35f, 1f); // Horror amber gold
@@ -98,6 +99,14 @@ namespace V0.UI
             if (!ShouldShowObjectiveInCurrentScene())
             {
                 _showObjective = false;
+                return;
+            }
+
+            // If a WakeUpSequenceController is present, hide objective until cutscene finishes
+            var wakeUpSeq = Object.FindFirstObjectByType<V0.Cinematics.WakeUpSequenceController>();
+            if (wakeUpSeq != null && wakeUpSeq.gameObject.activeInHierarchy)
+            {
+                _showObjective = false;
             }
             else
             {
@@ -129,7 +138,16 @@ namespace V0.UI
                 _currentObjective = "Seek Help from the House";
             }
 
-            _showObjective = ShouldShowObjectiveInCurrentScene();
+            // Check if intro cutscene is running in this scene
+            var wakeUpSeq = Object.FindFirstObjectByType<V0.Cinematics.WakeUpSequenceController>();
+            if (wakeUpSeq != null && wakeUpSeq.gameObject.activeInHierarchy)
+            {
+                _showObjective = false;
+            }
+            else
+            {
+                _showObjective = ShouldShowObjectiveInCurrentScene();
+            }
         }
 
         private void Update()
@@ -162,9 +180,24 @@ namespace V0.UI
         {
             _currentObjective = newObjective;
             _showObjective = ShouldShowObjectiveInCurrentScene();
-            _highlightTimer = 2.0f;
+            _highlightTimer = 2.5f;
 
             Debug.Log($"<color=yellow><b>[ObjectiveManager]</b></color> <color=white><b>{newObjective}</b></color>");
+        }
+
+        /// <summary>
+        /// Shows or hides the objective display directly.
+        /// </summary>
+        public static void SetVisible(bool visible)
+        {
+            if (Instance != null)
+            {
+                Instance._showObjective = visible && Instance.ShouldShowObjectiveInCurrentScene();
+                if (visible)
+                {
+                    Instance._highlightTimer = 2.5f;
+                }
+            }
         }
 
         /// <summary>
@@ -178,61 +211,75 @@ namespace V0.UI
             }
         }
 
-        private void InitGUIStyles()
+        private void InitStyles()
         {
-            if (_headerStyle != null) return;
-
-            _headerStyle = new GUIStyle(GUI.skin.label)
+            if (_headerStyle == null)
             {
-                fontSize = 13,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.UpperLeft
-            };
-            _headerStyle.normal.textColor = _headerColor;
+                _headerStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 13,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.UpperLeft
+                };
+                _headerStyle.normal.textColor = _headerColor;
 
-            _shadowHeaderStyle = new GUIStyle(_headerStyle);
-            _shadowHeaderStyle.normal.textColor = _shadowColor;
+                _objectiveStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 18,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.UpperLeft,
+                    wordWrap = true
+                };
+                _objectiveStyle.normal.textColor = _textColor;
 
-            _objectiveStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 19,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.UpperLeft,
-                wordWrap = true
-            };
-            _objectiveStyle.normal.textColor = _textColor;
+                _shadowHeaderStyle = new GUIStyle(_headerStyle);
+                _shadowHeaderStyle.normal.textColor = _shadowColor;
 
-            _shadowObjectiveStyle = new GUIStyle(_objectiveStyle);
-            _shadowObjectiveStyle.normal.textColor = _shadowColor;
+                _shadowObjectiveStyle = new GUIStyle(_objectiveStyle);
+                _shadowObjectiveStyle.normal.textColor = _shadowColor;
+            }
         }
 
         private void OnGUI()
         {
-            if (!_showObjective || string.IsNullOrEmpty(_currentObjective) || !ShouldShowObjectiveInCurrentScene()) return;
+            if (!_showObjective || string.IsNullOrEmpty(_currentObjective)) return;
 
-            InitGUIStyles();
+            InitStyles();
 
-            GUI.depth = -100; // Draw on top of all UI layers
+            // Responsive positioning for any screen resolution
+            float screenScale = Mathf.Clamp(Screen.height / 1080f, 0.7f, 1.4f);
+            float startX = 35f * screenScale;
+            float startY = 32f * screenScale;
+            float panelWidth = 550f * screenScale;
+            float headerHeight = 22f * screenScale;
+            float objectiveHeight = 35f * screenScale;
 
-            // Coordinates (Top-Left)
-            float startX = 45f;
-            float startY = 40f;
-            float width = 600f;
+            _headerStyle.fontSize = Mathf.RoundToInt(13 * screenScale);
+            _objectiveStyle.fontSize = Mathf.RoundToInt(18 * screenScale);
+            _shadowHeaderStyle.fontSize = _headerStyle.fontSize;
+            _shadowObjectiveStyle.fontSize = _objectiveStyle.fontSize;
 
-            // Highlight pulse color for newly updated objectives
-            Color activeTextColor = _highlightTimer > 0f
-                ? Color.Lerp(_textColor, new Color(1f, 0.92f, 0.55f), _highlightTimer / 2.0f)
-                : _textColor;
-            _objectiveStyle.normal.textColor = activeTextColor;
+            // Pulsing highlight effect when updated
+            Color textCol = _textColor;
+            if (_highlightTimer > 0f)
+            {
+                float pulse = Mathf.PingPong(_highlightTimer * 4f, 1f);
+                textCol = Color.Lerp(_textColor, new Color(1f, 0.9f, 0.4f, 1f), pulse);
+            }
+            _objectiveStyle.normal.textColor = textCol;
 
-            // 1. Draw Header ("OBJECTIVE")
-            GUI.Label(new Rect(startX + 1.5f, startY + 1.5f, width, 22f), "OBJECTIVE", _shadowHeaderStyle);
-            GUI.Label(new Rect(startX, startY, width, 22f), "OBJECTIVE", _headerStyle);
+            // Draw "OBJECTIVE" Tag Shadow & Text
+            Rect headerShadowRect = new Rect(startX + 1.5f, startY + 1.5f, panelWidth, headerHeight);
+            Rect headerRect = new Rect(startX, startY, panelWidth, headerHeight);
+            GUI.Label(headerShadowRect, "OBJECTIVE", _shadowHeaderStyle);
+            GUI.Label(headerRect, "OBJECTIVE", _headerStyle);
 
-            // 2. Draw Active Objective
-            float objY = startY + 20f;
-            GUI.Label(new Rect(startX + 1.5f, objY + 1.5f, width, 60f), _currentObjective, _shadowObjectiveStyle);
-            GUI.Label(new Rect(startX, objY, width, 60f), _currentObjective, _objectiveStyle);
+            // Draw Current Objective Shadow & Text
+            float objY = startY + headerHeight - (2f * screenScale);
+            Rect objShadowRect = new Rect(startX + 1.5f, objY + 1.5f, panelWidth, objectiveHeight);
+            Rect objRect = new Rect(startX, objY, panelWidth, objectiveHeight);
+            GUI.Label(objShadowRect, _currentObjective, _shadowObjectiveStyle);
+            GUI.Label(objRect, _currentObjective, _objectiveStyle);
         }
     }
 }
