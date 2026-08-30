@@ -75,7 +75,11 @@ namespace V0.Cinematics
 
             if (chainedDoorObj == null)
             {
-                chainedDoorObj = GameObject.Find("SM_Door_interior_01_LOD0");
+                chainedDoorObj = GameObject.Find("SM_Door_interior_01_LOD0")
+                              ?? GameObject.Find("Chainsaw")
+                              ?? GameObject.Find("Chain")
+                              ?? GameObject.Find("TriggerPoint")
+                              ?? GameObject.Find("FirstTrigger");
             }
 
             if (chainedDoorObj != null)
@@ -83,6 +87,11 @@ namespace V0.Cinematics
                 Instance = chainedDoorObj.GetComponent<DoorBangingAudio>() ?? chainedDoorObj.AddComponent<DoorBangingAudio>();
                 return Instance;
             }
+
+            // Create a dedicated audio host at the chainsaw / chained room location
+            GameObject newHost = new GameObject("DoorBangingAudioHost");
+            Instance = newHost.AddComponent<DoorBangingAudio>();
+            return Instance;
 
             return null;
         }
@@ -269,11 +278,16 @@ namespace V0.Cinematics
 
         public void AutoResolveAudioClip()
         {
-            if (_bangingAudioClip != null) return;
+            if (_bangingAudioClip != null)
+            {
+                if (_audioSource != null && _audioSource.clip == null) _audioSource.clip = _bangingAudioClip;
+                return;
+            }
 
             #if UNITY_EDITOR
             string[] searchPaths = new string[]
             {
+                "Assets/V0/Audio/Door_Banging.mp3",
                 "Assets/V0/Audio/Door_Banging.wav",
                 "Assets/V0/Audio/DoorBanging.mp3",
                 "Assets/V0/Audio/Door_Bang.mp3",
@@ -298,12 +312,17 @@ namespace V0.Cinematics
                 foreach (var c in allClips)
                 {
                     string n = c.name.ToLower();
-                    if (n.Contains("banging") || n.Contains("door_bang") || n.Contains("knock"))
+                    if (n.Contains("door_banging") || n.Contains("doorbanging") || n.Contains("banging") || n.Contains("door_bang") || n.Contains("knock"))
                     {
                         _bangingAudioClip = c;
                         break;
                     }
                 }
+            }
+
+            if (_audioSource != null && _bangingAudioClip != null)
+            {
+                _audioSource.clip = _bangingAudioClip;
             }
         }
     }

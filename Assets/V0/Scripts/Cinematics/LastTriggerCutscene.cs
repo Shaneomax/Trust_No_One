@@ -122,13 +122,13 @@ namespace V0.Cinematics
             if (_isPlaying && _allowSkip)
             {
 #if ENABLE_INPUT_SYSTEM
-                if (UnityEngine.InputSystem.Keyboard.current != null && (UnityEngine.InputSystem.Keyboard.current.spaceKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame))
+                if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.spaceKey.wasPressedThisFrame)
                 {
                     Debug.Log("<color=yellow>[LastTriggerCutscene]</color> Skipped by player.");
                     SkipCutscene();
                 }
 #else
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
+                if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Debug.Log("<color=yellow>[LastTriggerCutscene]</color> Skipped by player.");
                     SkipCutscene();

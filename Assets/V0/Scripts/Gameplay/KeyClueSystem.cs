@@ -496,13 +496,12 @@ namespace V0.Gameplay
 
         private void EnsureClueUIHierarchy()
         {
-            if (_clueCanvas != null && _clueText != null) return;
+            if (_clueCanvas != null && _clueText != null && _clueCanvasGroup != null) return;
 
             GameObject canvasObj = GameObject.Find("KeyClueCanvas");
             if (canvasObj == null)
             {
                 canvasObj = new GameObject("KeyClueCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                DontDestroyOnLoad(canvasObj);
             }
 
             _clueCanvas = canvasObj.GetComponent<Canvas>();
@@ -525,12 +524,12 @@ namespace V0.Gameplay
             _cluePanelRect.anchoredPosition = new Vector2(0f, 90f); // Centered near bottom
             _cluePanelRect.sizeDelta = new Vector2(920f, 75f);
 
-            _clueCanvasGroup = panelObj.GetComponent<CanvasGroup>();
+            _clueCanvasGroup = panelObj.GetComponent<CanvasGroup>() ?? panelObj.AddComponent<CanvasGroup>();
             _clueCanvasGroup.alpha = 0f;
             _clueCanvasGroup.blocksRaycasts = false;
             _clueCanvasGroup.interactable = false;
 
-            Image panelBg = panelObj.GetComponent<Image>();
+            Image panelBg = panelObj.GetComponent<Image>() ?? panelObj.AddComponent<Image>();
             panelBg.color = new Color(0.04f, 0.04f, 0.04f, 0.85f); // Sleek dark bar
             panelBg.raycastTarget = false;
 

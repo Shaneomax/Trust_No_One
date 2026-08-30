@@ -47,6 +47,17 @@ namespace V0.UI
 
         private void Awake()
         {
+            Time.timeScale = 1f;
+            AudioListener.pause = false;
+            _isTransitioning = false;
+
+            // Destroy any leftover gameplay canvases from previous scenes
+            GameObject oldClueCanvas = GameObject.Find("KeyClueCanvas");
+            if (oldClueCanvas != null) Destroy(oldClueCanvas);
+
+            GameObject oldPauseCanvas = GameObject.Find("PauseCanvas");
+            if (oldPauseCanvas != null) Destroy(oldPauseCanvas);
+
             if (Camera.main != null)
             {
                 Camera.main.clearFlags = CameraClearFlags.SolidColor;
@@ -61,6 +72,10 @@ namespace V0.UI
 
         private void Start()
         {
+            Time.timeScale = 1f;
+            AudioListener.pause = false;
+            _isTransitioning = false;
+
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
@@ -68,6 +83,8 @@ namespace V0.UI
             if (_menuCanvasGroup != null)
             {
                 _menuCanvasGroup.alpha = 0f;
+                _menuCanvasGroup.blocksRaycasts = true;
+                _menuCanvasGroup.interactable = true;
                 _menuCanvasGroup.DOFade(1f, 1.2f).SetEase(Ease.InOutSine);
             }
         }
@@ -96,6 +113,29 @@ namespace V0.UI
 
         private void AutoLoadAssets()
         {
+            if (_audioSource == null)
+            {
+                _audioSource = GetComponent<AudioSource>();
+            }
+
+            // 1. If AudioSource already has a clip assigned in Inspector, respect that!
+            if (_audioSource != null && _audioSource.clip != null)
+            {
+                _menuAmbientAudio = _audioSource.clip;
+            }
+
+            // 2. If _menuAmbientAudio is still null, look for BAckGround.mp3 first!
+            if (_menuAmbientAudio == null)
+            {
+#if UNITY_EDITOR
+                _menuAmbientAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/BAckGround.mp3");
+                if (_menuAmbientAudio == null)
+                {
+                    _menuAmbientAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/BAckGround.wav");
+                }
+#endif
+            }
+
             if (_backgroundSprite == null)
             {
 #if UNITY_EDITOR
@@ -114,27 +154,28 @@ namespace V0.UI
                     }
                 }
             }
-
-            if (_menuAmbientAudio == null)
-            {
-#if UNITY_EDITOR
-                _menuAmbientAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/OutsideSound.mp3");
-#endif
-            }
         }
 
         private void SetupMenuAudio()
         {
-            if (_menuAmbientAudio != null && _audioSource == null)
+            if (_audioSource == null)
             {
                 _audioSource = gameObject.GetComponent<AudioSource>();
                 if (_audioSource == null) _audioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            // Respect existing AudioSource.clip if present
+            if (_audioSource.clip == null && _menuAmbientAudio != null)
+            {
                 _audioSource.clip = _menuAmbientAudio;
-                _audioSource.loop = true;
-                _audioSource.volume = _ambientVolume;
-                _audioSource.playOnAwake = false;
-                _audioSource.spatialBlend = 0f;
-                if (!_audioSource.isPlaying) _audioSource.Play();
+            }
+
+            _audioSource.loop = true;
+            _audioSource.volume = _ambientVolume;
+            _audioSource.spatialBlend = 0f;
+            if (!_audioSource.isPlaying && _audioSource.clip != null)
+            {
+                _audioSource.Play();
             }
         }
 
@@ -480,7 +521,10 @@ namespace V0.UI
             if (_isTransitioning) return;
             _isTransitioning = true;
 
-            Debug.Log($"<color=green>[MainMenuManager]</color> Starting game! Loading scene: <b>{_gameSceneName}</b>");
+            // Reset inventory and static state so a fresh game starts with all doors locked
+            V0.Interaction.KeyPickup.ClearInventory();
+
+            Debug.Log($"<color=green>[MainMenuManager]</color> Starting fresh game! Loading scene: <b>{_gameSceneName}</b>");
 
             if (_audioSource != null)
             {

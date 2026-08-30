@@ -116,13 +116,13 @@ namespace V0.Cinematics
             if (_isPlaying && _allowSkip)
             {
 #if ENABLE_INPUT_SYSTEM
-                if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame))
+                if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
                 {
                     Debug.Log("<color=yellow>[HouseFlyover]</color> Cutscene skipped by player.");
                     SkipCutscene();
                 }
 #else
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
+                if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Debug.Log("<color=yellow>[HouseFlyover]</color> Cutscene skipped by player.");
                     SkipCutscene();

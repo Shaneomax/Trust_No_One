@@ -54,6 +54,27 @@ namespace V0.Interaction
             OnKeyCollected = null;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoInitSceneWatcher()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedReset;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedReset;
+        }
+
+        private static void OnSceneLoadedReset(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            ResetStaticState();
+            Debug.Log($"<color=cyan>[KeyPickup]</color> Inventory cleared for new scene/gameplay session ({scene.name}).");
+        }
+
+        /// <summary>
+        /// Clears all collected keys so that a fresh game session starts with all doors locked.
+        /// </summary>
+        public static void ClearInventory()
+        {
+            ResetStaticState();
+        }
+
         private bool _isBeingPickedUp = false;
 
         /// <summary>

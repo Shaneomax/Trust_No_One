@@ -123,13 +123,13 @@ namespace V0.Cinematics
             if (_isSequenceRunning && _allowSkipInEditor)
             {
 #if ENABLE_INPUT_SYSTEM
-                if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame))
+                if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
                 {
                     Debug.Log("<color=yellow>[WakeUpSequence]</color> Skipped by player.");
                     SkipSequence();
                 }
 #else
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
+                if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Debug.Log("<color=yellow>[WakeUpSequence]</color> Skipped by player.");
                     SkipSequence();

@@ -160,6 +160,18 @@ namespace V0.Interaction
             OnDoorUnlocked = null;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoInitSceneWatcher()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedReset;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedReset;
+        }
+
+        private static void OnSceneLoadedReset(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            ResetStaticState();
+        }
+
         /// <summary>
         /// Checks if the player holds the exact key needed for this specific door.
         /// </summary>
