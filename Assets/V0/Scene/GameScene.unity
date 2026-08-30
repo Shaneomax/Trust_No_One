@@ -34299,7 +34299,7 @@ Transform:
   m_GameObject: {fileID: 351934282}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -43.687603, y: -0.75619984, z: 49.6775}
+  m_LocalPosition: {x: -43.687603, y: -0.75619984, z: 46.06}
   m_LocalScale: {x: 108.56553, y: 4.5736, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -39352,7 +39352,7 @@ Light:
   m_Type: 0
   m_Color: {r: 0.8867924, g: 0.8867924, b: 0.8867924, a: 1}
   m_Intensity: 11
-  m_Range: 10
+  m_Range: 15
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -242737,7 +242737,7 @@ Transform:
   m_GameObject: {fileID: 1189203005}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.3528, y: -0, z: -1.4834}
+  m_LocalPosition: {x: 6.3528, y: 0, z: -1.4834}
   m_LocalScale: {x: 2.9122708, y: 1, z: 0.7947}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -243376,7 +243376,7 @@ Transform:
   m_GameObject: {fileID: 1243601684}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -89.8884, y: -1.6975999, z: 6.0738}
+  m_LocalPosition: {x: -85.73, y: -1.6975999, z: 6.0738}
   m_LocalScale: {x: 1, y: 6.65685, z: 130.41437}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -244481,7 +244481,7 @@ Transform:
   m_GameObject: {fileID: 1362222787}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.526, y: 4.677, z: 4.749}
+  m_LocalPosition: {x: 5.5891, y: 4.677, z: 4.617}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -255088,6 +255088,10 @@ PrefabInstance:
       propertyPath: _playerCamera
       value: 
       objectReference: {fileID: 268119506}
+    - target: {fileID: 8616685848737228380, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+      propertyPath: _interactDistance
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8616685848737228380, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       propertyPath: _interactableLayer.m_Bits
       value: 64
