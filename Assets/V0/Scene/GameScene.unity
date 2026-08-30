@@ -245993,6 +245993,70 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 3.846, z: 0}
+--- !u!1 &1533620212
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1533620213}
+  - component: {fileID: 1533620214}
+  m_Layer: 0
+  m_Name: ClueSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1533620213
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1533620212}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8.11824, y: 1.15553, z: 9.86825}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1533620214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1533620212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V0.Gameplay.KeyClueSystem
+  _hintIntervalSeconds: 10
+  _hintDisplayDuration: 6
+  _startImmediatelyForTesting: 0
+  _currentState: 0
+  _hint1_SearchChainsaw: '[Player]: "The stranger said I need a chainsaw to free
+    him... I should check the entarence of the main door and nearby rooms"'
+  _hint2_ChainsawLocked: '[Player]: "The chainsaw room is locked! The stranger said
+    the key might be in the second floor bedroom upstairs."'
+  _hint3_BedroomLocked: '[Player]: "The second floor bedroom is locked too! I need
+    to search the Drawing Room downstairs for the Crowbar."'
+  _hint4_GotDrawingRoomKey: '[Player]: "I have the Kitchen Key! Now I can unlock
+    the lock door and get the Chainsaw" '
+  _hint5_GotBedroomKey: '[Player]: "I have the Crowbar. Now I can force myself in
+    to the bedroom!"'
+  _hint6_GotChainsaw: '[Player]: "I have the Chainsaw! Time to cut the chains on
+    the door and free the stranger."'
+  _enableVisualBeacon: 1
+  _beaconDuration: 8
+  _audioSource: {fileID: 0}
+  _clueChimeAudio: {fileID: 0}
 --- !u!1001 &1551482503
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -249517,8 +249581,8 @@ MonoBehaviour:
   - shotName: 3. Stealth Warning & Rules
     virtualCamera: {fileID: 1842978554}
     duration: 6
-    subtitleText: "[Stranger Behind Door]: \"Her senses are sharp! Do NOT sprint\u2014she
-      hears everything! Crouch and stay in the shadows!\""
+    subtitleText: '[Stranger Behind Door]: "Her senses are sharp! Do NOT sprint; 
+      She hears everything! Crouch and stay in the shadows!"'
     textColor: {r: 1, g: 0.88, b: 0.6, a: 1}
     activateGhost: 0
     shakeCamera: 0
@@ -255077,6 +255141,18 @@ PrefabInstance:
       value: 22
       objectReference: {fileID: 0}
     - target: {fileID: 8616685848737228371, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+      propertyPath: MoveSpeed
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8616685848737228371, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+      propertyPath: JumpHeight
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8616685848737228371, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+      propertyPath: SprintSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8616685848737228371, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       propertyPath: GroundLayers.m_Bits
       value: 1
       objectReference: {fileID: 0}
@@ -255090,7 +255166,7 @@ PrefabInstance:
       objectReference: {fileID: 268119506}
     - target: {fileID: 8616685848737228380, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       propertyPath: _interactDistance
-      value: 2
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 8616685848737228380, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       propertyPath: _interactableLayer.m_Bits
@@ -257281,3 +257357,4 @@ SceneRoots:
   - {fileID: 1657708075}
   - {fileID: 1809025310}
   - {fileID: 1166834428}
+  - {fileID: 1533620213}

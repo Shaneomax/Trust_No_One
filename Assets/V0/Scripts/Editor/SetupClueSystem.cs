@@ -30,8 +30,6 @@ namespace V0.Editor
                 clueSystem = Undo.AddComponent<KeyClueSystem>(clueObj);
             }
 
-            clueSystem.AutoWireReferences();
-
             EditorUtility.SetDirty(clueObj);
             UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
             Undo.CollapseUndoOperations(undoGroup);
@@ -39,12 +37,14 @@ namespace V0.Editor
             Debug.Log("<color=green><b>[SetupClueSystem]</b></color> Successfully configured Key Clue & Hint System on <b>'Clue'</b> GameObject!");
             EditorUtility.DisplayDialog("Key Clue System Setup",
                 "Successfully configured Key Clue System on 'Clue'!\n\n" +
-                "Features:\n" +
-                "1. Tracks: BedRoomKey -> DrawingRoomKey -> ChainSaw.\n" +
-                "2. Timer: Triggers every 60 seconds after SecondTrigger if the current key is not found.\n" +
-                "3. Dialogue: Player mumbles/thinks clues pointing to the room.\n" +
-                "4. Beacon: Soft visual glow marks the key location during the hint.\n" +
-                "5. Advances & resets timer upon key pickup.",
+                "Narrative Sequence:\n" +
+                "1. Search for Chainsaw Room outside\n" +
+                "2. Chainsaw room locked -> Search 2nd-floor Bedroom\n" +
+                "3. Bedroom locked -> Search Drawing Room Key downstairs\n" +
+                "4. Got Drawing Room Key -> Get Bedroom Key\n" +
+                "5. Got Bedroom Key -> Get Chainsaw\n" +
+                "6. Got Chainsaw -> Cut chains on door\n\n" +
+                "Hints pop up every 60s (or your test duration) if player gets stuck.",
                 "OK");
         }
     }

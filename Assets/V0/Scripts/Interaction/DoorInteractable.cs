@@ -140,12 +140,24 @@ namespace V0.Interaction
         private static Text _cachedSubtitleText;
         private static CanvasGroup _cachedLetterboxGroup;
 
+        /// <summary>
+        /// Fired whenever player tries to open any locked door without holding the required key.
+        /// </summary>
+        public static event System.Action<DoorInteractable, string> OnLockedDoorInteracted;
+
+        /// <summary>
+        /// Fired whenever a locked door is successfully unlocked with its key.
+        /// </summary>
+        public static event System.Action<DoorInteractable, string> OnDoorUnlocked;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             _globalHasPlayedUnlockDialogue = false;
             _cachedSubtitleText = null;
             _cachedLetterboxGroup = null;
+            OnLockedDoorInteracted = null;
+            OnDoorUnlocked = null;
         }
 
         /// <summary>
@@ -237,6 +249,7 @@ namespace V0.Interaction
                     }
 
                     Debug.Log($"<color=green>[DoorInteractable]</color> Unlocked '{gameObject.name}' with required key!");
+                    OnDoorUnlocked?.Invoke(this, _requiredKeyId);
 
                     // Trigger Unlock Dialogue strictly for the Chainsaw / Chained room door and ONLY ONCE!
                     bool isChainsawDoor = !string.IsNullOrEmpty(_requiredKeyId) && _requiredKeyId.Equals("ChainSaw", System.StringComparison.OrdinalIgnoreCase);
@@ -258,6 +271,7 @@ namespace V0.Interaction
                     _doorTransform.DOShakeRotation(0.25f, new Vector3(0, 4f, 0), 10, 90, false);
                     string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
                     Debug.Log($"<color=yellow>[DoorInteractable]</color> '{gameObject.name}' is locked. Requires key: '{keyName}'");
+                    OnLockedDoorInteracted?.Invoke(this, _requiredKeyId);
 
                     // Trigger locked clue dialogue on first attempt
                     // Gate: only after main door is locked AND stranger has been met (SecondTrigger fired)

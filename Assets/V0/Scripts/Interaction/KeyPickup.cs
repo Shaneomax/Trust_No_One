@@ -46,6 +46,14 @@ namespace V0.Interaction
         private static readonly System.Collections.Generic.HashSet<string> _collectedKeyIds = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private static readonly System.Collections.Generic.HashSet<KeyPickup> _collectedKeyInstances = new System.Collections.Generic.HashSet<KeyPickup>();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _collectedKeyIds.Clear();
+            _collectedKeyInstances.Clear();
+            OnKeyCollected = null;
+        }
+
         private bool _isBeingPickedUp = false;
 
         /// <summary>
