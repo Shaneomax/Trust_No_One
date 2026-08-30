@@ -246037,8 +246037,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V0.Gameplay.KeyClueSystem
-  _hintIntervalSeconds: 10
-  _hintDisplayDuration: 6
+  _hintIntervalSeconds: 60
+  _hintDisplayDuration: 4
   _startImmediatelyForTesting: 0
   _currentState: 0
   _hint1_SearchChainsaw: '[Player]: "The stranger said I need a chainsaw to free
