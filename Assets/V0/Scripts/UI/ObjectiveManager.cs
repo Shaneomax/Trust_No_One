@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace V0.UI
 {
     /// <summary>
     /// Manages the top-left horror game objective display.
     /// Pure OnGUI rendering eliminates all Canvas layer conflicts, font missing errors, and text overlapping bugs.
+    /// Automatically hides in MainMenu, GoodEnding, OkayEnding, and any ending/credits scenes.
     /// </summary>
     public class ObjectiveManager : MonoBehaviour
     {
@@ -79,12 +81,55 @@ namespace V0.UI
             }
         }
 
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            CleanupDuplicateSceneUI();
+
+            if (!ShouldShowObjectiveInCurrentScene())
+            {
+                _showObjective = false;
+            }
+            else
+            {
+                _showObjective = true;
+            }
+        }
+
+        private bool ShouldShowObjectiveInCurrentScene()
+        {
+            string sceneName = SceneManager.GetActiveScene().name;
+            if (string.IsNullOrEmpty(sceneName)) return false;
+
+            // Completely hide in MainMenu, GoodEnding, OkayEnding, BadEnding, or any menu/ending scenes
+            if (sceneName.IndexOf("menu", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                sceneName.IndexOf("ending", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                sceneName.IndexOf("credit", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                sceneName.IndexOf("title", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         private void Start()
         {
             if (string.IsNullOrEmpty(_currentObjective))
             {
                 _currentObjective = "Seek Help from the House";
             }
+
+            _showObjective = ShouldShowObjectiveInCurrentScene();
         }
 
         private void Update()
@@ -116,7 +161,7 @@ namespace V0.UI
         private void SetObjectiveInternal(string newObjective)
         {
             _currentObjective = newObjective;
-            _showObjective = true;
+            _showObjective = ShouldShowObjectiveInCurrentScene();
             _highlightTimer = 2.0f;
 
             Debug.Log($"<color=yellow><b>[ObjectiveManager]</b></color> <color=white><b>{newObjective}</b></color>");
@@ -163,7 +208,7 @@ namespace V0.UI
 
         private void OnGUI()
         {
-            if (!_showObjective || string.IsNullOrEmpty(_currentObjective)) return;
+            if (!_showObjective || string.IsNullOrEmpty(_currentObjective) || !ShouldShowObjectiveInCurrentScene()) return;
 
             InitGUIStyles();
 
