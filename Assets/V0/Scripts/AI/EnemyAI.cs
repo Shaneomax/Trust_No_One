@@ -126,6 +126,16 @@ namespace TrustNoOne.AI
 
         private AudioSource _heartbeatAudioSource;
 
+        [Header("Chase Music (Hunting Mode)")]
+        [Tooltip("Tense chase music played when ghost is hunting / chasing the player (Auto-finds Chase_Music.mp3)")]
+        [SerializeField] private AudioClip _chaseMusicClip;
+        [Range(0f, 1f)]
+        [SerializeField] private float _chaseMusicVolume = 0.75f;
+        [Tooltip("Smooth fade in / fade out speed for chase music (seconds)")]
+        [SerializeField] private float _chaseMusicFadeSpeed = 1.5f;
+
+        private AudioSource _chaseMusicAudioSource;
+
         [Header("References (Auto-detected if unassigned)")]
         [SerializeField] private Transform _player;
         [SerializeField] private Animator _animator;
@@ -401,6 +411,11 @@ namespace TrustNoOne.AI
             {
                 _heartbeatAudioSource.Stop();
             }
+            if (_chaseMusicAudioSource != null && _chaseMusicAudioSource.isPlaying)
+            {
+                _chaseMusicAudioSource.Stop();
+                _chaseMusicAudioSource.volume = 0f;
+            }
             DetectionIndicatorUI.SetGlobalState(DetectionIndicatorUI.DetectionState.None);
         }
 
@@ -486,6 +501,9 @@ namespace TrustNoOne.AI
 
             // 5. Update Player Panic Heartbeat Audio (Pounding in Chase/Attack, Tense in Search, Silent in Patrol)
             UpdateHeartbeatAudio();
+
+            // 6. Update Dynamic Chase Music (Intense horror chase music during hunting/chase mode)
+            UpdateChaseMusicAudio();
 
             // If standing still screaming upon spotting player, face player and wait
             if (_isScreaming)
@@ -1173,6 +1191,85 @@ namespace TrustNoOne.AI
                 if (_heartbeatAudioSource.isPlaying)
                 {
                     _heartbeatAudioSource.Stop();
+                }
+            }
+        }
+
+        private void UpdateChaseMusicAudio()
+        {
+            if (_chaseMusicAudioSource == null)
+            {
+                GameObject playerObj = _player != null ? _player.gameObject : GameObject.FindWithTag("Player");
+                if (playerObj != null)
+                {
+                    _chaseMusicAudioSource = playerObj.AddComponent<AudioSource>();
+                }
+                else
+                {
+                    _chaseMusicAudioSource = gameObject.AddComponent<AudioSource>();
+                }
+
+                _chaseMusicAudioSource.playOnAwake = false;
+                _chaseMusicAudioSource.spatialBlend = 0f; // 2D Stereo cinematic chase BGM
+                _chaseMusicAudioSource.loop = true;
+                _chaseMusicAudioSource.volume = 0f;
+            }
+
+            if (_chaseMusicClip == null)
+            {
+                #if UNITY_EDITOR
+                _chaseMusicClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Chase_Music.mp3");
+                #endif
+                if (_chaseMusicClip == null)
+                {
+                    _chaseMusicClip = Resources.Load<AudioClip>("Chase_Music");
+                    if (_chaseMusicClip == null)
+                    {
+                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                        foreach (var c in allClips)
+                        {
+                            if (c.name.ToLower().Contains("chase_music") || c.name.ToLower().Contains("chase"))
+                            {
+                                _chaseMusicClip = c;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (_chaseMusicClip != null && _chaseMusicAudioSource.clip != _chaseMusicClip)
+            {
+                _chaseMusicAudioSource.clip = _chaseMusicClip;
+            }
+
+            // Chase music plays during hunting / chasing / screaming when active
+            bool isHunting = (_currentState == State.Chase || _currentState == State.Attack || _isScreaming)
+                             && enabled
+                             && gameObject.activeInHierarchy
+                             && !V0.Interaction.FlashlightController.IsGlobalCutscene
+                             && _spawnGraceTimer <= 0f;
+
+            float targetVolume = isHunting ? _chaseMusicVolume : 0f;
+
+            if (isHunting)
+            {
+                if (!_chaseMusicAudioSource.isPlaying && _chaseMusicAudioSource.clip != null)
+                {
+                    _chaseMusicAudioSource.Play();
+                }
+                _chaseMusicAudioSource.volume = Mathf.MoveTowards(_chaseMusicAudioSource.volume, targetVolume, Time.deltaTime / Mathf.Max(0.1f, _chaseMusicFadeSpeed));
+            }
+            else
+            {
+                if (_chaseMusicAudioSource != null && _chaseMusicAudioSource.isPlaying)
+                {
+                    _chaseMusicAudioSource.volume = Mathf.MoveTowards(_chaseMusicAudioSource.volume, 0f, Time.deltaTime * 1.5f);
+                    if (_chaseMusicAudioSource.volume <= 0.01f)
+                    {
+                        _chaseMusicAudioSource.Stop();
+                        _chaseMusicAudioSource.volume = 0f;
+                    }
                 }
             }
         }

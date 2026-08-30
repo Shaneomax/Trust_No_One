@@ -3,54 +3,74 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 using Unity.Cinemachine;
 using DG.Tweening;
 using StarterAssets;
 using V0.Interaction;
 using V0.UI;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 namespace V0.Cinematics
 {
     /// <summary>
-    /// Triggered when the player steps on GhostTrigger (outside bedroom door after picking up bedroom key).
-    /// Focuses camera downstairs on the foggy grand entrance where the ghost awakens and becomes active.
-    /// Stranger warns the player not to get caught and teaches stealth mechanics (crouching, avoiding sprinting).
+    /// Terrifying Ghost Materialization Cutscene at Grand Entrance (Foyer):
+    /// 1. Triggers when player walks downstairs after collecting the drawing room key.
+    /// 2. Plays the grand entrance cutscene with eerie mist / floating soul embers.
+    /// 3. Stranger warns the player of the Ghost's hyper-sensitive hearing & stealth rules.
     /// </summary>
-    [RequireComponent(typeof(Collider))]
+    [AddComponentMenu("Trust No One/Ghost Spawn Cutscene")]
+    [RequireComponent(typeof(BoxCollider))]
     public class GhostSpawnCutscene : MonoBehaviour
     {
         [System.Serializable]
         public class DialogueShot
         {
-            [Tooltip("Descriptive name for this shot")]
-            public string shotName = "Shot";
-
-            [Tooltip("Cinemachine virtual camera for this shot (e.g. Cam_GhostGrandEntrance)")]
-            public CinemachineCamera virtualCamera;
-
-            [Tooltip("How long this shot and its subtitle remain active on screen (seconds)")]
-            public float duration = 5.0f;
-
-            [Tooltip("Subtitle dialogue text displayed during this shot")]
+            public string shotName;
+            public CinemachineVirtualCameraBase virtualCamera;
+            [Tooltip("Shot duration in seconds")]
+            public float duration = 4.5f;
             [TextArea(2, 4)]
-            public string subtitleText = "";
-
-            [Tooltip("Color tint for the subtitle text")]
-            public Color textColor = new Color(1f, 0.88f, 0.6f);
-
-            [Tooltip("If true, activates the Ghost GameObject during this shot")]
+            public string subtitleText;
+            public Color textColor = Color.white;
+            [Tooltip("Activate the Ghost object during this shot?")]
             public bool activateGhost = false;
-
-            [Tooltip("Shake the camera for horror impact tremor")]
+            [Tooltip("Tremor / camera shake for scary impact")]
             public bool shakeCamera = false;
         }
 
-        [Header("Cinematic Shots & Dialogue")]
-        [Tooltip("List of shots and dialogue lines played in sequence with customizable durations and cameras")]
-        [SerializeField] private List<DialogueShot> _shots = new List<DialogueShot>();
+        [Header("Dialogue Sequence")]
+        [SerializeField] private List<DialogueShot> _shots = new List<DialogueShot>()
+        {
+            new DialogueShot()
+            {
+                shotName = "1. Ghost Awakens in Fog",
+                duration = 5.0f,
+                subtitleText = "[Stranger Behind Door]: \"Listen to me! She's awake! Do NOT let her catch you!\"",
+                textColor = new Color(1f, 0.45f, 0.45f), // Danger Red
+                activateGhost = true,
+                shakeCamera = true
+            },
+            new DialogueShot()
+            {
+                shotName = "2. Player Disbelief",
+                duration = 4.5f,
+                subtitleText = "[Player]: \"What... what is that thing?! Is she even alive?!\"",
+                textColor = new Color(0.95f, 0.95f, 0.9f),
+                activateGhost = false,
+                shakeCamera = false
+            },
+            new DialogueShot()
+            {
+                shotName = "3. Stealth Warning & Rules",
+                duration = 6.0f,
+                subtitleText = "[Stranger Behind Door]: \"Her senses are sharp! Do NOT sprint; She hears everything! Crouch and stay in the shadows!\"",
+                textColor = new Color(1.0f, 0.88f, 0.6f),
+                activateGhost = false,
+                shakeCamera = false
+            }
+        };
 
         [Header("Ghost Reference")]
         [Tooltip("The Ghost GameObject to set active during the cutscene")]
@@ -111,6 +131,11 @@ namespace V0.Cinematics
             AutoFindReferences();
         }
 
+        private void Start()
+        {
+            AutoFindReferences();
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (_hasTriggered && _playOnce) return;
@@ -162,21 +187,19 @@ namespace V0.Cinematics
                 }
             }
 
-            // Freeze player movement & camera
+            // Lock player controls & freeze inputs
             SetPlayerControlsActive(false);
 
-            // Animate letterbox black bars in
+            // Show letterbox bars
             ShowLetterbox(true);
 
-            // Run cutscene sequence
+            // Start playing the multi-shot cinematic sequence
             if (_cutsceneCoroutine != null) StopCoroutine(_cutsceneCoroutine);
-            _cutsceneCoroutine = StartCoroutine(CutsceneRoutine());
+            _cutsceneCoroutine = StartCoroutine(PlayCutsceneSequence());
         }
 
-        private IEnumerator CutsceneRoutine()
+        private IEnumerator PlayCutsceneSequence()
         {
-            ResetAllCameraPriorities();
-
             for (int i = 0; i < _shots.Count; i++)
             {
                 DialogueShot shot = _shots[i];
@@ -202,11 +225,11 @@ namespace V0.Cinematics
                     if (_ghostAnimator == null) _ghostAnimator = _ghostGameObject.GetComponentInChildren<Animator>();
                     if (_ghostAnimator != null) _ghostAnimator.SetFloat("Speed", 0f);
 
-                    // Start visible fog around ghost
+                    // Start particles if assigned
                     if (_ghostSpawnFog != null)
                     {
                         _ghostSpawnFog.gameObject.SetActive(true);
-                        _ghostSpawnFog.Play();
+                        _ghostSpawnFog.Play(true);
                     }
 
                     Debug.Log("<color=red>[GhostSpawnCutscene]</color> Ghost has materialized in the Grand Entrance fog (Idle animation active)!");
@@ -298,40 +321,38 @@ namespace V0.Cinematics
                 }
 
                 // Reset camera priorities so player camera immediately takes back control
-                ResetAllCameraPriorities();
+                ResetCameraPriorities();
 
-                if (_playerFollowCamera != null)
-                {
-                    _playerFollowCamera.Priority.Value = 10;
-                }
-
-                // Restore player controls cleanly
+                // Re-enable player movement & interaction
                 SetPlayerControlsActive(true);
+
+                OnCutsceneCompleted?.Invoke();
+                Debug.Log("<color=green>[GhostSpawnCutscene]</color> Cutscene completed. Player controls restored!");
             });
-
-            OnCutsceneCompleted?.Invoke();
-            Debug.Log("<color=green>[GhostSpawnCutscene]</color> Cutscene completed! Ghost is now hunting. Player in control.");
-
-            if (_playOnce)
-            {
-                Collider col = GetComponent<Collider>();
-                if (col != null) col.enabled = false;
-            }
         }
 
         public void SkipCutscene()
         {
+            if (!_isPlaying) return;
             EndCutscene();
         }
 
-        private void ResetAllCameraPriorities()
+        private void ResetCameraPriorities()
         {
-            foreach (DialogueShot shot in _shots)
+            if (_shots != null)
             {
-                if (shot != null && shot.virtualCamera != null)
+                foreach (DialogueShot shot in _shots)
                 {
-                    shot.virtualCamera.Priority.Value = 0;
+                    if (shot != null && shot.virtualCamera != null)
+                    {
+                        shot.virtualCamera.Priority.Value = 0;
+                    }
                 }
+            }
+
+            if (_playerFollowCamera != null)
+            {
+                _playerFollowCamera.Priority.Value = 50;
             }
         }
 
@@ -420,6 +441,15 @@ namespace V0.Cinematics
             if (_audioSource == null)
             {
                 _audioSource = GetComponent<AudioSource>();
+            }
+
+            if (_ghostSpawnFog == null)
+            {
+                GameObject fogObj = GameObject.Find("GhostSpawnFog");
+                if (fogObj != null)
+                {
+                    _ghostSpawnFog = fogObj.GetComponent<ParticleSystem>();
+                }
             }
         }
 
