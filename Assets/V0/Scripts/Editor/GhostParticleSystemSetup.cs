@@ -20,45 +20,18 @@ namespace V0.Editor
             Directory.CreateDirectory("Assets/V0/Prefabs/Effects");
             AssetDatabase.Refresh();
 
-            // 1. Create or Load Spherical Glow/Wisp Material
-            Material sphereParticleMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/V0/Materials/Particles/M_GhostSphere_Additive.mat");
-            if (sphereParticleMat == null)
-            {
-                Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") 
-                             ?? Shader.Find("Particles/Standard Unlit") 
-                             ?? Shader.Find("Sprites/Default");
-
-                sphereParticleMat = new Material(shader);
-                sphereParticleMat.name = "M_GhostSphere_Additive";
-
-                if (sphereParticleMat.HasProperty("_Surface")) sphereParticleMat.SetFloat("_Surface", 1); // Transparent
-                if (sphereParticleMat.HasProperty("_Blend")) sphereParticleMat.SetFloat("_Blend", 1); // Additive
-                if (sphereParticleMat.HasProperty("_ZWrite")) sphereParticleMat.SetFloat("_ZWrite", 0);
-                sphereParticleMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-
-                Texture2D wispTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/V0/Textures/Particles/T_GhostWisps_Glow.png");
-                if (wispTex != null)
-                {
-                    sphereParticleMat.mainTexture = wispTex;
-                    if (sphereParticleMat.HasProperty("_BaseMap")) sphereParticleMat.SetTexture("_BaseMap", wispTex);
-                }
-
-                AssetDatabase.CreateAsset(sphereParticleMat, "Assets/V0/Materials/Particles/M_GhostSphere_Additive.mat");
-            }
-
-            // 2. Soft Ground Fog Material
+            // 1. Create or Load Fog Material
             Material fogMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/V0/Materials/Particles/M_GhostFog_Soft.mat");
             if (fogMat == null)
             {
                 Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") 
                              ?? Shader.Find("Particles/Standard Unlit") 
                              ?? Shader.Find("Sprites/Default");
-
                 fogMat = new Material(shader);
                 fogMat.name = "M_GhostFog_Soft";
 
-                if (fogMat.HasProperty("_Surface")) fogMat.SetFloat("_Surface", 1); // Transparent
-                if (fogMat.HasProperty("_Blend")) fogMat.SetFloat("_Blend", 0); // Alpha
+                if (fogMat.HasProperty("_Surface")) fogMat.SetFloat("_Surface", 1);
+                if (fogMat.HasProperty("_Blend")) fogMat.SetFloat("_Blend", 0);
                 if (fogMat.HasProperty("_ZWrite")) fogMat.SetFloat("_ZWrite", 0);
                 fogMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
 
@@ -70,6 +43,31 @@ namespace V0.Editor
                 }
 
                 AssetDatabase.CreateAsset(fogMat, "Assets/V0/Materials/Particles/M_GhostFog_Soft.mat");
+            }
+
+            // 2. Create or Load Wisps Material
+            Material wispMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/V0/Materials/Particles/M_GhostWisps_Additive.mat");
+            if (wispMat == null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") 
+                             ?? Shader.Find("Particles/Standard Unlit") 
+                             ?? Shader.Find("Sprites/Default");
+                wispMat = new Material(shader);
+                wispMat.name = "M_GhostWisps_Additive";
+
+                if (wispMat.HasProperty("_Surface")) wispMat.SetFloat("_Surface", 1);
+                if (wispMat.HasProperty("_Blend")) wispMat.SetFloat("_Blend", 1);
+                if (wispMat.HasProperty("_ZWrite")) wispMat.SetFloat("_ZWrite", 0);
+                wispMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+
+                Texture2D wispTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/V0/Textures/Particles/T_GhostWisps_Glow.png");
+                if (wispTex != null)
+                {
+                    wispMat.mainTexture = wispTex;
+                    if (wispMat.HasProperty("_BaseMap")) wispMat.SetTexture("_BaseMap", wispTex);
+                }
+
+                AssetDatabase.CreateAsset(wispMat, "Assets/V0/Materials/Particles/M_GhostWisps_Additive.mat");
             }
 
             AssetDatabase.SaveAssets();
@@ -94,7 +92,6 @@ namespace V0.Editor
             rootFogObj.transform.position = spawnPos;
             rootFogObj.transform.rotation = Quaternion.identity;
 
-            // Remove any old broken child components
             for (int i = rootFogObj.transform.childCount - 1; i >= 0; i--)
             {
                 Undo.DestroyObjectImmediate(rootFogObj.transform.GetChild(i).gameObject);
@@ -103,16 +100,15 @@ namespace V0.Editor
             ParticleSystem mainPS = rootFogObj.GetComponent<ParticleSystem>();
             if (mainPS == null) mainPS = rootFogObj.AddComponent<ParticleSystem>();
 
-            // Configure Root: Low ground subtle misty fog
             var main = mainPS.main;
             main.duration = 4.0f;
             main.loop = true;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(2.5f, 3.8f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.1f, 0.25f);
-            main.startSize = new ParticleSystem.MinMaxCurve(1.2f, 2.0f);
-            main.startColor = new Color(0.6f, 0.85f, 1.0f, 0.25f); // Subtle soft cyan mist
+            main.startLifetime = new ParticleSystem.MinMaxCurve(2.8f, 4.2f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.12f, 0.3f);
+            main.startSize = new ParticleSystem.MinMaxCurve(1.5f, 2.8f);
+            main.startColor = new Color(0.65f, 0.85f, 1.0f, 0.3f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-            main.maxParticles = 25; // Highly optimized
+            main.maxParticles = 25;
             main.playOnAwake = false;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
 
@@ -123,7 +119,7 @@ namespace V0.Editor
             var shape = mainPS.shape;
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.radius = 1.8f;
+            shape.radius = 2.0f;
             shape.rotation = new Vector3(90f, 0f, 0f);
 
             var colLife = mainPS.colorOverLifetime;
@@ -132,13 +128,13 @@ namespace V0.Editor
             grad.SetKeys(
                 new GradientColorKey[] {
                     new GradientColorKey(new Color(0.6f, 0.85f, 1.0f), 0.0f),
-                    new GradientColorKey(new Color(0.8f, 0.95f, 1.0f), 0.5f),
+                    new GradientColorKey(new Color(0.85f, 0.95f, 1.0f), 0.5f),
                     new GradientColorKey(new Color(0.5f, 0.75f, 0.9f), 1.0f)
                 },
                 new GradientAlphaKey[] {
                     new GradientAlphaKey(0.0f, 0.0f),
-                    new GradientAlphaKey(0.7f, 0.3f),
-                    new GradientAlphaKey(0.7f, 0.7f),
+                    new GradientAlphaKey(0.8f, 0.25f),
+                    new GradientAlphaKey(0.8f, 0.75f),
                     new GradientAlphaKey(0.0f, 1.0f)
                 }
             );
@@ -151,8 +147,8 @@ namespace V0.Editor
                 mainRend.sortMode = ParticleSystemSortMode.Distance;
             }
 
-            // 5. Child: Very Small Floating Spherical Wisps (Soul Motes)
-            GameObject wispsObj = new GameObject("SmallSoulSpheres");
+            // 5. Child: Rising Soul Wisps
+            GameObject wispsObj = new GameObject("RisingSoulWisps");
             wispsObj.transform.SetParent(rootFogObj.transform, false);
             wispsObj.transform.localPosition = Vector3.zero;
 
@@ -160,17 +156,17 @@ namespace V0.Editor
             var wMain = wispsPS.main;
             wMain.duration = 4.0f;
             wMain.loop = true;
-            wMain.startLifetime = new ParticleSystem.MinMaxCurve(1.8f, 3.2f);
-            wMain.startSpeed = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
-            wMain.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.12f); // VERY SMALL SPHERES!
-            wMain.startColor = new Color(0.45f, 0.9f, 1.0f, 0.9f); // Glowing cyan sphere
+            wMain.startLifetime = new ParticleSystem.MinMaxCurve(1.8f, 3.0f);
+            wMain.startSpeed = new ParticleSystem.MinMaxCurve(0.5f, 1.2f);
+            wMain.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.22f);
+            wMain.startColor = new Color(0.45f, 0.9f, 1.0f, 0.85f);
             wMain.playOnAwake = false;
-            wMain.maxParticles = 30; // Highly optimized
+            wMain.maxParticles = 25;
             wMain.simulationSpace = ParticleSystemSimulationSpace.World;
 
             var wEmission = wispsPS.emission;
             wEmission.enabled = true;
-            wEmission.rateOverTime = 14f;
+            wEmission.rateOverTime = 12f;
 
             var wShape = wispsPS.shape;
             wShape.enabled = true;
@@ -182,33 +178,19 @@ namespace V0.Editor
 
             var wColLife = wispsPS.colorOverLifetime;
             wColLife.enabled = true;
-            Gradient wGrad = new Gradient();
-            wGrad.SetKeys(
-                new GradientColorKey[] {
-                    new GradientColorKey(new Color(0.3f, 0.85f, 1.0f), 0.0f),
-                    new GradientColorKey(new Color(0.9f, 1.0f, 1.0f), 0.5f),
-                    new GradientColorKey(new Color(0.2f, 0.6f, 1.0f), 1.0f)
-                },
-                new GradientAlphaKey[] {
-                    new GradientAlphaKey(0.0f, 0.0f),
-                    new GradientAlphaKey(1.0f, 0.25f),
-                    new GradientAlphaKey(0.8f, 0.75f),
-                    new GradientAlphaKey(0.0f, 1.0f)
-                }
-            );
-            wColLife.color = wGrad;
+            wColLife.color = grad;
 
             ParticleSystemRenderer wispsRend = wispsObj.GetComponent<ParticleSystemRenderer>();
             if (wispsRend != null)
             {
-                wispsRend.material = sphereParticleMat; // Smooth spherical additive material
+                wispsRend.material = wispMat;
                 wispsRend.sortMode = ParticleSystemSortMode.Distance;
             }
 
             // 6. Save as Prefab
             PrefabUtility.SaveAsPrefabAssetAndConnect(rootFogObj, "Assets/V0/Prefabs/Effects/GhostSpawnParticles.prefab", InteractionMode.AutomatedAction);
 
-            // 7. Auto-wire to GhostSpawnCutscene in the scene
+            // 7. Auto-wire to GhostSpawnCutscene in scene
             GhostSpawnCutscene cutscene = Object.FindFirstObjectByType<GhostSpawnCutscene>();
             if (cutscene != null)
             {
@@ -228,13 +210,12 @@ namespace V0.Editor
             UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
             Undo.CollapseUndoOperations(undoGroup);
 
-            Debug.Log("<color=green><b>[GhostParticleSetup]</b></color> Small spherical ghost particles built and wired successfully!");
-            EditorUtility.DisplayDialog("Ghost Particles Configured",
-                "Successfully configured Ghost Particle System!\n\n" +
-                "1. Particle Shape: Delicate glowing spheres (0.04m - 0.12m).\n" +
-                "2. Materials: Soft circular feathered textures (0 square boxes/quads).\n" +
-                "3. Performance: Ultra-lightweight (~20 particles total), fully optimized for WebGL and low-end PCs.\n" +
-                "4. Compile-time: Baked directly into scene and wired to GhostSpawnCutscene.",
+            Debug.Log("<color=green><b>[GhostParticleSetup]</b></color> Ghost spawn particle effect restored and wired successfully!");
+            EditorUtility.DisplayDialog("Ghost Particles Restored",
+                "Successfully restored the previous atmospheric particle setup!\n\n" +
+                "1. Ground Eerie Fog: Soft rolling cyan/spectral mist.\n" +
+                "2. Rising Soul Wisps: Floating glowing ethereal motes.\n" +
+                "3. Wired to GhostSpawnCutscene slot.",
                 "OK");
         }
     }

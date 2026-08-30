@@ -245795,6 +245795,9 @@ MonoBehaviour:
   _heartbeatAudioClip: {fileID: 8300000, guid: f7de6b2fec744eb40a891a2ee8c8f536, type: 3}
   _chaseHeartbeatVolume: 0.85
   _searchHeartbeatVolume: 0.5
+  _chaseMusicClip: {fileID: 0}
+  _chaseMusicVolume: 0.75
+  _chaseMusicFadeSpeed: 1.5
   _player: {fileID: 1132628782}
   _animator: {fileID: 428100276}
   _modelTransform: {fileID: 428100275}
@@ -253644,12 +253647,12 @@ MonoBehaviour:
   _mainFrontDoorReference: {fileID: 533957764}
   _lockedDialogueLines:
   - text: '[Stranger Behind Door]: "Hey! That door is locked! You''ll need the key
-      from our bedroom on the 2nd floor!"'
+      from our bedroom on the second floor!"'
     color: {r: 1, g: 0.88, b: 0.6, a: 1}
     duration: 4.8
-  - text: "[Stranger Behind Door]: \"Be careful... my crazy wife is guarding that
-      key! And that bedroom door gets stuck from time to time\u2014you might have
-      to force it open!\""
+  - text: '[Stranger Behind Door]: "Be careful... my crazy wife is guarding that
+      key! And that bedroom door gets stuck from time to time; you might have to
+      force it open!"'
     color: {r: 1, g: 0.88, b: 0.6, a: 1}
     duration: 5.5
   - text: '[Player]: "2nd floor bedroom... got it. I need to watch out for her."'
@@ -256218,6 +256221,22 @@ PrefabInstance:
     - target: {fileID: 2663728831061341411, guid: 6a590f456b6eee4488c0a5f5b025b4ae, type: 3}
       propertyPath: m_Name
       value: GhostSpawnFog
+      objectReference: {fileID: 0}
+    - target: {fileID: 2730949699755648955, guid: 6a590f456b6eee4488c0a5f5b025b4ae, type: 3}
+      propertyPath: InitialModule.startSizeY.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2730949699755648955, guid: 6a590f456b6eee4488c0a5f5b025b4ae, type: 3}
+      propertyPath: InitialModule.startSizeZ.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2730949699755648955, guid: 6a590f456b6eee4488c0a5f5b025b4ae, type: 3}
+      propertyPath: InitialModule.startRotationX.minMaxState
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2730949699755648955, guid: 6a590f456b6eee4488c0a5f5b025b4ae, type: 3}
+      propertyPath: InitialModule.startRotationY.minMaxState
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4800834094970359709, guid: 6a590f456b6eee4488c0a5f5b025b4ae, type: 3}
       propertyPath: EmissionModule.m_Bursts.Array.data[0].repeatInterval

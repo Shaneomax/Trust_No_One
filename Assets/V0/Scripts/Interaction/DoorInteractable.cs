@@ -262,11 +262,8 @@ namespace V0.Interaction
                 }
                 else
                 {
-                    // Door is locked: jiggle handle animation
-                    if (_lockedJiggleSound != null)
-                    {
-                        AudioSource.PlayClipAtPoint(_lockedJiggleSound, transform.position, 1.0f);
-                    }
+                    // Door is locked: play lock rattle sound & jiggle handle animation
+                    PlayLockedDoorSound();
                     _doorTransform.DOKill();
                     _doorTransform.DOShakeRotation(0.25f, new Vector3(0, 4f, 0), 10, 90, false);
                     string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
@@ -332,6 +329,37 @@ namespace V0.Interaction
             if (_openCloseDoorSound != null)
             {
                 AudioSource.PlayClipAtPoint(_openCloseDoorSound, transform.position, _doorSoundVolume);
+            }
+        }
+
+        private void PlayLockedDoorSound()
+        {
+            if (_lockedJiggleSound == null)
+            {
+                #if UNITY_EDITOR
+                _lockedJiggleSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Door_Lock.mp3");
+                #endif
+                if (_lockedJiggleSound == null)
+                {
+                    _lockedJiggleSound = Resources.Load<AudioClip>("Door_Lock");
+                    if (_lockedJiggleSound == null)
+                    {
+                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                        foreach (var c in allClips)
+                        {
+                            if (c.name.ToLower().Contains("door_lock") || c.name.ToLower().Contains("lock"))
+                            {
+                                _lockedJiggleSound = c;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (_lockedJiggleSound != null)
+            {
+                AudioSource.PlayClipAtPoint(_lockedJiggleSound, transform.position, _doorSoundVolume);
             }
         }
 
