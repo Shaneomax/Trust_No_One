@@ -83,7 +83,7 @@ namespace V0.Cinematics
         [SerializeField] private StarterAssetsInputs _playerInputs;
 
         [Header("Settings")]
-        [Tooltip("Allow pressing Space, Escape, or E to skip")]
+        [Tooltip("Allow pressing Space or Escape to skip")]
         [SerializeField] private bool _allowSkip = true;
 
         [Tooltip("Trigger only once")]
@@ -126,13 +126,13 @@ namespace V0.Cinematics
             if (_isPlaying && _allowSkip)
             {
 #if ENABLE_INPUT_SYSTEM
-                if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.eKey.wasPressedThisFrame))
+                if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame))
                 {
                     Debug.Log("<color=yellow>[GhostSpawnCutscene]</color> Skipped by player.");
                     SkipCutscene();
                 }
 #else
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.E))
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
                 {
                     Debug.Log("<color=yellow>[GhostSpawnCutscene]</color> Skipped by player.");
                     SkipCutscene();

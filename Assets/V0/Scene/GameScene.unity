@@ -35072,8 +35072,8 @@ Transform:
   m_GameObject: {fileID: 471141105}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.506, y: 0.907, z: 5.1969}
-  m_LocalScale: {x: 1, y: 1, z: 2.7357094}
+  m_LocalPosition: {x: -3.476, y: 0.907, z: 4.8522}
+  m_LocalScale: {x: 1, y: 1, z: 3.4251082}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1162930989}
@@ -39352,7 +39352,7 @@ Light:
   m_Type: 0
   m_Color: {r: 0.8867924, g: 0.8867924, b: 0.8867924, a: 1}
   m_Intensity: 11
-  m_Range: 6.5
+  m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -244688,6 +244688,7 @@ MonoBehaviour:
   _subtitleText: {fileID: 2022090134}
   _playerController: {fileID: 1132628793}
   _playerInputs: {fileID: 1132628784}
+  _allowSkip: 1
 --- !u!65 &1383194551
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -247580,11 +247581,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c03aa0bfb979d248ae239e59eeeba8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V0.Cinematics.LastTriggerCutscene
-  _stranger: {fileID: 0}
+  _stranger: {fileID: 418162879}
   _stumbleDuration: 1
   _fallDuration: 1.1
   _fallTiltAngle: 60
   _collapsedCameraY: 0.25
+  _dropDeadSound: {fileID: 8300000, guid: 7d8e348c95669b9419c5f539f8ff170d, type: 3}
   _stabSound: {fileID: 0}
   _groanSound: {fileID: 0}
   _audioSource: {fileID: 0}
@@ -247599,6 +247601,7 @@ MonoBehaviour:
   _subtitleText: {fileID: 2022090134}
   _playerController: {fileID: 1132628793}
   _playerInputs: {fileID: 1132628784}
+  _allowSkip: 1
   _playOnce: 1
 --- !u!1 &1693301632
 GameObject:
@@ -248805,7 +248808,7 @@ MonoBehaviour:
   _outsideAmbienceClip: {fileID: 8300000, guid: 666234ed6b08eab4db3a730aa4f6c453, type: 3}
   _insideAmbienceClip: {fileID: 8300000, guid: a383e8d62c69f5144ae2743bfa9c6eed, type: 3}
   _outsideMaxVolume: 0.6
-  _insideMaxVolume: 0.45
+  _insideMaxVolume: 0.5
   _outsideBleedWhenInside: 0.08
   _fadeDuration: 2
   _fadeEase: 4
@@ -255403,14 +255406,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2088646960}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.6141985, y: -0.35037157, z: 0.35037148, w: 0.61419857}
-  m_LocalPosition: {x: 17.077269, y: 0.16300014, z: 6.1382613}
+  m_LocalRotation: {x: 0.6154341, y: 0.3481966, z: -0.34819657, w: 0.6154341}
+  m_LocalPosition: {x: 10.547, y: 0.219, z: 6.102}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 23180202}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 59.405}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: -59}
 --- !u!114 &2088646964
 MonoBehaviour:
   m_ObjectHideFlags: 0

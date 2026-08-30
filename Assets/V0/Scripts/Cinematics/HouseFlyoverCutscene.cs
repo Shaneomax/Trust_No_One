@@ -71,7 +71,7 @@ namespace V0.Cinematics
         [Tooltip("Blend style for transitions (EaseInOut is cinematic and smooth)")]
         [SerializeField] private CinemachineBlendDefinition.Styles _blendStyle = CinemachineBlendDefinition.Styles.EaseInOut;
 
-        [Tooltip("Allow pressing Space, Escape, or E to skip cutscene")]
+        [Tooltip("Allow pressing Space or Escape to skip cutscene")]
         [SerializeField] private bool _allowSkip = true;
 
         [Tooltip("Trigger only once")]
@@ -116,13 +116,13 @@ namespace V0.Cinematics
             if (_isPlaying && _allowSkip)
             {
 #if ENABLE_INPUT_SYSTEM
-                if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame || Keyboard.current.eKey.wasPressedThisFrame))
+                if (Keyboard.current != null && (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame))
                 {
                     Debug.Log("<color=yellow>[HouseFlyover]</color> Cutscene skipped by player.");
                     SkipCutscene();
                 }
 #else
-                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.E))
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
                 {
                     Debug.Log("<color=yellow>[HouseFlyover]</color> Cutscene skipped by player.");
                     SkipCutscene();

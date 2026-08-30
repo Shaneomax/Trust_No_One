@@ -63,11 +63,30 @@ namespace V0.Interaction
             }
         }
 
+        private void Start()
+        {
+            V0.UI.InteractionPromptUI.GetOrCreate();
+        }
+
         private void Update()
         {
             UpdateCurrentInteractable();
             UpdateOutlines();
+            UpdatePromptUI();
             HandleInteraction();
+        }
+
+        private void UpdatePromptUI()
+        {
+            if (_currentInteractable != null)
+            {
+                string prompt = _currentInteractable.InteractionPrompt;
+                V0.UI.InteractionPromptUI.Instance?.ShowPrompt(prompt);
+            }
+            else
+            {
+                V0.UI.InteractionPromptUI.Instance?.HidePrompt();
+            }
         }
 
         private void UpdateCurrentInteractable()

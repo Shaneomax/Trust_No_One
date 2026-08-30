@@ -67,6 +67,12 @@ namespace V0.Cinematics
         private bool _hasTriggered = false;
         private bool _isPlaying = false;
 
+        [Header("Settings")]
+        [Tooltip("Allow pressing Space or Escape to skip cutscene")]
+        [SerializeField] private bool _allowSkip = true;
+
+        private Coroutine _cutsceneCoroutine;
+
         private void Reset()
         {
             Collider col = GetComponent<Collider>();
@@ -95,7 +101,62 @@ namespace V0.Cinematics
             if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null || other.GetComponentInParent<FirstPersonController>() != null)
             {
                 _hasTriggered = true;
-                StartCoroutine(PlayOkayEndingRoutine());
+                _cutsceneCoroutine = StartCoroutine(PlayOkayEndingRoutine());
+            }
+        }
+
+        private void Update()
+        {
+            if (_isPlaying && _allowSkip)
+            {
+#if ENABLE_INPUT_SYSTEM
+                if (UnityEngine.InputSystem.Keyboard.current != null && (UnityEngine.InputSystem.Keyboard.current.spaceKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame))
+                {
+                    Debug.Log("<color=yellow>[OkayEndingTrigger]</color> Cutscene skipped by player.");
+                    SkipCutscene();
+                }
+#else
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
+                {
+                    Debug.Log("<color=yellow>[OkayEndingTrigger]</color> Cutscene skipped by player.");
+                    SkipCutscene();
+                }
+#endif
+            }
+        }
+
+        public void SkipCutscene()
+        {
+            if (!_isPlaying) return;
+            _isPlaying = false;
+
+            if (_cutsceneCoroutine != null)
+            {
+                StopCoroutine(_cutsceneCoroutine);
+            }
+
+            if (_letterboxCanvasGroup != null)
+            {
+                _letterboxCanvasGroup.DOKill();
+                _letterboxCanvasGroup.alpha = 0f;
+            }
+
+            if (_subtitleText != null)
+            {
+                _subtitleText.DOKill();
+                _subtitleText.text = "";
+            }
+
+            if (FadeScreen.Instance != null)
+            {
+                FadeScreen.Instance.FadeToBlack(0.5f, () =>
+                {
+                    SceneManager.LoadScene(_endingSceneName);
+                });
+            }
+            else
+            {
+                SceneManager.LoadScene(_endingSceneName);
             }
         }
 

@@ -40,7 +40,9 @@ namespace V0.Cinematics
         [Tooltip("Floor height of camera relative to player base when collapsed")]
         [SerializeField] private float _collapsedCameraY = 0.20f;
 
-        [Header("Audio (Optional)")]
+        [Header("Audio")]
+        [Tooltip("Drop dead / body collapse sound played when player falls to the floor (Auto-finds DropDeadSound.mp3)")]
+        [SerializeField] private AudioClip _dropDeadSound;
         [SerializeField] private AudioClip _stabSound;
         [SerializeField] private AudioClip _groanSound;
         [SerializeField] private AudioSource _audioSource;
@@ -72,10 +74,15 @@ namespace V0.Cinematics
         [SerializeField] private StarterAssetsInputs _playerInputs;
 
         [Header("Settings")]
+        [Tooltip("Allow pressing Space or Escape to skip")]
+        [SerializeField] private bool _allowSkip = true;
+
+        [Tooltip("Trigger only once")]
         [SerializeField] private bool _playOnce = true;
 
         private bool _hasTriggered = false;
         private bool _isPlaying = false;
+        private Coroutine _cutsceneCoroutine;
 
         private void Reset()
         {
@@ -106,7 +113,64 @@ namespace V0.Cinematics
             if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null || other.GetComponentInParent<FirstPersonController>() != null)
             {
                 _hasTriggered = true;
-                StartCoroutine(PlayBetrayalRoutine());
+                _cutsceneCoroutine = StartCoroutine(PlayBetrayalRoutine());
+            }
+        }
+
+        private void Update()
+        {
+            if (_isPlaying && _allowSkip)
+            {
+#if ENABLE_INPUT_SYSTEM
+                if (UnityEngine.InputSystem.Keyboard.current != null && (UnityEngine.InputSystem.Keyboard.current.spaceKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame))
+                {
+                    Debug.Log("<color=yellow>[LastTriggerCutscene]</color> Skipped by player.");
+                    SkipCutscene();
+                }
+#else
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Escape))
+                {
+                    Debug.Log("<color=yellow>[LastTriggerCutscene]</color> Skipped by player.");
+                    SkipCutscene();
+                }
+#endif
+            }
+        }
+
+        public void SkipCutscene()
+        {
+            if (!_isPlaying) return;
+            _isPlaying = false;
+
+            if (_cutsceneCoroutine != null)
+            {
+                StopCoroutine(_cutsceneCoroutine);
+            }
+
+            if (_letterboxCanvasGroup != null)
+            {
+                _letterboxCanvasGroup.DOKill();
+                _letterboxCanvasGroup.alpha = 0f;
+            }
+
+            if (_subtitleText != null)
+            {
+                _subtitleText.DOKill();
+                _subtitleText.text = "";
+            }
+
+            TriggerObjectActivation();
+
+            if (FadeScreen.Instance != null)
+            {
+                FadeScreen.Instance.FadeToBlack(0.5f, () =>
+                {
+                    SceneManager.LoadScene(_endingSceneName);
+                });
+            }
+            else
+            {
+                SceneManager.LoadScene(_endingSceneName);
             }
         }
 
@@ -131,6 +195,12 @@ namespace V0.Cinematics
             if (_stabSound != null && _audioSource != null)
             {
                 _audioSource.PlayOneShot(_stabSound);
+            }
+
+            // Play Drop Dead sound as player is struck and collapses!
+            if (_dropDeadSound != null && _audioSource != null)
+            {
+                _audioSource.PlayOneShot(_dropDeadSound, 1.0f);
             }
 
             GameObject camTarget = _playerController != null ? _playerController.CinemachineCameraTarget : null;
@@ -269,6 +339,25 @@ namespace V0.Cinematics
                 {
                     _letterboxCanvasGroup = canvasObj.GetComponent<CanvasGroup>();
                     if (_subtitleText == null) _subtitleText = canvasObj.GetComponentInChildren<Text>();
+                }
+            }
+
+            if (_dropDeadSound == null)
+            {
+                #if UNITY_EDITOR
+                _dropDeadSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/DropDeadSound.mp3");
+                #endif
+                if (_dropDeadSound == null)
+                {
+                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
+                    foreach (var c in allClips)
+                    {
+                        if (c.name.ToLower().Contains("dropdead") || c.name.ToLower().Contains("drop_dead"))
+                        {
+                            _dropDeadSound = c;
+                            break;
+                        }
+                    }
                 }
             }
         }

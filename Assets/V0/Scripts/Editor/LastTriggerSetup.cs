@@ -74,6 +74,10 @@ namespace V0.Editor
             so.FindProperty("_letterboxCanvasGroup").objectReferenceValue = canvasGroup;
             so.FindProperty("_subtitleText").objectReferenceValue = subtitleText;
 
+            // Wire audio
+            AudioClip dropDeadClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/DropDeadSound.mp3");
+            if (dropDeadClip != null) so.FindProperty("_dropDeadSound").objectReferenceValue = dropDeadClip;
+
             so.ApplyModifiedProperties();
 
             EditorUtility.SetDirty(triggerObj);
