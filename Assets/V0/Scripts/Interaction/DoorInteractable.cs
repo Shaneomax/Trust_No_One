@@ -182,6 +182,7 @@ namespace V0.Interaction
 
         public bool IsOpen => _isOpen;
         public bool IsLocked => _isLocked;
+        public string RequiredKeyId => _requiredKeyId;
 
         private void Awake()
         {

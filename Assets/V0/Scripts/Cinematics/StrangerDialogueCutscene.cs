@@ -150,6 +150,7 @@ namespace V0.Cinematics
             HasMet = true;  // signal to the rest of the game that player has met the stranger
 
             OnCutsceneStarted?.Invoke();
+            DoorBangingAudio.Instance?.StopBanging();
             Debug.Log("<color=cyan>[StrangerDialogueCutscene]</color> Starting Stranger Dialogue Cutscene!");
 
             // Configure Cinemachine Brain blend

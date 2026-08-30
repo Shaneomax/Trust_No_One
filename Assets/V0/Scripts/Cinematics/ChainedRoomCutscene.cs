@@ -83,6 +83,11 @@ namespace V0.Cinematics
             AutoFindReferences();
         }
 
+        private void Start()
+        {
+            DoorBangingAudio.GetOrCreate();
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (_hasTriggered && _playOnce) return;
@@ -120,6 +125,7 @@ namespace V0.Cinematics
             _isPlaying = true;
 
             OnCutsceneStarted?.Invoke();
+            DoorBangingAudio.GetOrCreate()?.StartBanging();
             Debug.Log("<color=cyan>[ChainedRoomCutscene]</color> Starting Chained Room Cutscene!");
 
             // Configure Cinemachine Brain blend for slow, cinematic glide
