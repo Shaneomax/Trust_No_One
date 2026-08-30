@@ -251,24 +251,26 @@ namespace V0.Gameplay
 
             Debug.Log($"<color=yellow><b>[KeyClueSystem]</b> Key collected: '{keyId}'. Current state: {_currentState}</color>");
 
-            // 1. Drawing Room Key / Kitchen Key -> Advance to Hint 4
-            if (!string.IsNullOrEmpty(keyId) && (keyId.IndexOf("draw", StringComparison.OrdinalIgnoreCase) >= 0 || keyId.IndexOf("kitchen", StringComparison.OrdinalIgnoreCase) >= 0))
+            string k = !string.IsNullOrEmpty(keyId) ? keyId.ToLower() : "";
+
+            // 1. Chainsaw / Chainsaw Key / Tool / Shed / Chain / Saw / Master -> Complete clue system immediately (no more dialogues)
+            if (k.Contains("chainsaw") || k.Contains("chain") || k.Contains("saw") || k.Contains("master") || k.Contains("toolshed") || k.Contains("shed"))
             {
-                SetState(ClueState.GotDrawingRoomKey_GetBedroomKey, showImmediateHint: false);
+                CompleteSystem();
                 return;
             }
 
             // 2. Bedroom Key / Crowbar -> Advance to Hint 5
-            if (!string.IsNullOrEmpty(keyId) && (keyId.IndexOf("bed", StringComparison.OrdinalIgnoreCase) >= 0 || keyId.IndexOf("crowbar", StringComparison.OrdinalIgnoreCase) >= 0 || keyId.IndexOf("haligan", StringComparison.OrdinalIgnoreCase) >= 0))
+            if (k.Contains("bed") || k.Contains("crowbar") || k.Contains("haligan"))
             {
                 SetState(ClueState.GotBedroomKey_GetChainsaw, showImmediateHint: false);
                 return;
             }
 
-            // 3. Chainsaw -> Advance to Hint 6
-            if (!string.IsNullOrEmpty(keyId) && keyId.IndexOf("chainsaw", StringComparison.OrdinalIgnoreCase) >= 0)
+            // 3. Drawing Room Key / Kitchen Key -> Advance to Hint 4
+            if (k.Contains("draw") || k.Contains("kitchen"))
             {
-                SetState(ClueState.GotChainsaw_CutChains, showImmediateHint: false);
+                SetState(ClueState.GotDrawingRoomKey_GetBedroomKey, showImmediateHint: false);
                 return;
             }
 
@@ -297,11 +299,13 @@ namespace V0.Gameplay
             }
 
             HideHintUI();
-            Debug.Log("<color=green><b>[KeyClueSystem]</b> Chainsaw door unlocked! Clue system completely finished - no more prompts will show.</color>");
+            Debug.Log("<color=green><b>[KeyClueSystem]</b> Chainsaw acquired/door unlocked! Clue system completely finished - no more dialogue will show.</color>");
         }
 
         public void SetState(ClueState newState, bool showImmediateHint = false)
         {
+            if (_currentState == ClueState.Completed) return;
+
             _currentState = newState;
             _timer = 0f; // Reset countdown timer for fresh duration
             _isSystemActive = true; // Ensure timer is actively ticking
@@ -315,15 +319,32 @@ namespace V0.Gameplay
 
         public void EvaluateStateFromInventory()
         {
-            if (KeyPickup.HasKey("ChainSaw"))
+            if (_currentState == ClueState.Completed) return;
+
+            // Check all keys collected in player inventory
+            if (KeyPickup.CollectedKeyIds != null)
             {
-                _currentState = ClueState.GotChainsaw_CutChains;
+                foreach (string key in KeyPickup.CollectedKeyIds)
+                {
+                    if (string.IsNullOrEmpty(key)) continue;
+                    string k = key.ToLower();
+                    if (k.Contains("chainsaw") || k.Contains("chain") || k.Contains("saw") || k.Contains("master") || k.Contains("toolshed") || k.Contains("shed"))
+                    {
+                        CompleteSystem();
+                        return;
+                    }
+                }
             }
-            else if (KeyPickup.HasKey("BedRoomKey"))
+
+            if (KeyPickup.HasKey("ChainSaw") || KeyPickup.HasKey("Chainsaw") || KeyPickup.HasKey("ChainsawKey") || KeyPickup.HasKey("MasterKey"))
+            {
+                CompleteSystem();
+            }
+            else if (KeyPickup.HasKey("BedRoomKey") || KeyPickup.HasKey("BedroomKey") || KeyPickup.HasKey("Crowbar") || KeyPickup.HasKey("HaliganBar"))
             {
                 _currentState = ClueState.GotBedroomKey_GetChainsaw;
             }
-            else if (KeyPickup.HasKey("DrawingRoomKey"))
+            else if (KeyPickup.HasKey("DrawingRoomKey") || KeyPickup.HasKey("KitchenKey"))
             {
                 _currentState = ClueState.GotDrawingRoomKey_GetBedroomKey;
             }

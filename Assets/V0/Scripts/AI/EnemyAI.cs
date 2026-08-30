@@ -257,8 +257,77 @@ namespace TrustNoOne.AI
             CacheRenderers();
             CheckAnimatorParameters();
             InitializeDoors();
-
             CachePlayerReferences();
+            InitializeAudioSourcesAndClips();
+        }
+
+        private void InitializeAudioSourcesAndClips()
+        {
+            if (_audioSource == null)
+            {
+                _audioSource = GetComponent<AudioSource>();
+                if (_audioSource == null)
+                {
+                    _audioSource = gameObject.AddComponent<AudioSource>();
+                    _audioSource.spatialBlend = 1f;
+                    _audioSource.minDistance = 3f;
+                    _audioSource.maxDistance = 25f;
+                    _audioSource.rolloffMode = AudioRolloffMode.Linear;
+                }
+            }
+
+            if (_screamSound == null)
+            {
+#if UNITY_EDITOR
+                _screamSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Ghost_Scream.mp3");
+#endif
+                if (_screamSound == null) _screamSound = Resources.Load<AudioClip>("Ghost_Scream");
+            }
+
+            // Pre-initialize heartbeat AudioSource & Clip
+            if (_heartbeatAudioSource == null)
+            {
+                GameObject targetObj = _player != null ? _player.gameObject : gameObject;
+                _heartbeatAudioSource = targetObj.GetComponent<AudioSource>() ?? targetObj.AddComponent<AudioSource>();
+                _heartbeatAudioSource.playOnAwake = false;
+                _heartbeatAudioSource.spatialBlend = 0f;
+                _heartbeatAudioSource.loop = true;
+            }
+
+            if (_heartbeatAudioClip == null)
+            {
+#if UNITY_EDITOR
+                _heartbeatAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Heart_Beat.mp3");
+#endif
+                if (_heartbeatAudioClip == null) _heartbeatAudioClip = Resources.Load<AudioClip>("Heart_Beat");
+            }
+            if (_heartbeatAudioClip != null && _heartbeatAudioSource != null)
+            {
+                _heartbeatAudioSource.clip = _heartbeatAudioClip;
+            }
+
+            // Pre-initialize Chase Music AudioSource & Clip
+            if (_chaseMusicAudioSource == null)
+            {
+                GameObject targetObj = _player != null ? _player.gameObject : gameObject;
+                _chaseMusicAudioSource = targetObj.AddComponent<AudioSource>();
+                _chaseMusicAudioSource.playOnAwake = false;
+                _chaseMusicAudioSource.spatialBlend = 0f;
+                _chaseMusicAudioSource.loop = true;
+                _chaseMusicAudioSource.volume = 0f;
+            }
+
+            if (_chaseMusicClip == null)
+            {
+#if UNITY_EDITOR
+                _chaseMusicClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Chase_Music.mp3");
+#endif
+                if (_chaseMusicClip == null) _chaseMusicClip = Resources.Load<AudioClip>("Chase_Music");
+            }
+            if (_chaseMusicClip != null && _chaseMusicAudioSource != null)
+            {
+                _chaseMusicAudioSource.clip = _chaseMusicClip;
+            }
         }
 
         private void CachePlayerReferences()
@@ -1104,59 +1173,7 @@ namespace TrustNoOne.AI
 
         private void UpdateHeartbeatAudio()
         {
-            if (_heartbeatAudioSource == null)
-            {
-                // Create dedicated 2D stereo AudioSource for the player's heartbeat
-                GameObject playerObj = _player != null ? _player.gameObject : GameObject.FindWithTag("Player");
-                if (playerObj != null)
-                {
-                    _heartbeatAudioSource = playerObj.GetComponent<AudioSource>();
-                    if (_heartbeatAudioSource == null)
-                    {
-                        _heartbeatAudioSource = playerObj.AddComponent<AudioSource>();
-                    }
-                }
-                else
-                {
-                    _heartbeatAudioSource = GetComponent<AudioSource>();
-                    if (_heartbeatAudioSource == null)
-                    {
-                        _heartbeatAudioSource = gameObject.AddComponent<AudioSource>();
-                    }
-                }
-
-                _heartbeatAudioSource.playOnAwake = false;
-                _heartbeatAudioSource.spatialBlend = 0f; // 2D Stereo inside player's head
-                _heartbeatAudioSource.loop = true;
-            }
-
-            if (_heartbeatAudioClip == null)
-            {
-                #if UNITY_EDITOR
-                _heartbeatAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Heart_Beat.mp3");
-                #endif
-                if (_heartbeatAudioClip == null)
-                {
-                    _heartbeatAudioClip = Resources.Load<AudioClip>("Heart_Beat");
-                    if (_heartbeatAudioClip == null)
-                    {
-                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                        foreach (var c in allClips)
-                        {
-                            if (c.name.ToLower().Contains("heart"))
-                            {
-                                _heartbeatAudioClip = c;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (_heartbeatAudioClip != null && _heartbeatAudioSource.clip != _heartbeatAudioClip)
-            {
-                _heartbeatAudioSource.clip = _heartbeatAudioClip;
-            }
+            if (_heartbeatAudioSource == null) return;
 
             // Stop heartbeat immediately if ghost is disabled, inactive, in cutscene, or in spawn grace
             if (!enabled || !gameObject.activeInHierarchy || V0.Interaction.FlashlightController.IsGlobalCutscene || _spawnGraceTimer > 0f)
@@ -1197,51 +1214,7 @@ namespace TrustNoOne.AI
 
         private void UpdateChaseMusicAudio()
         {
-            if (_chaseMusicAudioSource == null)
-            {
-                GameObject playerObj = _player != null ? _player.gameObject : GameObject.FindWithTag("Player");
-                if (playerObj != null)
-                {
-                    _chaseMusicAudioSource = playerObj.AddComponent<AudioSource>();
-                }
-                else
-                {
-                    _chaseMusicAudioSource = gameObject.AddComponent<AudioSource>();
-                }
-
-                _chaseMusicAudioSource.playOnAwake = false;
-                _chaseMusicAudioSource.spatialBlend = 0f; // 2D Stereo cinematic chase BGM
-                _chaseMusicAudioSource.loop = true;
-                _chaseMusicAudioSource.volume = 0f;
-            }
-
-            if (_chaseMusicClip == null)
-            {
-                #if UNITY_EDITOR
-                _chaseMusicClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Chase_Music.mp3");
-                #endif
-                if (_chaseMusicClip == null)
-                {
-                    _chaseMusicClip = Resources.Load<AudioClip>("Chase_Music");
-                    if (_chaseMusicClip == null)
-                    {
-                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                        foreach (var c in allClips)
-                        {
-                            if (c.name.ToLower().Contains("chase_music") || c.name.ToLower().Contains("chase"))
-                            {
-                                _chaseMusicClip = c;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (_chaseMusicClip != null && _chaseMusicAudioSource.clip != _chaseMusicClip)
-            {
-                _chaseMusicAudioSource.clip = _chaseMusicClip;
-            }
+            if (_chaseMusicAudioSource == null) return;
 
             // Chase music plays during hunting / chasing / screaming when active
             bool isHunting = (_currentState == State.Chase || _currentState == State.Attack || _isScreaming)
@@ -1262,7 +1235,7 @@ namespace TrustNoOne.AI
             }
             else
             {
-                if (_chaseMusicAudioSource != null && _chaseMusicAudioSource.isPlaying)
+                if (_chaseMusicAudioSource.isPlaying)
                 {
                     _chaseMusicAudioSource.volume = Mathf.MoveTowards(_chaseMusicAudioSource.volume, 0f, Time.deltaTime * 1.5f);
                     if (_chaseMusicAudioSource.volume <= 0.01f)

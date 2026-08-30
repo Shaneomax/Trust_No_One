@@ -105,6 +105,8 @@ namespace V0.Interaction
         /// </summary>
         public static bool HasAnyKey => _collectedKeyIds.Count > 0;
 
+        public static System.Collections.Generic.IReadOnlyCollection<string> CollectedKeyIds => _collectedKeyIds;
+
         public string InteractionPrompt => _interactionPrompt;
         public string KeyId => _keyId;
 
