@@ -140,7 +140,8 @@ namespace V0.Cinematics
 
             yield return new WaitForSeconds(0.1f);
 
-            Debug.Log($"<color=green>[GoodEndingTrigger]</color> Loading Good Ending scene: '{_goodEndingSceneName}'");
+            Debug.Log($"<color=green>[GoodEndingTrigger]</color> Setting Good Ending and Loading scene: '{_goodEndingSceneName}'");
+            EndingManager.CurrentEnding = EndingType.Good;
             SceneManager.LoadScene(_goodEndingSceneName);
         }
 

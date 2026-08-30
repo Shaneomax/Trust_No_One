@@ -273,7 +273,8 @@ namespace V0.Cinematics
             TriggerObjectActivation();
 
             // 8. Load Ending Scene
-            Debug.Log($"<color=green>[LastTriggerCutscene]</color> Loading Ending Scene: '{_endingSceneName}'");
+            Debug.Log($"<color=green>[LastTriggerCutscene]</color> Setting LastTrigger Ending and Loading Scene: '{_endingSceneName}'");
+            EndingManager.CurrentEnding = EndingType.LastTrigger;
             SceneManager.LoadScene(_endingSceneName);
         }
 

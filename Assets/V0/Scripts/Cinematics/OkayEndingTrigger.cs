@@ -266,7 +266,8 @@ namespace V0.Cinematics
             yield return new WaitForSeconds(0.4f);
 
             // 9. Load Ending Scene
-            Debug.Log($"<color=green>[OkayEndingTrigger]</color> Loading Ending Scene: '{_endingSceneName}'");
+            Debug.Log($"<color=green>[OkayEndingTrigger]</color> Setting Okay Ending and Loading Scene: '{_endingSceneName}'");
+            EndingManager.CurrentEnding = EndingType.Okay;
             SceneManager.LoadScene(_endingSceneName);
         }
 
