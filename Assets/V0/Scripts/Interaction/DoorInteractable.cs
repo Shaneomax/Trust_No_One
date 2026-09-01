@@ -156,8 +156,6 @@ namespace V0.Interaction
             _globalHasPlayedUnlockDialogue = false;
             _cachedSubtitleText = null;
             _cachedLetterboxGroup = null;
-            OnLockedDoorInteracted = null;
-            OnDoorUnlocked = null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -169,7 +167,9 @@ namespace V0.Interaction
 
         private static void OnSceneLoadedReset(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
-            ResetStaticState();
+            _globalHasPlayedUnlockDialogue = false;
+            _cachedSubtitleText = null;
+            _cachedLetterboxGroup = null;
         }
 
         /// <summary>
@@ -213,6 +213,24 @@ namespace V0.Interaction
             if (_doorTransform == null)
             {
                 _doorTransform = transform;
+            }
+
+            if (_openCloseDoorSound == null)
+            {
+                _openCloseDoorSound = Resources.Load<AudioClip>("Audio/Open_Or_CloseDoor")
+                                   ?? Resources.Load<AudioClip>("Open_Or_CloseDoor");
+            }
+
+            if (_lockedJiggleSound == null)
+            {
+                _lockedJiggleSound = Resources.Load<AudioClip>("Audio/Door_Lock")
+                                  ?? Resources.Load<AudioClip>("Door_Lock");
+            }
+
+            if (_unlockSound == null)
+            {
+                _unlockSound = Resources.Load<AudioClip>("Audio/Door_Break")
+                            ?? Resources.Load<AudioClip>("Door_Break");
             }
         }
 
@@ -262,6 +280,7 @@ namespace V0.Interaction
 
                     Debug.Log($"<color=green>[DoorInteractable]</color> Unlocked '{gameObject.name}' with required key!");
                     OnDoorUnlocked?.Invoke(this, _requiredKeyId);
+                    V0.Gameplay.KeyClueSystem.Instance?.HandleDoorUnlocked(this, _requiredKeyId);
 
                     // Trigger Unlock Dialogue strictly for the Chainsaw / Chained room door and ONLY ONCE!
                     bool isChainsawDoor = !string.IsNullOrEmpty(_requiredKeyId) && _requiredKeyId.Equals("ChainSaw", System.StringComparison.OrdinalIgnoreCase);
@@ -271,6 +290,13 @@ namespace V0.Interaction
                         if (_dialogueCoroutine != null) StopCoroutine(_dialogueCoroutine);
                         _dialogueCoroutine = StartCoroutine(PlayUnlockDialogueRoutine());
                     }
+
+                    // Auto-open door immediately upon unlocking with 1 single E press!
+                    _isOpen = true;
+                    _doorTransform.DOKill();
+                    _doorTransform.DOLocalRotate(_openRotation, _animationDuration).SetEase(_openEase);
+                    PlayDoorSound();
+                    return;
                 }
                 else
                 {
@@ -278,35 +304,39 @@ namespace V0.Interaction
                     PlayLockedDoorSound();
                     _doorTransform.DOKill();
                     _doorTransform.DOShakeRotation(0.25f, new Vector3(0, 4f, 0), 10, 90, false);
-                    string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
-                    Debug.Log($"<color=yellow>[DoorInteractable]</color> '{gameObject.name}' is locked. Requires key: '{keyName}'");
-                    OnLockedDoorInteracted?.Invoke(this, _requiredKeyId);
 
-                    // Trigger locked clue dialogue on first attempt
-                    // Gate: only after main door is locked AND stranger has been met (SecondTrigger fired)
-                    bool strangerConditionMet = !_requireStrangerMetFirst || StrangerDialogueCutscene.HasMet;
-                    if (_enableLockedDialogue && !_hasTriggeredLockedDialogue && IsMainDoorLocked() && strangerConditionMet && _lockedDialogueLines != null && _lockedDialogueLines.Count > 0)
+                    string keyName = _requiredKey != null ? _requiredKey.name : _requiredKeyId;
+                    Debug.Log($"<color=yellow>[DoorInteractable]</color> Door is locked. Needs: {keyName}");
+                    OnLockedDoorInteracted?.Invoke(this, _requiredKeyId);
+                    V0.Gameplay.KeyClueSystem.Instance?.HandleLockedDoorInteracted(this, _requiredKeyId);
+
+                    if (_requireMainDoorLockedFirst && !IsMainDoorLocked())
+                    {
+                        return;
+                    }
+
+                    if (_requireStrangerMetFirst && !StrangerDialogueCutscene.HasMet)
+                    {
+                        return;
+                    }
+
+                    if (!_hasTriggeredLockedDialogue && _lockedDialogueLines != null && _lockedDialogueLines.Count > 0)
                     {
                         _hasTriggeredLockedDialogue = true;
                         if (_dialogueCoroutine != null) StopCoroutine(_dialogueCoroutine);
                         _dialogueCoroutine = StartCoroutine(PlayLockedDialogueRoutine());
                     }
-
-                    return;
                 }
+                return;
             }
 
+            // Normal door open / close
             _isOpen = !_isOpen;
-
-            // Stop any running tween on this transform to smoothly handle rapid interactions
             _doorTransform.DOKill();
+            Vector3 targetRot = _isOpen ? _openRotation : _closedRotation;
+            Ease chosenEase = _isOpen ? _openEase : _closeEase;
 
-            Vector3 targetRotation = _isOpen ? _openRotation : _closedRotation;
-            Ease targetEase = _isOpen ? _openEase : _closeEase;
-
-            _doorTransform.DOLocalRotate(targetRotation, _animationDuration)
-                .SetEase(targetEase);
-
+            _doorTransform.DOLocalRotate(targetRot, _animationDuration).SetEase(chosenEase);
             PlayDoorSound();
 
             if (_isOpen)
@@ -323,19 +353,8 @@ namespace V0.Interaction
         {
             if (_openCloseDoorSound == null)
             {
-                _openCloseDoorSound = Resources.Load<AudioClip>("Open_Or_CloseDoor");
-                if (_openCloseDoorSound == null)
-                {
-                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                    foreach (var c in allClips)
-                    {
-                        if (c.name.ToLower().Contains("open_or_close") || (c.name.ToLower().Contains("door") && !c.name.ToLower().Contains("jiggle")))
-                        {
-                            _openCloseDoorSound = c;
-                            break;
-                        }
-                    }
-                }
+                _openCloseDoorSound = Resources.Load<AudioClip>("Audio/Open_Or_CloseDoor")
+                                   ?? Resources.Load<AudioClip>("Open_Or_CloseDoor");
             }
 
             if (_openCloseDoorSound != null)
@@ -348,25 +367,15 @@ namespace V0.Interaction
         {
             if (_lockedJiggleSound == null)
             {
+                _lockedJiggleSound = Resources.Load<AudioClip>("Audio/Door_Lock")
+                                  ?? Resources.Load<AudioClip>("Door_Lock");
+
                 #if UNITY_EDITOR
-                _lockedJiggleSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Door_Lock.mp3");
-                #endif
                 if (_lockedJiggleSound == null)
                 {
-                    _lockedJiggleSound = Resources.Load<AudioClip>("Door_Lock");
-                    if (_lockedJiggleSound == null)
-                    {
-                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                        foreach (var c in allClips)
-                        {
-                            if (c.name.ToLower().Contains("door_lock") || c.name.ToLower().Contains("lock"))
-                            {
-                                _lockedJiggleSound = c;
-                                break;
-                            }
-                        }
-                    }
+                    _lockedJiggleSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/Door_Lock.mp3");
                 }
+                #endif
             }
 
             if (_lockedJiggleSound != null)

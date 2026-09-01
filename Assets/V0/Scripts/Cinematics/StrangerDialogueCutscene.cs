@@ -101,6 +101,25 @@ namespace V0.Cinematics
         public event Action OnCutsceneStarted;
         public event Action OnCutsceneCompleted;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            HasMet = false;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void AutoInitSceneWatcher()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedReset;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedReset;
+        }
+
+        private static void OnSceneLoadedReset(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            HasMet = false;
+            Debug.Log($"<color=cyan>[StrangerDialogueCutscene]</color> Reset HasMet for new scene load ({scene.name}).");
+        }
+
         private void Reset()
         {
             Collider col = GetComponent<Collider>();
@@ -109,6 +128,7 @@ namespace V0.Cinematics
 
         private void Awake()
         {
+            HasMet = false;
             AutoFindReferences();
         }
 

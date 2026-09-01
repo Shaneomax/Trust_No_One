@@ -51,7 +51,6 @@ namespace V0.Interaction
         {
             _collectedKeyIds.Clear();
             _collectedKeyInstances.Clear();
-            OnKeyCollected = null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -63,7 +62,8 @@ namespace V0.Interaction
 
         private static void OnSceneLoadedReset(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
-            ResetStaticState();
+            _collectedKeyIds.Clear();
+            _collectedKeyInstances.Clear();
             Debug.Log($"<color=cyan>[KeyPickup]</color> Inventory cleared for new scene/gameplay session ({scene.name}).");
         }
 
@@ -170,32 +170,24 @@ namespace V0.Interaction
                 ? playerTransform.position + Vector3.up * _playerHeightOffset
                 : transform.position;
 
-            // Play pickup audio specifically for DrawingRoomKey
-            if (_keyId.Equals("DrawingRoomKey", StringComparison.OrdinalIgnoreCase))
+            // Play pickup audio for all keys
+            if (_pickupSound == null)
             {
-                if (_pickupSound == null)
+                if (!string.IsNullOrEmpty(_keyId) && _keyId.ToLower().Contains("bed"))
                 {
-                    _pickupSound = Resources.Load<AudioClip>("Key_Pickup");
-                    if (_pickupSound == null)
-                    {
-                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                        foreach (var c in allClips)
-                        {
-                            if (c.name.Equals("Key_Pickup", StringComparison.OrdinalIgnoreCase) || c.name.ToLower().Contains("key_pickup"))
-                            {
-                                _pickupSound = c;
-                                break;
-                            }
-                        }
-                    }
+                    _pickupSound = Resources.Load<AudioClip>("Audio/BedRoomKey_Pickup")
+                                ?? Resources.Load<AudioClip>("BedRoomKey_Pickup")
+                                ?? Resources.Load<AudioClip>("Audio/Key_Pickup")
+                                ?? Resources.Load<AudioClip>("Key_Pickup");
                 }
-
-                if (_pickupSound != null)
+                else
                 {
-                    AudioSource.PlayClipAtPoint(_pickupSound, transform.position, 1.0f);
+                    _pickupSound = Resources.Load<AudioClip>("Audio/Key_Pickup")
+                                ?? Resources.Load<AudioClip>("Key_Pickup");
                 }
             }
-            else if (_pickupSound != null)
+
+            if (_pickupSound != null)
             {
                 AudioSource.PlayClipAtPoint(_pickupSound, transform.position, 1.0f);
             }
@@ -219,7 +211,14 @@ namespace V0.Interaction
                 _collectedKeyInstances.Add(this);
 
                 OnKeyCollected?.Invoke(capturedKeyId);
+                V0.Gameplay.KeyClueSystem.Instance?.HandleKeyCollected(capturedKeyId);
                 Debug.Log($"<color=yellow>[KeyPickup]</color> Collected key: '{capturedKeyId}'");
+
+                string lowerKeyCheck = capturedKeyId != null ? capturedKeyId.ToLower() : "";
+                if (lowerKeyCheck.Contains("chain") || lowerKeyCheck.Contains("saw") || lowerKeyCheck.Contains("toolshed"))
+                {
+                    V0.Gameplay.KeyClueSystem.Instance?.CompleteSystem();
+                }
 
                 // Activate all objects in the list on pickup
                 if (capturedObjects != null && capturedObjects.Count > 0)
@@ -241,17 +240,17 @@ namespace V0.Interaction
 
                 // Update Game Objective based on item collected
                 string lowerKey = capturedKeyId != null ? capturedKeyId.ToLower() : "";
-                if (lowerKey.Contains("bed") || lowerKey.Contains("crowbar") || lowerKey.Contains("haligan"))
+                if (lowerKey.Contains("chain") || lowerKey.Contains("saw") || lowerKey.Contains("toolshed"))
                 {
-                    V0.UI.ObjectiveManager.SetObjective("Retrieve Master key from the bedroom");
+                    V0.UI.ObjectiveManager.SetObjective("Free the man");
                 }
-                else if (lowerKey.Contains("drawing") || lowerKey.Contains("master"))
+                else if (lowerKey.Contains("bed") || lowerKey.Contains("crowbar") || lowerKey.Contains("haligan"))
                 {
                     V0.UI.ObjectiveManager.SetObjective("Get the Chainsaw");
                 }
-                else if (lowerKey.Contains("chain"))
+                else if (lowerKey.Contains("draw") || lowerKey.Contains("key"))
                 {
-                    V0.UI.ObjectiveManager.SetObjective("Free the man");
+                    V0.UI.ObjectiveManager.SetObjective("Find the Bedroom key inside the drawing room");
                 }
 
                 // Spawn / Activate Ghost immediately (if enabled)

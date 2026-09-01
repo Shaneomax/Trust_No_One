@@ -284,41 +284,36 @@ namespace V0.Cinematics
                 return;
             }
 
+            // 1. Try Resources.Load (Works in WebGL & Standalone Builds!)
+            _bangingAudioClip = Resources.Load<AudioClip>("Audio/Door_Banging")
+                             ?? Resources.Load<AudioClip>("Door_Banging")
+                             ?? Resources.Load<AudioClip>("Audio/Door_Bang")
+                             ?? Resources.Load<AudioClip>("Door_Bang");
+
             #if UNITY_EDITOR
-            string[] searchPaths = new string[]
-            {
-                "Assets/V0/Audio/Door_Banging.mp3",
-                "Assets/V0/Audio/Door_Banging.wav",
-                "Assets/V0/Audio/DoorBanging.mp3",
-                "Assets/V0/Audio/Door_Bang.mp3",
-                "Assets/V0/Audio/Door_Knock.mp3",
-                "Assets/V0/Audio/DoorKnock.mp3"
-            };
-
-            foreach (string path in searchPaths)
-            {
-                AudioClip clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-                if (clip != null)
-                {
-                    _bangingAudioClip = clip;
-                    break;
-                }
-            }
-            #endif
-
             if (_bangingAudioClip == null)
             {
-                AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                foreach (var c in allClips)
+                string[] searchPaths = new string[]
                 {
-                    string n = c.name.ToLower();
-                    if (n.Contains("door_banging") || n.Contains("doorbanging") || n.Contains("banging") || n.Contains("door_bang") || n.Contains("knock"))
+                    "Assets/V0/Audio/Door_Banging.mp3",
+                    "Assets/V0/Audio/Door_Banging.wav",
+                    "Assets/V0/Audio/DoorBanging.mp3",
+                    "Assets/V0/Audio/Door_Bang.mp3",
+                    "Assets/V0/Audio/Door_Knock.mp3",
+                    "Assets/V0/Audio/DoorKnock.mp3"
+                };
+
+                foreach (string path in searchPaths)
+                {
+                    AudioClip clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                    if (clip != null)
                     {
-                        _bangingAudioClip = c;
+                        _bangingAudioClip = clip;
                         break;
                     }
                 }
             }
+            #endif
 
             if (_audioSource != null && _bangingAudioClip != null)
             {

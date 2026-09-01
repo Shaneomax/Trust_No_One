@@ -135,13 +135,22 @@ namespace V0.Gameplay
                 }
             }
 
+            _isSystemActive = false;
+            _timer = 0f;
+            _currentState = ClueState.SearchChainsawRoom;
+
             EnsureClueUIHierarchy();
+            HideHintUI();
         }
 
         private void Start()
         {
+            _isSystemActive = false;
+            _timer = 0f;
+            _currentState = ClueState.SearchChainsawRoom;
+
             EnsureClueUIHierarchy();
-            EvaluateStateFromInventory();
+            HideHintUI();
 
             if (_startImmediatelyForTesting)
             {
@@ -221,31 +230,53 @@ namespace V0.Gameplay
             }
         }
 
-        private void HandleLockedDoorInteracted(DoorInteractable door, string requiredKeyId)
+        public void HandleLockedDoorInteracted(DoorInteractable door, string requiredKeyId)
         {
             if (_currentState == ClueState.Completed) return;
 
-            Debug.Log($"<color=yellow><b>[KeyClueSystem]</b> Player tried locked door with required key '{requiredKeyId}'. Current state: {_currentState}</color>");
-
-            // 1. If player tries Chainsaw Room door while searching for chainsaw -> advance state to search Bedroom (with full delay before hint!)
-            if (_currentState == ClueState.SearchChainsawRoom)
+            // Only show locked door clue hints AFTER the SecondTrigger (stranger met)
+            if (!StrangerDialogueCutscene.HasMet && !_startImmediatelyForTesting)
             {
-                SetState(ClueState.ChainsawLocked_SearchBedroom, showImmediateHint: false);
                 return;
             }
 
-            // 2. If player tries 2nd Floor Bedroom door -> advance state to search Drawing Room Key (with full delay before hint!)
-            if (_currentState == ClueState.ChainsawLocked_SearchBedroom || _currentState == ClueState.SearchChainsawRoom)
+            string req = !string.IsNullOrEmpty(requiredKeyId) ? requiredKeyId.ToLower() : "";
+            string doorName = door != null ? door.gameObject.name.ToLower() : "";
+
+            Debug.Log($"<color=yellow><b>[KeyClueSystem]</b> Player tried locked door '{doorName}' with required key '{requiredKeyId}'. Current state: {_currentState}</color>");
+
+            // Always check if player has collected keys first
+            EvaluateStateFromInventory();
+            if (_currentState == ClueState.Completed) return;
+
+            // 1. If player tries 2nd Floor Bedroom door
+            if (req.Contains("bed") || req.Contains("crowbar") || req.Contains("haligan") || doorName.Contains("bed"))
             {
-                if (!string.IsNullOrEmpty(requiredKeyId) && requiredKeyId.IndexOf("bed", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (_currentState < ClueState.BedroomLocked_SearchDrawingRoom)
                 {
-                    SetState(ClueState.BedroomLocked_SearchDrawingRoom, showImmediateHint: false);
+                    SetState(ClueState.BedroomLocked_SearchDrawingRoom, showImmediateHint: true);
                     return;
                 }
             }
+
+            // 2. If player tries Chainsaw Room door
+            if (req.Contains("chain") || req.Contains("saw") || doorName.Contains("chain"))
+            {
+                if (_currentState < ClueState.ChainsawLocked_SearchBedroom)
+                {
+                    SetState(ClueState.ChainsawLocked_SearchBedroom, showImmediateHint: true);
+                    return;
+                }
+            }
+
+            // 3. Fallback: Any locked door interaction advances beyond Hint 1
+            if (_currentState == ClueState.SearchChainsawRoom)
+            {
+                SetState(ClueState.ChainsawLocked_SearchBedroom, showImmediateHint: true);
+            }
         }
 
-        private void HandleKeyCollected(string keyId)
+        public void HandleKeyCollected(string keyId)
         {
             if (_currentState == ClueState.Completed) return;
 
@@ -253,31 +284,33 @@ namespace V0.Gameplay
 
             string k = !string.IsNullOrEmpty(keyId) ? keyId.ToLower() : "";
 
-            // 1. Chainsaw / Chainsaw Key / Tool / Shed / Chain / Saw / Master -> Complete clue system immediately (no more dialogues)
+            // 1. Chainsaw / Chainsaw Key -> Complete immediately (NO CLUE SHOWS)
             if (k.Contains("chainsaw") || k.Contains("chain") || k.Contains("saw") || k.Contains("master") || k.Contains("toolshed") || k.Contains("shed"))
             {
                 CompleteSystem();
                 return;
             }
 
-            // 2. Bedroom Key / Crowbar -> Advance to Hint 5
+            bool showHint = StrangerDialogueCutscene.HasMet || _startImmediatelyForTesting;
+
+            // 2. Bedroom Key / Crowbar -> Advance to Hint 5 (Get Chainsaw)
             if (k.Contains("bed") || k.Contains("crowbar") || k.Contains("haligan"))
             {
-                SetState(ClueState.GotBedroomKey_GetChainsaw, showImmediateHint: false);
+                SetState(ClueState.GotBedroomKey_GetChainsaw, showImmediateHint: showHint);
                 return;
             }
 
-            // 3. Drawing Room Key / Kitchen Key -> Advance to Hint 4
-            if (k.Contains("draw") || k.Contains("kitchen"))
+            // 3. Drawing Room Key / Kitchen Key / Ground Floor Key -> Advance to Hint 4 (Get Bedroom Key)
+            if (k.Contains("draw") || k.Contains("kitchen") || k.Contains("key"))
             {
-                SetState(ClueState.GotDrawingRoomKey_GetBedroomKey, showImmediateHint: false);
+                SetState(ClueState.GotDrawingRoomKey_GetBedroomKey, showImmediateHint: showHint);
                 return;
             }
 
             EvaluateStateFromInventory();
         }
 
-        private void HandleDoorUnlocked(DoorInteractable door, string requiredKeyId)
+        public void HandleDoorUnlocked(DoorInteractable door, string requiredKeyId)
         {
             // When the Chainsaw door is unlocked, complete the clue system permanently!
             if (!string.IsNullOrEmpty(requiredKeyId) && requiredKeyId.Equals("ChainSaw", StringComparison.OrdinalIgnoreCase))
@@ -309,7 +342,7 @@ namespace V0.Gameplay
             _currentState = newState;
             _timer = 0f; // Reset countdown timer for fresh duration
             _isSystemActive = true; // Ensure timer is actively ticking
-            Debug.Log($"<color=green><b>[KeyClueSystem]</b> Set state to: {_currentState} (Hint will show in {_hintIntervalSeconds}s)</color>");
+            Debug.Log($"<color=green><b>[KeyClueSystem]</b> Set state to: {_currentState}</color>");
 
             if (showImmediateHint)
             {
@@ -321,7 +354,7 @@ namespace V0.Gameplay
         {
             if (_currentState == ClueState.Completed) return;
 
-            // Check all keys collected in player inventory
+            // 1. If player has Chainsaw in inventory -> Complete immediately!
             if (KeyPickup.CollectedKeyIds != null)
             {
                 foreach (string key in KeyPickup.CollectedKeyIds)
@@ -339,12 +372,46 @@ namespace V0.Gameplay
             if (KeyPickup.HasKey("ChainSaw") || KeyPickup.HasKey("Chainsaw") || KeyPickup.HasKey("ChainsawKey") || KeyPickup.HasKey("MasterKey"))
             {
                 CompleteSystem();
+                return;
             }
-            else if (KeyPickup.HasKey("BedRoomKey") || KeyPickup.HasKey("BedroomKey") || KeyPickup.HasKey("Crowbar") || KeyPickup.HasKey("HaliganBar"))
+
+            // 2. If player has Bedroom Key in inventory -> Hint 5
+            if (KeyPickup.CollectedKeyIds != null)
+            {
+                foreach (string key in KeyPickup.CollectedKeyIds)
+                {
+                    if (string.IsNullOrEmpty(key)) continue;
+                    string k = key.ToLower();
+                    if (k.Contains("bed") || k.Contains("crowbar") || k.Contains("haligan"))
+                    {
+                        _currentState = ClueState.GotBedroomKey_GetChainsaw;
+                        return;
+                    }
+                }
+            }
+
+            if (KeyPickup.HasKey("BedRoomKey") || KeyPickup.HasKey("BedroomKey") || KeyPickup.HasKey("Crowbar") || KeyPickup.HasKey("HaliganBar"))
             {
                 _currentState = ClueState.GotBedroomKey_GetChainsaw;
+                return;
             }
-            else if (KeyPickup.HasKey("DrawingRoomKey") || KeyPickup.HasKey("KitchenKey"))
+
+            // 3. If player has Drawing Room Key in inventory -> Hint 4
+            if (KeyPickup.CollectedKeyIds != null)
+            {
+                foreach (string key in KeyPickup.CollectedKeyIds)
+                {
+                    if (string.IsNullOrEmpty(key)) continue;
+                    string k = key.ToLower();
+                    if (k.Contains("draw") || k.Contains("kitchen") || k.Contains("key"))
+                    {
+                        _currentState = ClueState.GotDrawingRoomKey_GetBedroomKey;
+                        return;
+                    }
+                }
+            }
+
+            if (KeyPickup.HasKey("DrawingRoomKey") || KeyPickup.HasKey("KitchenKey"))
             {
                 _currentState = ClueState.GotDrawingRoomKey_GetBedroomKey;
             }
@@ -355,6 +422,8 @@ namespace V0.Gameplay
         /// </summary>
         public void TriggerCurrentHint()
         {
+            if (_currentState == ClueState.Completed) return;
+
             string dialogue = "";
             Vector3 beaconPosition = Vector3.zero;
             bool hasBeacon = false;

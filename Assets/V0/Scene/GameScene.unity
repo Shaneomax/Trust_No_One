@@ -242695,6 +242695,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395323, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
+      propertyPath: m_Lens.FieldOfView
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 8762286023885395323, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_StreamingVersion
       value: 20241001
       objectReference: {fileID: 0}
@@ -246850,8 +246854,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V0.Gameplay.KeyClueSystem
-  _hintIntervalSeconds: 5
-  _hintDisplayDuration: 4
+  _hintIntervalSeconds: 65
+  _hintDisplayDuration: 3
   _startImmediatelyForTesting: 0
   _currentState: 0
   _hint1_SearchChainsaw: '[Player]: "The stranger said I need a chainsaw to free
@@ -246860,8 +246864,8 @@ MonoBehaviour:
     the key might be in the second floor bedroom upstairs."'
   _hint3_BedroomLocked: '[Player]: "The second floor bedroom is locked too! I need
     to search the Drawing Room downstairs for the Crowbar."'
-  _hint4_GotDrawingRoomKey: '[Player]: "I have the Kitchen Key! Now I can unlock
-    the lock door and get the Chainsaw" '
+  _hint4_GotDrawingRoomKey: '[Player]: "I have the Master Key! Now I can unlock any
+    door and get the Chainsaw" '
   _hint5_GotBedroomKey: '[Player]: "I have the Crowbar. Now I can force myself in
     to the bedroom!"'
   _hint6_GotChainsaw: '[Player]: "I have the Chainsaw! Time to cut the chains on
@@ -253084,7 +253088,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430821, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: field of view
-      value: 40
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 9005220659476430821, guid: 2d3a85ecde41a8246a79669975912b74, type: 3}
       propertyPath: far clip plane

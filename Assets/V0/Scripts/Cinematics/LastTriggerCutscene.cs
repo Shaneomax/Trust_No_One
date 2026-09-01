@@ -345,21 +345,14 @@ namespace V0.Cinematics
 
             if (_dropDeadSound == null)
             {
+                _dropDeadSound = Resources.Load<AudioClip>("Audio/DropDeadSound") ?? Resources.Load<AudioClip>("DropDeadSound");
+
                 #if UNITY_EDITOR
-                _dropDeadSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/DropDeadSound.mp3");
-                #endif
                 if (_dropDeadSound == null)
                 {
-                    AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                    foreach (var c in allClips)
-                    {
-                        if (c.name.ToLower().Contains("dropdead") || c.name.ToLower().Contains("drop_dead"))
-                        {
-                            _dropDeadSound = c;
-                            break;
-                        }
-                    }
+                    _dropDeadSound = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/DropDeadSound.mp3");
                 }
+                #endif
             }
         }
     }

@@ -932,25 +932,14 @@ namespace TrustNoOne.AI
 
             if (_footstepAudioClip == null)
             {
-                #if UNITY_EDITOR
-                _footstepAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/FootStep.mp3");
-                #endif
+                _footstepAudioClip = Resources.Load<AudioClip>("Audio/FootStep")
+                                  ?? Resources.Load<AudioClip>("FootStep");
+#if UNITY_EDITOR
                 if (_footstepAudioClip == null)
                 {
-                    _footstepAudioClip = Resources.Load<AudioClip>("FootStep");
-                    if (_footstepAudioClip == null)
-                    {
-                        AudioClip[] allClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-                        foreach (var c in allClips)
-                        {
-                            if (c.name.ToLower().Contains("footstep"))
-                            {
-                                _footstepAudioClip = c;
-                                break;
-                            }
-                        }
-                    }
+                    _footstepAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/FootStep.mp3");
                 }
+#endif
             }
 
             if (_footstepAudioClip != null && _footstepAudioSource.clip != _footstepAudioClip)

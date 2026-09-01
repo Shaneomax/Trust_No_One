@@ -127,32 +127,27 @@ namespace V0.UI
             // 2. If _menuAmbientAudio is still null, look for BAckGround.mp3 first!
             if (_menuAmbientAudio == null)
             {
+                _menuAmbientAudio = Resources.Load<AudioClip>("Audio/BAckGround")
+                                 ?? Resources.Load<AudioClip>("BAckGround");
 #if UNITY_EDITOR
-                _menuAmbientAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/BAckGround.mp3");
                 if (_menuAmbientAudio == null)
                 {
-                    _menuAmbientAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/BAckGround.wav");
+                    _menuAmbientAudio = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/BAckGround.mp3")
+                                     ?? UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/V0/Audio/BAckGround.wav");
                 }
 #endif
             }
 
             if (_backgroundSprite == null)
             {
+                _backgroundSprite = Resources.Load<Sprite>("Images/BackGround_Img")
+                                 ?? Resources.Load<Sprite>("BackGround_Img");
 #if UNITY_EDITOR
-                _backgroundSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/V0/Images/BackGround_Img.png");
-#endif
                 if (_backgroundSprite == null)
                 {
-                    Sprite[] allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
-                    foreach (var s in allSprites)
-                    {
-                        if (s.name.ToLower().Contains("background_img") || s.name.ToLower().Contains("background"))
-                        {
-                            _backgroundSprite = s;
-                            break;
-                        }
-                    }
+                    _backgroundSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/V0/Images/BackGround_Img.png");
                 }
+#endif
             }
         }
 
